@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>JuKa Stocks — MVP 0.6</title>
+<style>
+:root{--bg:#091019;--panel:#101923;--panel2:#0c141d;--text:#eef4fa;--muted:#8fa2b4;--line:#20303f;--accent:#8be0b0;--gold:#ffd36a;--danger:#ff8a8a;--blue:#76b7ff}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#081019,#0b1118 45%,#081019);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:22px}.topbar{display:flex;align-items:center;gap:18px;position:sticky;top:0;background:rgba(9,16,25,.92);backdrop-filter:blur(10px);z-index:20;padding:14px 0;border-bottom:1px solid var(--line)}
+.brand{font-weight:850;letter-spacing:.4px;font-size:19px;white-space:nowrap}.brand span{color:var(--accent)}
+.searchWrap{position:relative;flex:1}.search{width:100%;background:#0f1923;border:1px solid #263848;color:white;border-radius:12px;padding:13px 15px;font-size:15px;outline:none}.search:focus{border-color:#55728c}.results{position:absolute;top:52px;left:0;right:0;background:#0f1923;border:1px solid #263848;border-radius:12px;box-shadow:0 16px 45px #0008;overflow:hidden;display:none}.result{padding:11px 14px;display:flex;justify-content:space-between;cursor:pointer;border-bottom:1px solid #1b2a36}.result:hover{background:#172531}.result:last-child{border:0}.ticker{font-weight:800}.country{color:var(--muted);font-size:12px}
+.hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;padding:34px 0 18px}.eyebrow{color:var(--muted);font-size:13px}.name{font-size:34px;font-weight:850;margin:4px 0}.price{font-size:27px;font-weight:800}.badge{display:inline-block;border:1px solid #2b3e4d;background:#101b25;border-radius:999px;padding:7px 10px;color:#b9c8d5;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.card{background:linear-gradient(180deg,#101923,#0d161f);border:1px solid var(--line);border-radius:16px;padding:17px}.metric{grid-column:span 2;min-height:110px}.metric .label{font-size:12px;color:var(--muted);margin-bottom:10px}.metric .value{font-size:22px;font-weight:800}.metric .sub{font-size:12px;color:var(--muted);margin-top:6px}.green{color:var(--accent)} .gold{color:var(--gold)} .red{color:var(--danger)}
+.chartCard{grid-column:span 12}.side{grid-column:span 12}.chartToolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.periods{display:flex;gap:7px;flex-wrap:wrap}.periodBtn{border:1px solid #2a3a48;background:#101a23;color:#9fb0bf;border-radius:9px;padding:7px 10px;cursor:pointer;font-weight:750}.periodBtn.active{background:#1b2a34;color:#fff;border-color:#587088}.chartWrap{position:relative}.chartTooltip{position:absolute;display:none;pointer-events:none;background:#08121b;border:1px solid #304455;border-radius:12px;padding:10px 12px;box-shadow:0 12px 32px #0008;min-width:185px;font-size:12px;z-index:5}.chartTooltip strong{font-size:13px}.tooltipRow{display:flex;justify-content:space-between;gap:18px;padding-top:4px}.tooltipVal{font-weight:800}.hoverLine{stroke:#607587;stroke-width:1;stroke-dasharray:4 5;display:none}.hoverDot{display:none}.business{grid-column:span 12}.funds{grid-column:span 12}.quality{grid-column:span 12} h3{margin:0 0 13px;font-size:15px}p{color:#c2ced8;line-height:1.55;margin:8px 0}.note{font-size:12px;color:var(--muted)}
+svg{width:100%;height:330px;display:block}.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:5px}.dot{width:9px;height:9px;border-radius:99px;display:inline-block;margin-right:5px}.bar{height:12px;background:#1f2c37;border-radius:99px;overflow:hidden;margin:12px 0}.bar>div{height:100%;width:73%;background:linear-gradient(90deg,#6ec89b,#c4e56f)} details{margin-top:12px;border-top:1px solid #1c2a36;padding-top:10px} summary{cursor:pointer;color:#cfe1ef;font-weight:750;list-style:none} summary::-webkit-details-marker{display:none} summary::after{content:"＋";float:right;color:var(--muted)} details[open] summary::after{content:"−"}.qualityGrid{display:grid;grid-template-columns:220px 1fr;gap:22px;align-items:start}.scoreBig{font-size:46px;font-weight:850}.scoreMeta{color:var(--muted);font-size:13px}.scoreBreakdown{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px;margin-top:12px}.scoreItem{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #1c2a36}.scoreItem span:first-child{color:var(--muted)}
+.kv{display:flex;justify-content:space-between;border-bottom:1px solid #1c2a36;padding:10px 0}.kv:last-child{border:0}.kv span:first-child{color:var(--muted)}.pill{font-size:11px;padding:4px 7px;border-radius:8px;background:#16222c;color:#aabac8}.footer{padding:30px 0;color:#66798a;font-size:12px;text-align:center}
+@media(max-width:850px){.wrap{padding:12px}.topbar{padding:10px 0}.search{font-size:16px}.results{position:fixed;top:62px;left:12px;right:12px;max-height:60vh;overflow:auto}.metric{grid-column:span 6}.chartCard,.side,.funds,.quality{grid-column:span 12}.hero{align-items:flex-start;flex-direction:column}.name{font-size:28px}.topbar{gap:9px}.brand{font-size:15px}.qualityGrid{grid-template-columns:1fr}.scoreBreakdown{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">MVP 0.6 · Demo</span></div>
+
+  <section class="hero"><div><div class="eyebrow" id="market">NASDAQ · USD · Operating Company</div><div class="name" id="name">Meta Platforms</div><div class="eyebrow" id="symbol">META</div></div><div><div class="price" id="price">$616.77</div><div class="eyebrow" id="priceDate">Aktienkurs · Stand 08.09.2026</div></div></section>
+
+  <section class="grid" id="dashboard">
+    <div class="card chartCard"><div class="chartToolbar"><div><h3 style="margin-bottom:3px">Aktienkurs & integrierter Fair Value</h3><div class="note" id="periodLabel">Historische Ansicht · 5 Jahre</div></div><div class="periods" aria-label="Zeitraum auswählen"><button class="periodBtn" data-period="1Y">1J</button><button class="periodBtn" data-period="3Y">3J</button><button class="periodBtn active" data-period="5Y">5J</button><button class="periodBtn" data-period="MAX">Max</button></div></div>
+      <div class="chartWrap"><svg id="valuationChart" viewBox="0 0 760 350" role="img" aria-label="Aktienkurs mit Fair Value, Bear-Fair-Value und Bull-Fair-Value"></svg><div id="chartTooltip" class="chartTooltip"></div></div>
+      <div class="legend"><span><i class="dot" style="background:#76b7ff"></i>Aktienkurs</span><span><i class="dot" style="background:#8be0b0"></i>Fair Value</span><span><i class="dot" style="background:#ff8a8a"></i>Bear-Fair-Value</span><span><i class="dot" style="background:#ffd36a"></i>Bull-Fair-Value</span></div>
+      <div class="note" id="chartNote">Demo-Modus. Nach kostenlosem Vercel-Deployment mit Twelve-Data-Key werden echte Tageskurse geladen; US-Fundamentaldaten kommen serverseitig aus der SEC und speisen den historischen DCF.</div></div>
+
+    <div class="card quality"><h3>Qualitätsscore</h3><div class="qualityGrid"><div><div class="scoreBig"><span id="qualityScore">73</span> <span style="font-size:18px;color:#8fa2b4">/ 100</span></div><div class="bar"><div></div></div><p><strong id="qualityGrade">B — Stark</strong></p><div class="scoreMeta">Historische Qualitätsfaktoren; DCF-Annahmen fließen nicht in den Score ein.</div></div><div><details><summary>Bewertungsgrundlage anzeigen</summary><div class="scoreBreakdown" id="scoreBreakdown"><div class="scoreItem"><span>ROIC / Kapitalrendite</span><strong>stark</strong></div><div class="scoreItem"><span>EBIT-Marge</span><strong>stark</strong></div><div class="scoreItem"><span>Umsatzwachstum</span><strong>solide</strong></div><div class="scoreItem"><span>Gewinnwachstum</span><strong>solide</strong></div><div class="scoreItem"><span>Bilanzqualität</span><strong>stark</strong></div><div class="scoreItem"><span>Cashflow-Qualität</span><strong>solide</strong></div></div><p class="note">Die Detailwerte werden in der Live-Version direkt aus dem Quality-Score-Modell deiner Excel-Datei übernommen.</p></details></div></div></div>
+
+    <div class="card funds"><h3>Bilanzwerte & Fundamentaldaten</h3><div class="kv"><span>Fair Value (DCF)</span><strong class="green" id="fvMetric">$654.43</strong></div><div class="kv"><span>Kurs vs. Fair Value</span><strong class="gold" id="valuationMetric">−5.8% · unterbewertet</strong></div><div class="kv"><span>KGV</span><strong id="peMetric">23.25×</strong></div><div class="kv"><span>Modell-KGV Jahr 5</span><strong id="forwardPeMetric">13.71×</strong></div><div class="kv"><span>Umsatz</span><strong id="revenueMetric">$228.25 Mrd.</strong></div><div class="kv"><span>EBIT</span><strong id="ebitMetric">$86.93 Mrd.</strong></div><div class="kv"><span>EBIT-Marge</span><strong id="marginMetric">38.1%</strong></div><div class="kv"><span>EPS</span><strong id="epsMetric">$26.53</strong></div><div class="kv"><span>Free Cashflow</span><strong id="fcfMetric">—</strong></div><div class="kv"><span>Nettofinanzposition</span><strong id="netCashMetric">−$6.60 Mrd.</strong></div><div class="note" id="fundNote">META-Demowerte aus deinem bisherigen Modell. Live-Modus nutzt SEC-Fundamentals.</div></div>
+
+    <div class="card business"><h3>Geschäftsmodell in 30 Sekunden</h3><p><strong>Meta Platforms</strong> betreibt mit Facebook, Instagram, Messenger, WhatsApp und Threads ein globales Ökosystem sozialer Apps. Der überwiegende Teil des Umsatzes entsteht durch digitale Werbung: Unternehmen bezahlen dafür, Nutzer innerhalb dieser Apps zielgerichtet zu erreichen. Daneben investiert Meta stark in KI, Recheninfrastruktur, Wearables sowie Virtual- und Augmented-Reality-Produkte. Der zweite Berichtsbereich „Reality Labs“ umfasst entsprechende Hardware, Software und Inhalte, ist im Vergleich zum Werbegeschäft aber wesentlich kleiner und aktuell deutlich verlustreich.</p><span class="pill" id="businessSource">Quelle: Meta 2025 Form 10-K / SEC</span></div>
+  </section>
+  <div class="footer">JuKa Stocks MVP 0.6 · Private Research Prototype · keine Anlageberatung</div>
+</div>
+<script>
+(function(root,factory){
+  if(typeof module==='object'&&module.exports){module.exports=factory();}
+  else{root.JuKaCore=factory();}
+})(typeof self!=='undefined'?self:this,function(){
+  function n(v,fallback=0){const x=Number(v);return Number.isFinite(x)?x:fallback;}
+  function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+  function median(values){const a=values.filter(Number.isFinite).slice().sort((a,b)=>a-b);if(!a.length)return null;const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
+  function cagr(start,end,years){start=n(start);end=n(end);years=n(years);if(start<=0||end<=0||years<=0)return null;return Math.pow(end/start,1/years)-1;}
+  function valuationPct(price,fair){price=n(price,NaN);fair=n(fair,NaN);if(!Number.isFinite(price)||!Number.isFinite(fair)||fair===0)return null;return (price/fair-1)*100;}
+
+  // 10-point generic quality engine. Max 100. Transparent and intentionally conservative.
+  function qualityScore(m={}){
+    const parts=[]; let score=0;
+    function add(label,points,max,reason){points=clamp(n(points),0,max);score+=points;parts.push({label,points,max,reason});}
+    const roic=n(m.roic,NaN), opm=n(m.operatingMargin,NaN), rg=n(m.revenueCagr3y,NaN), eg=n(m.epsCagr3y,NaN), fcfm=n(m.fcfMargin,NaN), nde=n(m.netDebtToEbit,NaN), dilution=n(m.shareCagr3y,NaN);
+    add('ROIC / Kapitalrendite',Number.isFinite(roic)?(roic>=.20?20:roic>=.12?16:roic>=.08?11:roic>=.04?6:2):8,20,Number.isFinite(roic)?`${(roic*100).toFixed(1)}%`:'nicht verfügbar');
+    add('EBIT-Marge',Number.isFinite(opm)?(opm>=.30?15:opm>=.20?13:opm>=.12?10:opm>=.06?6:3):7,15,Number.isFinite(opm)?`${(opm*100).toFixed(1)}%`:'nicht verfügbar');
+    add('Umsatzwachstum',Number.isFinite(rg)?(rg>=.15?15:rg>=.08?12:rg>=.03?9:rg>=0?6:2):7,15,Number.isFinite(rg)?`${(rg*100).toFixed(1)}% CAGR`:'nicht verfügbar');
+    add('Gewinnwachstum',Number.isFinite(eg)?(eg>=.15?15:eg>=.08?12:eg>=.03?9:eg>=0?6:2):7,15,Number.isFinite(eg)?`${(eg*100).toFixed(1)}% CAGR`:'nicht verfügbar');
+    add('Cashflow-Qualität',Number.isFinite(fcfm)?(fcfm>=.20?15:fcfm>=.12?12:fcfm>=.06?9:fcfm>0?6:1):7,15,Number.isFinite(fcfm)?`${(fcfm*100).toFixed(1)}% FCF-Marge`:'nicht verfügbar');
+    add('Bilanzqualität',Number.isFinite(nde)?(nde<=0?10:nde<=1?9:nde<=2?7:nde<=3?5:2):5,10,Number.isFinite(nde)?`${nde.toFixed(1)}× Net Debt / EBIT`:'nicht verfügbar');
+    add('Verwässerung',Number.isFinite(dilution)?(dilution<=0?10:dilution<=.01?8:dilution<=.03?5:2):5,10,Number.isFinite(dilution)?`${(dilution*100).toFixed(1)}% Aktien-CAGR`:'nicht verfügbar');
+    const grade=score>=85?'A':score>=70?'B':score>=55?'C':score>=40?'D':'E';
+    const label=score>=85?'Exzellent':score>=70?'Stark':score>=55?'Solide':score>=40?'Durchschnittlich':'Schwach';
+    return {score:Math.round(score),grade,label,parts};
+  }
+
+  // Simplified FCFF DCF for generic cross-stock use. Assumptions are explicit and user-overridable.
+  function dcfFairValue(input={}){
+    const fcf0=n(input.fcf0), growth=n(input.growth,.08), fadeGrowth=n(input.fadeGrowth,.04), wacc=n(input.wacc,.09), terminalGrowth=n(input.terminalGrowth,.025), years=Math.max(1,Math.round(n(input.years,10))), netCash=n(input.netCash), shares=n(input.shares);
+    if(fcf0<=0||shares<=0||wacc<=terminalGrowth)return null;
+    let pv=0, fcf=fcf0;
+    for(let y=1;y<=years;y++){
+      const t=(y-1)/Math.max(1,years-1); const g=growth+(fadeGrowth-growth)*t; fcf*=1+g; pv+=fcf/Math.pow(1+wacc,y);
+    }
+    const terminal=fcf*(1+terminalGrowth)/(wacc-terminalGrowth); pv+=terminal/Math.pow(1+wacc,years);
+    return (pv+netCash)/shares;
+  }
+  function scenarioValues(baseInput={}){
+    const base=dcfFairValue(baseInput); if(base==null)return null;
+    const bear=dcfFairValue({...baseInput,growth:n(baseInput.growth,.08)-.03,fadeGrowth:n(baseInput.fadeGrowth,.04)-.015,wacc:n(baseInput.wacc,.09)+.015,terminalGrowth:Math.max(.01,n(baseInput.terminalGrowth,.025)-.005)});
+    const bull=dcfFairValue({...baseInput,growth:n(baseInput.growth,.08)+.03,fadeGrowth:n(baseInput.fadeGrowth,.04)+.015,wacc:Math.max(.055,n(baseInput.wacc,.09)-.01),terminalGrowth:Math.min(.04,n(baseInput.terminalGrowth,.025)+.005)});
+    return {bear,base,bull};
+  }
+  function filterPeriod(rows,period){const months={"1Y":12,"3Y":36,"5Y":60,"MAX":9999}[period]||60;return rows.slice(Math.max(0,rows.length-months-1));}
+  function buildFairSeries(priceRows, annualFacts, assumptions={}){
+    if(!Array.isArray(priceRows)||!priceRows.length)return [];
+    const facts=(annualFacts||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    return priceRows.map(row=>{
+      const d=String(row.date); let fact=null; for(const f of facts){if(String(f.date)<=d)fact=f;else break;}
+      if(!fact)return {...row,base:null,bear:null,bull:null};
+      const growth=Number.isFinite(fact.revenueCagr3y)?clamp(fact.revenueCagr3y,-.02,.22):n(assumptions.growth,.08);
+      const input={fcf0:n(fact.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:n(assumptions.years,10),netCash:n(fact.netCash),shares:n(fact.shares)};
+      const s=scenarioValues(input); return {...row,base:s?.base??null,bear:s?.bear??null,bull:s?.bull??null};
+    });
+  }
+  return {n,clamp,median,cagr,valuationPct,qualityScore,dcfFairValue,scenarioValues,filterPeriod,buildFairSeries};
+});
+
+</script>
+<script>
+const stocks=[
+ {s:'META',n:'Meta Platforms',m:'NASDAQ · USA'},{s:'AAPL',n:'Apple',m:'NASDAQ · USA'},{s:'MSFT',n:'Microsoft',m:'NASDAQ · USA'},{s:'NVDA',n:'NVIDIA',m:'NASDAQ · USA'},{s:'AMZN',n:'Amazon',m:'NASDAQ · USA'},{s:'GOOGL',n:'Alphabet',m:'NASDAQ · USA'},{s:'BRK.B',n:'Berkshire Hathaway',m:'NYSE · USA'},{s:'JPM',n:'JPMorgan Chase',m:'NYSE · USA'},{s:'V',n:'Visa',m:'NYSE · USA'},{s:'LLY',n:'Eli Lilly',m:'NYSE · USA'},
+ {s:'SAP',n:'SAP SE',m:'Xetra · Deutschland'},{s:'SIE',n:'Siemens',m:'Xetra · Deutschland'},{s:'ALV',n:'Allianz',m:'Xetra · Deutschland'},{s:'DTE',n:'Deutsche Telekom',m:'Xetra · Deutschland'},{s:'ASML',n:'ASML Holding',m:'Euronext · Niederlande'},{s:'MC',n:'LVMH',m:'Euronext Paris · Frankreich'},{s:'OR',n:"L'Oréal",m:'Euronext Paris · Frankreich'},{s:'NOVO-B',n:'Novo Nordisk',m:'Nasdaq Copenhagen · Dänemark'},{s:'NESN',n:'Nestlé',m:'SIX · Schweiz'},{s:'ROG',n:'Roche',m:'SIX · Schweiz'}
+];
+
+const q=document.getElementById('search'),r=document.getElementById('results');
+const LIVE_CAPABLE=(location.protocol==='http:'||location.protocol==='https:') && !['localhost','127.0.0.1'].includes(location.hostname);
+function fmtBig(v){if(v==null||!Number.isFinite(Number(v)))return '—'; const x=Number(v),a=Math.abs(x); if(a>=1e12)return '$'+(x/1e12).toFixed(2)+' Bio.'; if(a>=1e9)return '$'+(x/1e9).toFixed(2)+' Mrd.'; if(a>=1e6)return '$'+(x/1e6).toFixed(1)+' Mio.'; return '$'+x.toLocaleString('en-US',{maximumFractionDigits:0});}
+function setStatus(text,live=false){const e=document.getElementById('dataStatus');e.textContent='MVP 0.6 · '+text;e.style.borderColor=live?'#3b7859':'#2b3e4d';}
+function latestFacts(annual){return (annual||[]).filter(x=>x&&x.date).sort((a,b)=>String(a.date).localeCompare(String(b.date))).at(-1)||null;}
+function annualEpsGrowth(annual){const a=(annual||[]).filter(x=>Number.isFinite(Number(x.eps))&&Number(x.eps)>0);if(a.length<4)return .08;return JuKaCore.clamp(JuKaCore.cagr(Number(a.at(-4).eps),Number(a.at(-1).eps),3)??.08,-.02,.20);}
+function updateFromLive(symbol,marketData,secData){
+  const prices=(marketData.values||[]).slice().reverse().map(x=>({date:new Date(String(x.datetime).slice(0,10)),price:Number(x.close)})).filter(x=>Number.isFinite(x.price));
+  if(!prices.length)throw new Error('Keine Kursdaten erhalten');
+  const annual=secData?.annual||[]; const withFair=JuKaCore.buildFairSeries(prices.map(x=>({date:x.date.toISOString().slice(0,10),price:x.price})),annual,{wacc:.09,terminalGrowth:.025,fadeGrowth:.04,years:10}).map(x=>({...x,date:new Date(x.date)}));
+  chartData=withFair; const last=chartData.at(-1), fact=latestFacts(annual); const fair=last?.base; const vp=JuKaCore.valuationPct(last.price,fair);
+  document.getElementById('price').textContent=money(last.price); document.getElementById('priceDate').textContent='Aktienkurs · Stand '+last.date.toLocaleDateString('de-DE');
+  document.getElementById('name').textContent=secData?.name||marketData.meta?.symbol||symbol; document.getElementById('symbol').textContent=symbol;
+  document.getElementById('market').textContent=[marketData.meta?.exchange,marketData.meta?.currency,'Live-Daten'].filter(Boolean).join(' · ');
+  document.getElementById('fvMetric').textContent=fair?money(fair):'—'; document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
+  if(fact){
+    const eps=Number(fact.eps), eg=annualEpsGrowth(annual); const eps5=eps>0?eps*Math.pow(1+eg,5):null;
+    document.getElementById('peMetric').textContent=eps>0?(last.price/eps).toFixed(1)+'×':'—'; document.getElementById('forwardPeMetric').textContent=eps5>0?(last.price/eps5).toFixed(1)+'×':'—';
+    document.getElementById('revenueMetric').textContent=fmtBig(fact.revenue); document.getElementById('ebitMetric').textContent=fmtBig(fact.operatingIncome); document.getElementById('marginMetric').textContent=Number.isFinite(fact.operatingMargin)?(fact.operatingMargin*100).toFixed(1)+'%':'—'; document.getElementById('epsMetric').textContent=Number.isFinite(eps)?money(eps):'—'; document.getElementById('fcfMetric').textContent=fmtBig(fact.fcf); document.getElementById('netCashMetric').textContent=fmtBig(fact.netCash);
+    const prev=annual.at(-4); const epsC=prev?.eps>0&&eps>0?JuKaCore.cagr(prev.eps,eps,3):null; const shareC=prev?.shares>0&&fact.shares>0?JuKaCore.cagr(prev.shares,fact.shares,3):null; const nde=fact.operatingIncome?(-fact.netCash)/fact.operatingIncome:null;
+    const qs=JuKaCore.qualityScore({operatingMargin:fact.operatingMargin,revenueCagr3y:fact.revenueCagr3y,epsCagr3y:epsC,fcfMargin:fact.fcfMargin,netDebtToEbit:nde,shareCagr3y:shareC}); document.getElementById('qualityScore').textContent=qs.score; document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label; document.querySelector('.bar>div').style.width=qs.score+'%'; document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${p.points}/${p.max} · ${p.reason}</strong></div>`).join('');
+  }
+  document.getElementById('fundNote').textContent='Fundamentaldaten: SEC Company Facts · Fair Value: transparentes JuKa-DCF v0.5.'; document.getElementById('chartNote').textContent='Echte tägliche Schlusskurse. Fair Value/Bear/Bull werden für jeden historischen Punkt aus den zu diesem Zeitpunkt verfügbaren Jahres-Fundamentaldaten neu berechnet.'; setStatus('LIVE',true); draw();
+}
+async function loadLiveStock(symbol){
+  if(!LIVE_CAPABLE)throw new Error('Live-APIs sind erst nach Deployment verfügbar.'); setStatus('lädt…');
+  const start=new Date();start.setFullYear(start.getFullYear()-10); const startDate=start.toISOString().slice(0,10);
+  const [mr,sr]=await Promise.all([fetch(`/api/market?action=time_series&symbol=${encodeURIComponent(symbol)}&start_date=${startDate}`),fetch(`/api/sec?symbol=${encodeURIComponent(symbol)}`)]); const market=await mr.json(); const sec=await sr.json();
+  if(!mr.ok)throw new Error(market.error||market.message||'Kursdaten nicht verfügbar'); if(!sr.ok)throw new Error(sec.error||'SEC-Fundamentaldaten nicht verfügbar'); updateFromLive(symbol,market,sec);
+}
+
+function render(v=''){const x=v.trim().toLowerCase(); const a=stocks.filter(z=>!x||z.s.toLowerCase().includes(x)||z.n.toLowerCase().includes(x)).slice(0,8);r.innerHTML=a.map(z=>`<div class="result" data-s="${z.s}"><span><span class="ticker">${z.s}</span> &nbsp; ${z.n}</span><span class="country">${z.m}</span></div>`).join('');r.style.display=a.length?'block':'none';document.querySelectorAll('.result').forEach(el=>el.onclick=()=>select(el.dataset.s));}
+function demoForStock(s){
+  const z=stocks.find(x=>x.s===s)||{s,n:s,m:'Demo'};
+  // Deterministische Demo-Reihe je Ticker. Keine externen/fingierten Echtwerte.
+  let seed=[...s].reduce((a,c)=>a+c.charCodeAt(0),0); const rand=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
+  const start=new Date('2018-09-08'), end=new Date('2026-09-08'); const months=(end.getFullYear()-start.getFullYear())*12+(end.getMonth()-start.getMonth());
+  const baseStart=80+rand()*120, baseEnd=160+rand()*520; chartData=[];
+  for(let i=0;i<=months;i++){const d=new Date(start.getFullYear(),start.getMonth()+i,8),t=i/months;const wave=Math.sin(i*.23+rand())*(10+baseEnd*.05);const price=Math.max(20,baseStart+(baseEnd-baseStart)*t+wave);const fair=Math.max(25,baseStart*1.05+(baseEnd*1.04-baseStart)*t+Math.sin(i*.09)*12);chartData.push({date:d,price,base:fair,bear:fair*.72,bull:fair*1.32});}
+  const last=chartData.at(-1),vp=JuKaCore.valuationPct(last.price,last.base);
+  document.getElementById('name').textContent=z.n; document.getElementById('symbol').textContent=z.s; document.getElementById('market').textContent=z.m+' · Demo-Daten';
+  document.getElementById('price').textContent=money(last.price); document.getElementById('priceDate').textContent='Aktienkurs · Demo · '+last.date.toLocaleDateString('de-DE');
+  document.getElementById('fvMetric').textContent=money(last.base); document.getElementById('valuationMetric').textContent=`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'} (Demo)`;
+  ['peMetric','forwardPeMetric','revenueMetric','ebitMetric','marginMetric','epsMetric','fcfMetric','netCashMetric'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('qualityScore').textContent='—'; document.getElementById('qualityGrade').textContent='Live-Fundamentals noch nicht geladen'; document.querySelector('.bar>div').style.width='0%';
+  document.getElementById('scoreBreakdown').innerHTML='<div class="scoreItem"><span>Status</span><strong>Wird aus echten Fundamentaldaten berechnet</strong></div>';
+  document.getElementById('fundNote').textContent='Suchfunktion aktiv. Für diesen Titel werden in der lokalen Vorschau bewusst keine erfundenen Fundamentaldaten angezeigt.';
+  document.getElementById('chartNote').textContent='Interaktive Demo-Zeitreihe für '+z.s+'. Nach öffentlichem Deployment werden unterstützte Ticker durch echte Tageskurse und Fundamentaldaten ersetzt.';
+  setStatus('Demo · '+z.s); draw();
+}
+async function select(s){const z=stocks.find(x=>x.s===s);q.value='';r.style.display='none';document.getElementById('dashboard').style.opacity='1';
+  if(!LIVE_CAPABLE){demoForStock(s);return;}
+  document.getElementById('name').textContent=z?.n||s;document.getElementById('symbol').textContent=s;
+  try{await loadLiveStock(s);}catch(err){demoForStock(s);document.getElementById('fundNote').textContent='Live-Daten konnten nicht geladen werden: '+(err.message||err)+' — deshalb Demo-Fallback.';}
+}
+q.addEventListener('input',()=>render(q.value));q.addEventListener('focus',()=>render(q.value));q.addEventListener('keydown',e=>{if(e.key==='Enter'){const x=q.value.trim().toLowerCase();const hit=stocks.find(z=>z.s.toLowerCase()===x)||stocks.find(z=>z.n.toLowerCase().includes(x)||z.s.toLowerCase().includes(x));if(hit){e.preventDefault();select(hit.s);}}});
+document.addEventListener('click',e=>{if(!e.target.closest('.searchWrap'))r.style.display='none'});
+
+// Demo-Zeitreihe: Interaktion ist echt, Daten werden später durch Live-/Historien-Daten ersetzt.
+let chartData=[];
+const start=new Date('2018-09-08');
+const end=new Date('2026-09-08');
+const months=(end.getFullYear()-start.getFullYear())*12+(end.getMonth()-start.getMonth());
+for(let i=0;i<=months;i++){
+  const d=new Date(start.getFullYear(),start.getMonth()+i,8);
+  const t=i/months;
+  const cycle=Math.sin(i*0.34)*34+Math.sin(i*0.11)*22;
+  const shock=(i>42&&i<58)?-150*(1-Math.abs(i-50)/8):0;
+  const price=Math.max(90,150+455*t+cycle+shock);
+  const fair=180+475*t+Math.sin(i*0.08)*18;
+  chartData.push({date:d,price,base:fair,bear:fair*0.61,bull:fair*1.545});
+}
+// Anchor final point to current Excel values.
+const last=chartData[chartData.length-1]; last.price=616.77; last.base=654.43; last.bear=400.16; last.bull=1011.57;
+
+const svg=document.getElementById('valuationChart'), tooltip=document.getElementById('chartTooltip');
+let currentPeriod='5Y';
+const NS='http://www.w3.org/2000/svg';
+const periods={"1Y":12,"3Y":36,"5Y":60,"MAX":9999};
+function money(v){return '$'+v.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2});}
+function pct(v){return (v>=0?'+':'')+v.toLocaleString('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1})+'%';}
+function fmtDate(d){return d.toLocaleDateString('de-DE',{month:'short',year:'numeric'});}
+function node(tag,attrs={},text=''){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));if(text)n.textContent=text;return n;}
+function getSlice(){const count=periods[currentPeriod]; return chartData.slice(Math.max(0,chartData.length-count-1));}
+function draw(){
+  svg.innerHTML=''; const data=getSlice(); const W=760,H=350,L=55,R=18,T=18,B=44; const pw=W-L-R,ph=H-T-B;
+  const vals=data.flatMap(d=>[d.price,d.base,d.bear,d.bull]).filter(Number.isFinite); if(!vals.length)return; let min=Math.min(...vals),max=Math.max(...vals); const pad=(max-min)*.08; min=Math.max(0,min-pad); max+=pad;
+  const x=i=>L+(i/(data.length-1))*pw, y=v=>T+(max-v)/(max-min)*ph;
+  for(let k=0;k<5;k++){const yy=T+k*ph/4;const val=max-k*(max-min)/4;svg.append(node('line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:'#1f2c37'}));svg.append(node('text',{x:5,y:yy+4,fill:'#8093a4','font-size':'11'},'$'+Math.round(val)));}
+  const tickCount=5; for(let k=0;k<tickCount;k++){const idx=Math.round(k*(data.length-1)/(tickCount-1));svg.append(node('text',{x:x(idx),y:H-15,fill:'#8093a4','font-size':'11','text-anchor':k===0?'start':k===tickCount-1?'end':'middle'},data[idx].date.toLocaleDateString('de-DE',{year:'numeric',month:currentPeriod==='1Y'?'short':undefined})));}
+  const series=[['price','#76b7ff',3],['base','#8be0b0',3],['bear','#ff8a8a',2],['bull','#ffd36a',2]];
+  series.forEach(([key,color,width])=>{let d='',started=false;data.forEach((row,i)=>{if(!Number.isFinite(row[key])){started=false;return;}d+=(started?'L':'M')+x(i).toFixed(1)+' '+y(row[key]).toFixed(1)+' ';started=true;});if(d)svg.append(node('path',{d,fill:'none',stroke:color,'stroke-width':width,'stroke-dasharray':key==='price'?'':'7 6'}));});
+  const hover= node('line',{class:'hoverLine',x1:L,y1:T,x2:L,y2:H-B});svg.append(hover);
+  const dots={};series.forEach(([key,color])=>{const c=node('circle',{class:'hoverDot',r:4,fill:color,stroke:'#08121b','stroke-width':2});svg.append(c);dots[key]=c;});
+  const hit=node('rect',{x:L,y:T,width:pw,height:ph,fill:'transparent',style:'cursor:crosshair'});svg.append(hit);
+  hit.addEventListener('mousemove',ev=>{const rect=svg.getBoundingClientRect();const mx=(ev.clientX-rect.left)*(W/rect.width);let idx=Math.round((mx-L)/pw*(data.length-1));idx=Math.max(0,Math.min(data.length-1,idx));const row=data[idx],xx=x(idx);hover.style.display='block';hover.setAttribute('x1',xx);hover.setAttribute('x2',xx);Object.entries(dots).forEach(([key,c])=>{if(Number.isFinite(row[key])){c.style.display='block';c.setAttribute('cx',xx);c.setAttribute('cy',y(row[key]));}else c.style.display='none';});
+    const vp=JuKaCore.valuationPct(row.price,row.base); const status=vp==null?'Bewertung':(vp<0?'Unterbewertung':'Überbewertung'); const statusClass=vp!=null&&vp<0?'green':'red'; const mv=v=>Number.isFinite(v)?money(v):'—'; tooltip.innerHTML=`<strong>${fmtDate(row.date)}</strong><div class="tooltipRow"><span>Aktienkurs</span><span class="tooltipVal">${mv(row.price)}</span></div><div class="tooltipRow"><span>Fair Value</span><span class="tooltipVal">${mv(row.base)}</span></div><div class="tooltipRow"><span>Bear-Fair-Value</span><span class="tooltipVal">${mv(row.bear)}</span></div><div class="tooltipRow"><span>Bull-Fair-Value</span><span class="tooltipVal">${mv(row.bull)}</span></div><div class="tooltipRow"><span>${status}</span><span class="tooltipVal ${statusClass}">${vp==null?'—':pct(Math.abs(vp))}</span></div>`;
+    tooltip.style.display='block'; const wrap=document.querySelector('.chartWrap').getBoundingClientRect(); let left=ev.clientX-wrap.left+14, top=ev.clientY-wrap.top+12; if(left+200>wrap.width)left=ev.clientX-wrap.left-205; tooltip.style.left=left+'px';tooltip.style.top=top+'px';
+  });
+  hit.addEventListener('mouseleave',()=>{hover.style.display='none';Object.values(dots).forEach(c=>c.style.display='none');tooltip.style.display='none';});
+}
+document.querySelectorAll('.periodBtn').forEach(btn=>btn.addEventListener('click',()=>{currentPeriod=btn.dataset.period;document.querySelectorAll('.periodBtn').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('periodLabel').textContent='Historische Ansicht · '+btn.textContent;draw();}));
+draw();
+
+// Browser-Selbsttest, nur mit ?selftest=1 aktiv.
+if(new URLSearchParams(location.search).get('selftest')==='1'){
+  setTimeout(()=>{
+    const checks=[]; const ok=(name,cond)=>checks.push({name,ok:!!cond});
+    q.value='SAP'; q.dispatchEvent(new Event('input',{bubbles:true}));
+    ok('search-results',r.textContent.includes('SAP SE'));
+    q.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+    ok('stock-switch',document.getElementById('symbol').textContent==='SAP');
+    ok('demo-fallback',document.getElementById('dataStatus').textContent.includes('SAP'));
+    const one=document.querySelector('[data-period="1Y"]'); one.click();
+    ok('period-switch',one.classList.contains('active')&&document.getElementById('periodLabel').textContent.includes('1J'));
+    ok('chart-rendered',document.querySelectorAll('#valuationChart path').length>=4);
+    ok('quality-position',document.querySelector('.chartCard').compareDocumentPosition(document.querySelector('.quality')) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const out=document.createElement('pre'); out.id='selftest-result'; out.textContent=JSON.stringify({passed:checks.every(x=>x.ok),checks}); document.body.appendChild(out);
+  },150);
+}
+
+</script>
+</body></html>
