@@ -1,0 +1,10 @@
+const assert=require('assert'); const C=require('../core');
+let r=C.jukaRealityCheck({model:'operating-company',price:75,fairValue:100,qualityScore:85,relative:{pe:20,peY5:14},reverse:{impliedGrowth:.12}});
+assert.equal(r.label,'attraktiv'); assert.equal(r.components.valuationScore,2); assert.equal(r.components.qualityScore,2); assert.equal(r.components.relativeScore,1); assert.ok(r.breaker.includes('12.0%'));
+r=C.jukaRealityCheck({model:'operating-company',price:130,fairValue:100,qualityScore:40,relative:{pe:35,peY5:32},reverse:{}});
+assert.equal(r.label,'anspruchsvoll'); assert.ok(r.total<=-3);
+r=C.jukaRealityCheck({model:'bank-insurance',price:150,fairValue:160,qualityScore:70,relative:{pb:1.5,roe:.16},reverse:{impliedRoe:.13}});
+assert.ok(r.breaker.includes('13.0%'));
+r=C.jukaRealityCheck({model:'reit',price:70,fairValue:75,qualityScore:60,relative:{paFFO:14},reverse:{impliedGrowth:.045}});
+assert.ok(r.breaker.includes('4.5%'));
+console.log('reality-check.test.js: OK');

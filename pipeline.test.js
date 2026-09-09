@@ -1,0 +1,9 @@
+const assert=require('assert');const C=require('../core');const P=require('../lib/pipeline');
+const stock={s:'TEST',n:'Test Co',region:'US',currency:'USD',sector:'Software'};
+const market={meta:{currency:'USD',exchange:'NASDAQ'},values:[{datetime:'2025-01-02',close:'90'},{datetime:'2026-01-02',close:'100'}]};
+const annual=[];for(let y=2019;y<=2025;y++){const i=y-2019,rev=1000*Math.pow(1.10,i),op=rev*.25,ni=op*.8,cfo=ni*1.2,capex=rev*.05;annual.push({fy:y,date:`${y}-12-31`,filed:`${y+1}-02-15`,revenue:rev,operatingIncome:op,netIncome:ni,eps:5*Math.pow(1.08,i),cfo,capex,fcf:cfo-capex,cash:300,debt:100,shares:100,da:rev*.04,sbc:rev*.01,interestExpense:10,pretaxIncome:ni/.8,incomeTax:ni/.8*.2,equity:700,deltaNwc:rev*.005});}
+const fundamentals={name:'Test Co',annual,source:'mock'};
+const snap=P.buildSnapshot(stock,market,fundamentals,C);
+assert.equal(snap.model,'operating-company');assert.equal(snap.price,100);assert.equal(snap.currency,'USD');assert.equal(snap.dataCoverage.annualYears,7);assert.ok(snap.latest.revenue>0);assert.ok(snap.quality);assert.ok(snap.valuation&&snap.valuation.base>0);assert.ok(snap.dataQuality && snap.dataQuality.score>0); assert.ok(snap.companyProfile); assert.ok(snap.autoAssumptions); assert.ok(snap.forecast && snap.forecast.rows.length===5); assert.ok(snap.returnBridge); assert.ok(snap.forecastScenarios); assert.ok(snap.returnMatrix && snap.returnMatrix.matrix.length===9); assert.ok(snap.historical.length===2);assert.ok(snap.multiples.pe>0);
+let mc=0,fc=0;const pipe=P.createPipeline({core:C,ttlMs:999999,marketAdapter:async()=>{mc++;return market},fundamentalsAdapter:async()=>{fc++;return fundamentals}});
+(async()=>{const a=await pipe.load(stock),b=await pipe.load(stock);assert.equal(a.cacheHit,false);assert.equal(b.cacheHit,true);assert.equal(mc,1);assert.equal(fc,1);console.log('pipeline.test.js: OK')})().catch(e=>{console.error(e);process.exit(1)});

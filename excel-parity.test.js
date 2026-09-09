@@ -1,0 +1,12 @@
+const assert=require('assert'); const C=require('../core.js');
+const meta={revenue:228247,ebit:86926,taxRate:.18,da:22729,capex:89325,deltaNwc:-724,shares:2567,netFinancialPosition:-6596,growthY1:.18,growthY5:.10,targetEbitMarginY5:.40,wacc:.095,terminalGrowth:.03,terminalRoic:.20,capexPctY5:.22,daPctY5:.12,nwcPctY5:.005,bearGrowthAdj:-.03,bearMarginAdj:-.03,bearWaccAdj:.015,bullGrowthAdj:.03,bullMarginAdj:.03,bullWaccAdj:-.01};
+const s=C.jukaDcfScenarios(meta); assert.ok(s);
+assert.ok(Math.abs(s.base-654.4325829130363)<1e-8,`base ${s.base}`);
+assert.ok(Math.abs(s.bear-400.1574408699634)<1e-8,`bear ${s.bear}`);
+assert.ok(Math.abs(s.bull-1011.5660866959147)<1e-8,`bull ${s.bull}`);
+assert.ok(Math.abs(s.detail.base.terminalShare-.6191585157433616)<1e-9);
+const q=C.jukaQualityScore({roic:.3263451104996406,ebitMargin:.3808418073402936,revenueCagr5y:.10,fcfCagr5y:.10,fcfConversion:.90,sbcToRevenue:.11012631053201137,netDebtToEbitda:1,interestCoverage:10,dilutionPa:.01,roicTrend:-.02207032486907895});
+assert.strictEqual(q.score,73); assert.strictEqual(q.grade,'B');
+const rv=C.jukaRelativeValuation({price:616.77,epsTtm:26.53,epsY5:45,fairValue:s.base});
+assert.ok(Math.abs(rv.pe-23.24802110817942)<1e-10); assert.ok(Math.abs(rv.peY5-13.706)<1e-10); assert.ok(Math.abs(rv.epsGrowth-.111463109818293)<1e-10); assert.ok(Math.abs(rv.fairPe-24.667643532342115)<1e-10);
+console.log('excel-parity.test.js: OK');

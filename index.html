@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>JuKa Stocks — MVP 0.6</title>
+<title>JuKa Stocks — MVP 1.0</title>
 <style>
 :root{--bg:#091019;--panel:#101923;--panel2:#0c141d;--text:#eef4fa;--muted:#8fa2b4;--line:#20303f;--accent:#8be0b0;--gold:#ffd36a;--danger:#ff8a8a;--blue:#76b7ff}
 *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#081019,#0b1118 45%,#081019);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
@@ -15,28 +15,116 @@
 .chartCard{grid-column:span 12}.side{grid-column:span 12}.chartToolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.periods{display:flex;gap:7px;flex-wrap:wrap}.periodBtn{border:1px solid #2a3a48;background:#101a23;color:#9fb0bf;border-radius:9px;padding:7px 10px;cursor:pointer;font-weight:750}.periodBtn.active{background:#1b2a34;color:#fff;border-color:#587088}.chartWrap{position:relative}.chartTooltip{position:absolute;display:none;pointer-events:none;background:#08121b;border:1px solid #304455;border-radius:12px;padding:10px 12px;box-shadow:0 12px 32px #0008;min-width:185px;font-size:12px;z-index:5}.chartTooltip strong{font-size:13px}.tooltipRow{display:flex;justify-content:space-between;gap:18px;padding-top:4px}.tooltipVal{font-weight:800}.hoverLine{stroke:#607587;stroke-width:1;stroke-dasharray:4 5;display:none}.hoverDot{display:none}.business{grid-column:span 12}.funds{grid-column:span 12}.quality{grid-column:span 12} h3{margin:0 0 13px;font-size:15px}p{color:#c2ced8;line-height:1.55;margin:8px 0}.note{font-size:12px;color:var(--muted)}
 svg{width:100%;height:330px;display:block}.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:5px}.dot{width:9px;height:9px;border-radius:99px;display:inline-block;margin-right:5px}.bar{height:12px;background:#1f2c37;border-radius:99px;overflow:hidden;margin:12px 0}.bar>div{height:100%;width:73%;background:linear-gradient(90deg,#6ec89b,#c4e56f)} details{margin-top:12px;border-top:1px solid #1c2a36;padding-top:10px} summary{cursor:pointer;color:#cfe1ef;font-weight:750;list-style:none} summary::-webkit-details-marker{display:none} summary::after{content:"＋";float:right;color:var(--muted)} details[open] summary::after{content:"−"}.qualityGrid{display:grid;grid-template-columns:220px 1fr;gap:22px;align-items:start}.scoreBig{font-size:46px;font-weight:850}.scoreMeta{color:var(--muted);font-size:13px}.scoreBreakdown{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px;margin-top:12px}.scoreItem{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #1c2a36}.scoreItem span:first-child{color:var(--muted)}
 .kv{display:flex;justify-content:space-between;border-bottom:1px solid #1c2a36;padding:10px 0}.kv:last-child{border:0}.kv span:first-child{color:var(--muted)}.pill{font-size:11px;padding:4px 7px;border-radius:8px;background:#16222c;color:#aabac8}.footer{padding:30px 0;color:#66798a;font-size:12px;text-align:center}
-@media(max-width:850px){.wrap{padding:12px}.topbar{padding:10px 0}.search{font-size:16px}.results{position:fixed;top:62px;left:12px;right:12px;max-height:60vh;overflow:auto}.metric{grid-column:span 6}.chartCard,.side,.funds,.quality{grid-column:span 12}.hero{align-items:flex-start;flex-direction:column}.name{font-size:28px}.topbar{gap:9px}.brand{font-size:15px}.qualityGrid{grid-template-columns:1fr}.scoreBreakdown{grid-template-columns:1fr}}
+
+.modelBox{margin-top:16px;border-top:1px solid #1c2a36;padding-top:14px}.modelGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}.modelField{background:#0b141d;border:1px solid #20303f;border-radius:12px;padding:10px}.modelField label{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}.modelField input{width:100%;background:#111c26;border:1px solid #2b3e4d;border-radius:8px;color:#eef4fa;padding:9px;font-size:14px}.scenarioStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.scenario{background:#0b141d;border:1px solid #20303f;border-radius:12px;padding:11px}.scenario span{display:block;color:var(--muted);font-size:11px}.scenario strong{font-size:18px}.modelAudit{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:9px}.auditItem{font-size:12px;color:#b8c8d4;background:#0a121a;border-radius:9px;padding:9px}.auditItem b{display:block;color:#eef4fa;margin-top:3px}.historyWrap{overflow:auto;margin-top:12px}.historyTable{width:100%;border-collapse:collapse;min-width:760px;font-size:12px}.historyTable th,.historyTable td{padding:8px 10px;border-bottom:1px solid #1c2a36;text-align:right;white-space:nowrap}.historyTable th:first-child,.historyTable td:first-child{text-align:left}.historyTable th{color:#8fa2b4;font-weight:700}.engineLine{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.engineTag{font-size:11px;border:1px solid #263848;border-radius:8px;padding:5px 7px;color:#aebdcc}
+@media(max-width:850px){.wrap{padding:12px}.topbar{padding:10px 0}.search{font-size:16px}.results{position:fixed;top:62px;left:12px;right:12px;max-height:60vh;overflow:auto}.metric{grid-column:span 6}.chartCard,.side,.funds,.quality{grid-column:span 12}.hero{align-items:flex-start;flex-direction:column}.name{font-size:28px}.topbar{gap:9px}.brand{font-size:15px}.qualityGrid{grid-template-columns:1fr}.scoreBreakdown{grid-template-columns:1fr}.modelGrid{grid-template-columns:1fr 1fr}.scenarioStrip,.modelAudit{grid-template-columns:1fr}}
+.productBar{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin:14px 0}.productActions{display:flex;gap:8px;flex-wrap:wrap}.productBtn{border:1px solid #263848;background:#111d28;color:#eaf2f8;border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:700}.productBtn.active{outline:2px solid currentColor}.watchStrip{display:flex;gap:8px;overflow:auto;padding:5px 0}.watchChip{white-space:nowrap;border:1px solid #263848;background:#111d28;color:#eaf2f8;border-radius:999px;padding:7px 10px;cursor:pointer}.watchChip small,.emptyWatch{opacity:.65}.savedPanel{display:none;margin:10px 0 18px}.savedPanel.open{display:block}.savedGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.savedCard{border:1px solid #263848;background:#111d28;border-radius:12px;padding:12px}.savedCard h4{margin:0 0 6px}.savedCard p{margin:4px 0;font-size:13px;opacity:.82}.rowActions{display:flex;gap:6px;margin-top:9px}.toast{position:fixed;right:18px;bottom:18px;z-index:30;background:white;color:#071018;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}
+/* Product 3.2 — analysis hierarchy */
+.sectionNav{position:sticky;top:0;z-index:12;display:flex;gap:8px;overflow:auto;padding:9px 0;background:linear-gradient(180deg,var(--bg) 78%,transparent);backdrop-filter:blur(8px)}
+.sectionNav a{white-space:nowrap;text-decoration:none;color:#aebdca;border:1px solid #263848;background:#0e1923;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:750}
+.sectionNav a:hover{color:#fff;border-color:#52697b}
+.investmentSummary{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:4px 0 16px}
+.summarySignal{border:1px solid #263848;background:linear-gradient(180deg,#111f2b,#0d1822);border-radius:14px;padding:12px;min-height:78px}
+.summarySignal span{display:block;color:#8fa2b4;font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px}
+.summarySignal b{display:block;font-size:17px;line-height:1.25}
+.summarySignal small{display:block;color:#7f92a3;margin-top:4px;font-size:11px}
+.analysisHeading{grid-column:span 12;margin:10px 0 -3px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#7f92a3}
+.card.sectionCard{scroll-margin-top:56px}
+details[id]{scroll-margin-top:56px}
+@media(max-width:1000px){.investmentSummary{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:650px){.investmentSummary{grid-template-columns:repeat(2,1fr)}.sectionNav{margin-left:-2px;margin-right:-2px}}
+
+/* Product 3.3 Live Beta */
+.liveBetaBar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:0 0 14px}.liveBetaCell{border:1px solid #263848;background:#0d1822;border-radius:11px;padding:9px 10px}.liveBetaCell span{display:block;color:#8295a7;font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.liveBetaCell b{font-size:12px;line-height:1.3;display:block;overflow:hidden;text-overflow:ellipsis}.liveBetaCell small{font-size:10px;color:#718597}.liveBetaCell.ok{border-color:#315e4b}.liveBetaCell.warn{border-color:#6b5930}.liveBetaCell.bad{border-color:#704044}.liveDebug{margin:0 0 16px}.liveDebug pre{white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto;font-size:11px;line-height:1.45}@media(max-width:900px){.liveBetaBar{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.liveBetaBar{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">MVP 0.6 · Demo</span></div>
+  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Product 3.3 · Live Beta</span></div>
+
+  <div class="productBar"><div><strong>Meine Aktien</strong><div class="watchStrip" id="watchStrip"></div></div><div class="productActions"><button class="productBtn" id="watchBtn">☆ Watchlist</button><button class="productBtn" id="saveAnalysisBtn">Analyse speichern</button><button class="productBtn" id="savedToggleBtn">Gespeichert</button></div></div>
+  <div class="savedPanel" id="savedPanel"><details open><summary>Gespeicherte Analysen</summary><div class="savedGrid" id="savedGrid"></div></details></div>
 
   <section class="hero"><div><div class="eyebrow" id="market">NASDAQ · USD · Operating Company</div><div class="name" id="name">Meta Platforms</div><div class="eyebrow" id="symbol">META</div></div><div><div class="price" id="price">$616.77</div><div class="eyebrow" id="priceDate">Aktienkurs · Stand 08.09.2026</div></div></section>
 
+  <div class="liveBetaBar" id="liveBetaBar">
+    <div class="liveBetaCell" id="liveModeCell"><span>Modus</span><b id="liveMode">Start</b><small id="liveStatusText">Warte auf Analyse</small></div>
+    <div class="liveBetaCell" id="marketSourceCell"><span>Kursquelle</span><b id="marketSource">—</b><small id="marketDate">—</small></div>
+    <div class="liveBetaCell" id="fundSourceCell"><span>Fundamentals</span><b id="fundSource">—</b><small id="fundDate">—</small></div>
+    <div class="liveBetaCell" id="coverageCell"><span>Datenabdeckung</span><b id="liveCoverage">—</b><small id="liveValuationStatus">—</small></div>
+    <div class="liveBetaCell" id="warningCell"><span>Pipeline</span><b id="liveWarnings">—</b><small id="liveEngine">—</small></div>
+  </div>
+  <details class="liveDebug" id="liveDebugDetails"><summary>Live-Beta Diagnose</summary><pre id="liveDebugOutput">Noch keine Live-Antwort empfangen.</pre></details>
+  <div class="investmentSummary" id="investmentSummary">
+    <div class="summarySignal"><span>Fair Value</span><b id="summaryFair">—</b><small id="summaryFairNote">Base-Szenario</small></div>
+    <div class="summarySignal"><span>Bewertung</span><b id="summaryValuation">—</b><small>Kurs vs. Fair Value</small></div>
+    <div class="summarySignal"><span>Qualität</span><b id="summaryQuality">—</b><small id="summaryQualityNote">Quality Score</small></div>
+    <div class="summarySignal"><span>5J-Rendite</span><b id="summaryReturn">—</b><small>Base-Szenario p.a.</small></div>
+    <div class="summarySignal"><span>Risiko</span><b id="summaryRisk">—</b><small>Motor-Audit</small></div>
+    <div class="summarySignal"><span>Modell</span><b id="summaryModel">—</b><small id="summaryReadiness">Readiness —</small></div>
+  </div>
+  <nav class="sectionNav" aria-label="Analyseabschnitte">
+    <a href="#valuationSection">Bewertung & Chart</a>
+    <a href="#qualitySection">Qualität</a>
+    <a href="#fundamentalsSection">Fundamentals & Forecast</a>
+    <a href="#businessSection">Geschäftsmodell</a>
+    <a href="#motorAuditDetails">Motor-Audit</a>
+    <a href="#historyDetails">Datenhistorie</a>
+  </nav>
+
   <section class="grid" id="dashboard">
-    <div class="card chartCard"><div class="chartToolbar"><div><h3 style="margin-bottom:3px">Aktienkurs & integrierter Fair Value</h3><div class="note" id="periodLabel">Historische Ansicht · 5 Jahre</div></div><div class="periods" aria-label="Zeitraum auswählen"><button class="periodBtn" data-period="1Y">1J</button><button class="periodBtn" data-period="3Y">3J</button><button class="periodBtn active" data-period="5Y">5J</button><button class="periodBtn" data-period="MAX">Max</button></div></div>
+    <div class="analysisHeading">Bewertung</div><div class="card chartCard sectionCard" id="valuationSection"><div class="chartToolbar"><div><h3 style="margin-bottom:3px">Aktienkurs & integrierter Fair Value</h3><div class="note" id="periodLabel">Historische Ansicht · 5 Jahre</div></div><div class="periods" aria-label="Zeitraum auswählen"><button class="periodBtn" data-period="1Y">1J</button><button class="periodBtn" data-period="3Y">3J</button><button class="periodBtn active" data-period="5Y">5J</button><button class="periodBtn" data-period="MAX">Max</button></div></div>
       <div class="chartWrap"><svg id="valuationChart" viewBox="0 0 760 350" role="img" aria-label="Aktienkurs mit Fair Value, Bear-Fair-Value und Bull-Fair-Value"></svg><div id="chartTooltip" class="chartTooltip"></div></div>
       <div class="legend"><span><i class="dot" style="background:#76b7ff"></i>Aktienkurs</span><span><i class="dot" style="background:#8be0b0"></i>Fair Value</span><span><i class="dot" style="background:#ff8a8a"></i>Bear-Fair-Value</span><span><i class="dot" style="background:#ffd36a"></i>Bull-Fair-Value</span></div>
       <div class="note" id="chartNote">Demo-Modus. Nach kostenlosem Vercel-Deployment mit Twelve-Data-Key werden echte Tageskurse geladen; US-Fundamentaldaten kommen serverseitig aus der SEC und speisen den historischen DCF.</div></div>
 
-    <div class="card quality"><h3>Qualitätsscore</h3><div class="qualityGrid"><div><div class="scoreBig"><span id="qualityScore">73</span> <span style="font-size:18px;color:#8fa2b4">/ 100</span></div><div class="bar"><div></div></div><p><strong id="qualityGrade">B — Stark</strong></p><div class="scoreMeta">Historische Qualitätsfaktoren; DCF-Annahmen fließen nicht in den Score ein.</div></div><div><details><summary>Bewertungsgrundlage anzeigen</summary><div class="scoreBreakdown" id="scoreBreakdown"><div class="scoreItem"><span>ROIC / Kapitalrendite</span><strong>stark</strong></div><div class="scoreItem"><span>EBIT-Marge</span><strong>stark</strong></div><div class="scoreItem"><span>Umsatzwachstum</span><strong>solide</strong></div><div class="scoreItem"><span>Gewinnwachstum</span><strong>solide</strong></div><div class="scoreItem"><span>Bilanzqualität</span><strong>stark</strong></div><div class="scoreItem"><span>Cashflow-Qualität</span><strong>solide</strong></div></div><p class="note">Die Detailwerte werden in der Live-Version direkt aus dem Quality-Score-Modell deiner Excel-Datei übernommen.</p></details></div></div></div>
+    <div class="analysisHeading">Qualität</div><div class="card quality sectionCard" id="qualitySection"><h3>Qualitätsscore</h3><div class="qualityGrid"><div><div class="scoreBig"><span id="qualityScore">73</span> <span style="font-size:18px;color:#8fa2b4">/ 100</span></div><div class="bar"><div></div></div><p><strong id="qualityGrade">B — Stark</strong></p><div class="scoreMeta">Historische Qualitätsfaktoren; DCF-Annahmen fließen nicht in den Score ein.</div></div><div><details><summary>Bewertungsgrundlage anzeigen</summary><div class="scoreBreakdown" id="scoreBreakdown"></div><p class="note">Gewichte und Schwellenwerte sind jetzt 1:1 aus deiner Excel-Datei übernommen. DCF-Annahmen beeinflussen diesen Score nicht.</p></details></div></div></div>
 
-    <div class="card funds"><h3>Bilanzwerte & Fundamentaldaten</h3><div class="kv"><span>Fair Value (DCF)</span><strong class="green" id="fvMetric">$654.43</strong></div><div class="kv"><span>Kurs vs. Fair Value</span><strong class="gold" id="valuationMetric">−5.8% · unterbewertet</strong></div><div class="kv"><span>KGV</span><strong id="peMetric">23.25×</strong></div><div class="kv"><span>Modell-KGV Jahr 5</span><strong id="forwardPeMetric">13.71×</strong></div><div class="kv"><span>Umsatz</span><strong id="revenueMetric">$228.25 Mrd.</strong></div><div class="kv"><span>EBIT</span><strong id="ebitMetric">$86.93 Mrd.</strong></div><div class="kv"><span>EBIT-Marge</span><strong id="marginMetric">38.1%</strong></div><div class="kv"><span>EPS</span><strong id="epsMetric">$26.53</strong></div><div class="kv"><span>Free Cashflow</span><strong id="fcfMetric">—</strong></div><div class="kv"><span>Nettofinanzposition</span><strong id="netCashMetric">−$6.60 Mrd.</strong></div><div class="note" id="fundNote">META-Demowerte aus deinem bisherigen Modell. Live-Modus nutzt SEC-Fundamentals.</div></div>
+    <div class="analysisHeading">Fundamentals, Forecast & Bewertungstiefe</div><div class="card funds sectionCard" id="fundamentalsSection"><h3>Bilanzwerte & Fundamentaldaten</h3><div class="kv"><span>Fair Value (DCF)</span><strong class="green" id="fvMetric">$654.43</strong></div><div class="kv"><span>Kurs vs. Fair Value</span><strong class="gold" id="valuationMetric">−5.8% · unterbewertet</strong></div><div class="kv"><span>KGV</span><strong id="peMetric">23.25×</strong></div><div class="kv"><span>Modell-KGV Jahr 5</span><strong id="forwardPeMetric">13.71×</strong></div><div class="kv"><span>Umsatz</span><strong id="revenueMetric">$228.25 Mrd.</strong></div><div class="kv"><span>EBIT</span><strong id="ebitMetric">$86.93 Mrd.</strong></div><div class="kv"><span>EBIT-Marge</span><strong id="marginMetric">38.1%</strong></div><div class="kv"><span>EPS</span><strong id="epsMetric">$26.53</strong></div><div class="kv"><span>Free Cashflow</span><strong id="fcfMetric">—</strong></div><div class="kv"><span>Nettofinanzposition</span><strong id="netCashMetric">−$6.60 Mrd.</strong></div>
+      <div class="modelBox" id="modelBox"><details><summary>DCF-Annahmen & Szenarien anzeigen</summary>
+        <div class="modelGrid">
+          <div class="modelField"><label>Umsatzwachstum Jahr 1</label><input id="dcfG1" type="number" step="0.5" value="18"><span class="note">%</span></div>
+          <div class="modelField"><label>Umsatzwachstum Jahr 5</label><input id="dcfG5" type="number" step="0.5" value="10"><span class="note">%</span></div>
+          <div class="modelField"><label>Ziel-EBIT-Marge Jahr 5</label><input id="dcfMargin5" type="number" step="0.5" value="40"><span class="note">%</span></div>
+          <div class="modelField"><label>WACC</label><input id="dcfWacc" type="number" step="0.1" value="9.5"><span class="note">%</span></div>
+          <div class="modelField"><label>Terminalwachstum</label><input id="dcfTg" type="number" step="0.1" value="3"><span class="note">%</span></div>
+        </div>
+        <div class="scenarioStrip"><div class="scenario"><span>Bear-Fair-Value</span><strong class="red" id="bearModel">$400.16</strong></div><div class="scenario"><span>Fair Value</span><strong class="green" id="baseModel">$654.43</strong></div><div class="scenario"><span>Bull-Fair-Value</span><strong class="gold" id="bullModel">$1,011.57</strong></div></div>
+        <div class="modelAudit"><div class="auditItem">Terminalanteil EV<b id="terminalShare">61.9%</b></div><div class="auditItem">KGV beim Fair Value<b id="fairPe">24.7×</b></div><div class="auditItem">EPS-Wachstum bis J5<b id="epsGrowth5">11.1% p.a.</b></div></div>
+        <p class="note">Diese fünf Felder sind editierbar. Berechnung: dein 10-Jahres-FCFF-DCF mit automatischem Fade, Bear/Base/Bull-Szenarien und Terminal-Reinvestment g/ROIC.</p>
+      </details></div>
+      <details id="motorAuditDetails"><summary>Motor-Audit</summary>
+<div class="modelAudit">
+  <div class="auditItem">Bewertungsmodell<b id="motorModel">—</b></div>
+  <div class="auditItem">Readiness<b id="motorReady">—</b></div>
+  <div class="auditItem">Risiko-Audit<b id="motorRisk">—</b></div>
+</div>
+<div class="historyWrap"><table class="historyTable" id="motorAuditTable"></table></div>
+<p class="note" id="motorAuditNote">Der Motor zeigt explizit Pflichtdaten, Bewertungsbereitschaft und zentrale Modellrisiken.</p>
+</details><details id="profileDetails"><summary>Datenqualität & Auto-Annahmen</summary>
+<div class="modelAudit">
+  <div class="auditItem">Datenqualität<b id="dqScore">—</b></div>
+  <div class="auditItem">Forecast-Vertrauen<b id="dqConfidence">—</b></div>
+  <div class="auditItem">Unternehmensprofil<b id="dqProfile">—</b></div>
+</div>
+<div class="historyWrap"><table class="historyTable" id="autoAssumptionTable"></table></div>
+<p class="note" id="dqNote">JuKa passt Forecast-Annahmen an Datenabdeckung, Wachstum, Margenstabilität, Kapitalintensität und Verwässerung an.</p>
+</details><details id="scenarioForecastDetails" open><summary>Bear / Base / Bull & Renditematrix</summary>
+<div class="modelAudit">
+  <div class="auditItem">Bear Rendite p.a.<b id="scenarioBearReturn">—</b></div>
+  <div class="auditItem">Base Rendite p.a.<b id="scenarioBaseReturn">—</b></div>
+  <div class="auditItem">Bull Rendite p.a.<b id="scenarioBullReturn">—</b></div>
+</div>
+<div class="historyWrap"><table class="historyTable" id="scenarioTable"></table></div>
+<div class="historyWrap"><table class="historyTable" id="returnMatrixTable"></table></div>
+<p class="note" id="scenarioNote">Bear/Base/Bull verändern Wachstum, Margen, Verwässerung und Exit-Multiple. Die Matrix zeigt bewusst mehrere Pfade statt eines einzelnen Punktwerts.</p>
+</details><details id="forecastDetails" open><summary>5J-Forecast & Renditebrücke</summary><div class="modelAudit"><div class="auditItem">Umsatzwachstum 5J<b id="forecastRevenueGrowth">—</b></div><div class="auditItem">EPS-Wachstum 5J<b id="forecastEpsGrowth">—</b></div><div class="auditItem">FCF-Wachstum 5J<b id="forecastFcfGrowth">—</b></div><div class="auditItem">EBIT-Marge J5<b id="forecastMargin5">—</b></div><div class="auditItem">PEG<b id="forecastPeg">—</b></div><div class="auditItem">Rendite p.a. bis J5<b id="forecastReturn">—</b></div></div><div class="historyWrap"><table class="historyTable" id="forecastTable"></table></div><p class="note" id="forecastNote">Forecasts sind transparente Szenarien aus historischen Daten und begrenzten Annahmen – keine Prognosegarantie.</p></details><details id="peerDetails"><summary>Peer-/Relative-Valuation</summary><div class="modelAudit"><div class="auditItem">Peer-Gruppe<b id="peerGroup">—</b></div><div class="auditItem">Relative Bewertung<b id="peerLabel">—</b></div><div class="auditItem">Vergleichbare Multiples<b id="peerCoverage">—</b></div></div><div id="peerRows" class="scoreBreakdown"></div><p class="note">Peer-Multiples werden nur aus tatsächlich verfügbaren Vergleichsdaten berechnet. In der lokalen Demo werden keine Peer-Werte erfunden.</p></details><details id="realityDetails"><summary>Analyse-Realitätscheck</summary><div class="modelAudit"><div class="auditItem">Gesamtbild<b id="realityLabel">—</b></div><div class="auditItem">Engine-Score<b id="realityScore">—</b></div><div class="auditItem">Datenbasis<b id="realityConfidence">—</b></div></div><div id="realityDrivers" class="scoreBreakdown"></div><p class="note"><b>Was kippt die These?</b> <span id="realityBreaker">—</span></p><p class="note">Der Realitätscheck kombiniert Bewertung, Qualität und relative Kennzahlen. Er ist eine Modell-Zusammenfassung, keine Kauf-/Verkaufsempfehlung.</p></details><details id="reverseDetails"><summary>Reverse DCF & Sensitivität</summary><div class="modelAudit"><div class="auditItem">Markt-impliziertes Wachstum<b id="reverseGrowth">—</b></div><div class="auditItem">Markt-implizierte EBIT-Marge J5<b id="reverseMargin">—</b></div><div class="auditItem">Markt-impliziter WACC<b id="reverseWacc">—</b></div></div><div class="historyWrap"><table class="historyTable" id="sensitivityTable"></table></div><p class="note">Reverse DCF verändert jeweils nur eine Annahme und hält die übrigen Base-Annahmen konstant. Die Matrix zeigt Fair Values bei unterschiedlichen WACC- und Terminalwachstums-Annahmen.</p></details>
+      <details id="historyDetails"><summary>Fundamentaldaten-Historie & Engine-Audit</summary><div class="engineLine"><span class="engineTag" id="historySource">Quelle: Excel-Referenz</span><span class="engineTag" id="historyAvailability">Historischer DCF: ohne Look-ahead</span><span class="engineTag" id="historyCoverage">Datenabdeckung: Referenz</span></div><div class="historyWrap"><table class="historyTable"><thead><tr><th>Jahr</th><th>Umsatz</th><th>EBIT-Marge</th><th>FCF</th><th>EPS</th><th>ROIC</th><th>Net Debt/EBITDA</th><th>Verfügbar ab</th></tr></thead><tbody id="fundamentalHistory"><tr><td>TTM</td><td>$228,25 Mrd.</td><td>38,1%</td><td>$5,41 Mrd.</td><td>$26,53</td><td>32,6%</td><td>—</td><td>Excel-Referenz</td></tr></tbody></table></div><p class="note">Bei Live-US-Daten verwendet die historische Bewertung nur Geschäftsjahre, deren SEC-Filing am jeweiligen Kurstag bereits veröffentlicht war. Dadurch entsteht kein Zukunftswissen im historischen Fair Value.</p></details>
+      <div class="note" id="fundNote">META-Referenzwerte aus deiner Excel-Datei; DCF/Quality-Logik in MVP 1.0 Excel-paritätisch getestet.</div></div>
 
-    <div class="card business"><h3>Geschäftsmodell in 30 Sekunden</h3><p><strong>Meta Platforms</strong> betreibt mit Facebook, Instagram, Messenger, WhatsApp und Threads ein globales Ökosystem sozialer Apps. Der überwiegende Teil des Umsatzes entsteht durch digitale Werbung: Unternehmen bezahlen dafür, Nutzer innerhalb dieser Apps zielgerichtet zu erreichen. Daneben investiert Meta stark in KI, Recheninfrastruktur, Wearables sowie Virtual- und Augmented-Reality-Produkte. Der zweite Berichtsbereich „Reality Labs“ umfasst entsprechende Hardware, Software und Inhalte, ist im Vergleich zum Werbegeschäft aber wesentlich kleiner und aktuell deutlich verlustreich.</p><span class="pill" id="businessSource">Quelle: Meta 2025 Form 10-K / SEC</span></div>
+    <div class="analysisHeading">Unternehmen</div><div class="card business sectionCard" id="businessSection"><h3>Geschäftsmodell in 30 Sekunden</h3><p id="businessText"><strong>Meta Platforms</strong> betreibt mit Facebook, Instagram, Messenger, WhatsApp und Threads ein globales Ökosystem sozialer Apps. Der überwiegende Teil des Umsatzes entsteht durch digitale Werbung: Unternehmen bezahlen dafür, Nutzer innerhalb dieser Apps zielgerichtet zu erreichen. Daneben investiert Meta stark in KI, Recheninfrastruktur, Wearables sowie Virtual- und Augmented-Reality-Produkte.</p><span class="pill" id="businessSource">Kurzprofil · JuKa Stocks</span></div>
   </section>
-  <div class="footer">JuKa Stocks MVP 0.6 · Private Research Prototype · keine Anlageberatung</div>
+  <div class="footer">JuKa Stocks Product 3.3 Live Beta · Private Research Prototype · keine Anlageberatung</div>
 </div>
 <script>
 (function(root,factory){
@@ -49,7 +137,7 @@ svg{width:100%;height:330px;display:block}.legend{display:flex;gap:16px;font-siz
   function cagr(start,end,years){start=n(start);end=n(end);years=n(years);if(start<=0||end<=0||years<=0)return null;return Math.pow(end/start,1/years)-1;}
   function valuationPct(price,fair){price=n(price,NaN);fair=n(fair,NaN);if(!Number.isFinite(price)||!Number.isFinite(fair)||fair===0)return null;return (price/fair-1)*100;}
 
-  // 10-point generic quality engine. Max 100. Transparent and intentionally conservative.
+  // Generic score retained as a fallback for live datasets that do not yet expose all Excel inputs.
   function qualityScore(m={}){
     const parts=[]; let score=0;
     function add(label,points,max,reason){points=clamp(n(points),0,max);score+=points;parts.push({label,points,max,reason});}
@@ -66,14 +154,39 @@ svg{width:100%;height:330px;display:block}.legend{display:flex;gap:16px;font-siz
     return {score:Math.round(score),grade,label,parts};
   }
 
-  // Simplified FCFF DCF for generic cross-stock use. Assumptions are explicit and user-overridable.
+  // Exact score thresholds/weights from Aktienanalyse_1.0_JuKa_Meta.xlsx / Quality_Score.
+  function jukaQualityScore(m={}){
+    const defs=[
+      {key:'roic',label:'ROIC TTM',weight:.15,fmt:'pct',score:v=>v>=.20?10:v>=.15?8:v>=.10?6:v>=.05?3:0},
+      {key:'ebitMargin',label:'EBIT-Marge TTM',weight:.10,fmt:'pct',score:v=>v>=.20?10:v>=.15?8:v>=.10?6:v>=.05?3:0},
+      {key:'revenueCagr5y',label:'Umsatz-CAGR 5J',weight:.10,fmt:'pct',score:v=>v>=.15?10:v>=.10?8:v>=.05?6:v>=0?3:0},
+      {key:'fcfCagr5y',label:'FCF-CAGR 5J',weight:.10,fmt:'pct',score:v=>v>=.15?10:v>=.10?8:v>=.05?6:v>=0?3:0},
+      {key:'fcfConversion',label:'FCF Conversion',weight:.10,fmt:'pct',score:v=>v>=1?10:v>=.8?8:v>=.6?6:v>=.4?3:0},
+      {key:'sbcToRevenue',label:'SBC / Umsatz',weight:.08,fmt:'pct',lower:true,score:v=>v<=.01?10:v<=.02?8:v<=.04?6:v<=.07?3:0},
+      {key:'netDebtToEbitda',label:'Net Debt / EBITDA',weight:.12,fmt:'x',lower:true,score:v=>v<=0?10:v<=1?8:v<=2?6:v<=3?3:0},
+      {key:'interestCoverage',label:'Interest Coverage',weight:.08,fmt:'x',score:v=>v>=15?10:v>=8?8:v>=4?6:v>=2?3:0},
+      {key:'dilutionPa',label:'Aktienverwässerung p.a.',weight:.10,fmt:'pct',lower:true,score:v=>v<=0?10:v<=.01?8:v<=.02?6:v<=.04?3:0},
+      {key:'roicTrend',label:'ROIC-Trend',weight:.07,fmt:'pp',score:v=>v>=.05?10:v>=.02?8:v>=0?6:v>=-.02?3:0}
+    ];
+    let total=0; const parts=[];
+    for(const d of defs){
+      const v=Number(m[d.key]); const available=Number.isFinite(v); const raw=available?d.score(v):0; const weighted=raw*d.weight*10; total+=weighted;
+      let reason='nicht verfügbar'; if(available){reason=d.fmt==='x'?`${v.toFixed(1)}×`:d.fmt==='pp'?`${(v*100).toFixed(1)} pp`:`${(v*100).toFixed(1)}%`;}
+      parts.push({key:d.key,label:d.label,value:available?v:null,weight:d.weight,rawScore:raw,weightedScore:weighted,max:d.weight*100,reason});
+    }
+    const score=Math.round(total*10)/10;
+    const grade=score>=85?'A':score>=70?'B':score>=55?'C':score>=40?'D':'E';
+    const label=score>=85?'Exzellent':score>=70?'Stark':score>=55?'Solide':score>=40?'Schwach':'Problematisch';
+    const interpretation=score>=70?'Starkes Unternehmen – historische Profitabilität, Wachstum, Cashflow und Bilanz sind insgesamt überzeugend.':score>=55?'Solides Unternehmen – Qualität ist ordentlich, aber einzelne Bereiche sollten geprüft werden.':'Qualität ist schwach oder uneinheitlich – Ursachen genauer prüfen.';
+    return {score,grade,label,interpretation,parts};
+  }
+
+  // Legacy simplified FCFF DCF kept for partial live datasets.
   function dcfFairValue(input={}){
     const fcf0=n(input.fcf0), growth=n(input.growth,.08), fadeGrowth=n(input.fadeGrowth,.04), wacc=n(input.wacc,.09), terminalGrowth=n(input.terminalGrowth,.025), years=Math.max(1,Math.round(n(input.years,10))), netCash=n(input.netCash), shares=n(input.shares);
     if(fcf0<=0||shares<=0||wacc<=terminalGrowth)return null;
     let pv=0, fcf=fcf0;
-    for(let y=1;y<=years;y++){
-      const t=(y-1)/Math.max(1,years-1); const g=growth+(fadeGrowth-growth)*t; fcf*=1+g; pv+=fcf/Math.pow(1+wacc,y);
-    }
+    for(let y=1;y<=years;y++){const t=(y-1)/Math.max(1,years-1); const g=growth+(fadeGrowth-growth)*t; fcf*=1+g; pv+=fcf/Math.pow(1+wacc,y);}
     const terminal=fcf*(1+terminalGrowth)/(wacc-terminalGrowth); pv+=terminal/Math.pow(1+wacc,years);
     return (pv+netCash)/shares;
   }
@@ -83,84 +196,612 @@ svg{width:100%;height:330px;display:block}.legend{display:flex;gap:16px;font-siz
     const bull=dcfFairValue({...baseInput,growth:n(baseInput.growth,.08)+.03,fadeGrowth:n(baseInput.fadeGrowth,.04)+.015,wacc:Math.max(.055,n(baseInput.wacc,.09)-.01),terminalGrowth:Math.min(.04,n(baseInput.terminalGrowth,.025)+.005)});
     return {bear,base,bull};
   }
+
+  // 10Y FCFF model ported 1:1 from the user's Excel DCF_10Y logic.
+  function jukaDcf10Y(input={}, scenario={growthAdj:0,marginAdj:0,waccAdj:0}){
+    const revenue0=n(input.revenue), ebit0=n(input.ebit), tax=n(input.taxRate), da0=n(input.da), capex0=n(input.capex), nwc0=n(input.deltaNwc), shares=n(input.shares), netFinancialPosition=n(input.netFinancialPosition);
+    const g1=n(input.growthY1), g5=n(input.growthY5), targetMargin5=n(input.targetEbitMarginY5), wacc=n(input.wacc)+n(scenario.waccAdj), terminalGrowth=n(input.terminalGrowth), terminalRoic=n(input.terminalRoic);
+    const capexPct0=revenue0?capex0/revenue0:NaN, daPct0=revenue0?da0/revenue0:NaN, nwcPct0=revenue0?nwc0/revenue0:NaN;
+    const capexPct5=n(input.capexPctY5), daPct5=n(input.daPctY5), nwcPct5=n(input.nwcPctY5);
+    if(!(revenue0>0&&shares>0&&terminalRoic>terminalGrowth&&wacc>terminalGrowth&&Number.isFinite(capexPct0)&&Number.isFinite(daPct0)&&Number.isFinite(nwcPct0)))return null;
+    const margin0=ebit0/revenue0; const rows=[]; let revenue=revenue0; let pvForecast=0;
+    for(let y=1;y<=10;y++){
+      let growth,margin,daPct,capexPct,nwcPct;
+      if(y<=5){
+        growth=(g1+n(scenario.growthAdj))+(g5-g1)*(y-1)/4;
+        margin=margin0+((targetMargin5+n(scenario.marginAdj))-margin0)*y/5;
+        daPct=daPct0+(daPct5-daPct0)*y/5;
+        capexPct=capexPct0+(capexPct5-capexPct0)*y/5;
+        nwcPct=nwcPct0+(nwcPct5-nwcPct0)*y/5;
+      }else{
+        growth=(g5+n(scenario.growthAdj))+(terminalGrowth-(g5+n(scenario.growthAdj)))*(y-5)/5;
+        margin=targetMargin5+n(scenario.marginAdj);
+        daPct=daPct5+(capexPct5-daPct5)*(y-5)/5;
+        capexPct=capexPct5+(daPct5-capexPct5)*(y-5)/5;
+        nwcPct=nwcPct5*(1-(y-5)/5);
+      }
+      revenue*=1+growth;
+      const ebit=revenue*margin, nopat=ebit*(1-tax), da=revenue*daPct, capex=revenue*capexPct, deltaNwc=revenue*nwcPct, fcff=nopat+da-capex-deltaNwc;
+      const discountFactor=1/Math.pow(1+wacc,y), pvFcff=fcff*discountFactor; pvForecast+=pvFcff;
+      rows.push({year:y,revenue,growth,margin,ebit,nopat,daPct,capexPct,nwcPct,da,capex,deltaNwc,fcff,discountFactor,pvFcff});
+    }
+    const y10=rows[9], nopat11=y10.nopat*(1+terminalGrowth), terminalReinvestmentRate=terminalGrowth/terminalRoic, terminalFcff=nopat11*(1-terminalReinvestmentRate), terminalValue=terminalFcff/(wacc-terminalGrowth), pvTerminal=terminalValue/Math.pow(1+wacc,10), enterpriseValue=pvForecast+pvTerminal, equityValue=enterpriseValue-netFinancialPosition, fairValue=equityValue/shares, terminalShare=pvTerminal/enterpriseValue;
+    return {fairValue,enterpriseValue,equityValue,pvForecast,pvTerminal,terminalValue,nopat11,terminalReinvestmentRate,terminalFcff,terminalShare,wacc,rows};
+  }
+  function jukaDcfScenarios(input={}){
+    const bear=jukaDcf10Y(input,{growthAdj:n(input.bearGrowthAdj,-.03),marginAdj:n(input.bearMarginAdj,-.03),waccAdj:n(input.bearWaccAdj,.015)});
+    const base=jukaDcf10Y(input,{growthAdj:0,marginAdj:0,waccAdj:0});
+    const bull=jukaDcf10Y(input,{growthAdj:n(input.bullGrowthAdj,.03),marginAdj:n(input.bullMarginAdj,.03),waccAdj:n(input.bullWaccAdj,-.01)});
+    return base&&bear&&bull?{bear:bear.fairValue,base:base.fairValue,bull:bull.fairValue,detail:{bear,base,bull}}:null;
+  }
+  // Reverse DCF for operating companies: solve one market-implied assumption at a time.
+  function solveBisection(fn,target,lo,hi,iterations=80){
+    let flo=fn(lo)-target,fhi=fn(hi)-target;if(!Number.isFinite(flo)||!Number.isFinite(fhi)||flo*fhi>0)return null;
+    for(let i=0;i<iterations;i++){const mid=(lo+hi)/2,fm=fn(mid)-target;if(!Number.isFinite(fm))return null;if(Math.abs(fm)<1e-9)return mid;if(flo*fm<=0){hi=mid;fhi=fm;}else{lo=mid;flo=fm;}}
+    return (lo+hi)/2;
+  }
+  function jukaReverseDcf(input={},marketPrice){
+    const price=n(marketPrice,NaN);if(!(price>0))return null;
+    const fvGrowth=g=>jukaDcf10Y({...input,growthY1:g,growthY5:g})?.fairValue;
+    const fvMargin=m=>jukaDcf10Y({...input,targetEbitMarginY5:m})?.fairValue;
+    const fvWacc=w=>jukaDcf10Y({...input,wacc:w})?.fairValue;
+    const impliedGrowth=solveBisection(fvGrowth,price,-.10,.40);
+    const impliedMargin=solveBisection(fvMargin,price,.01,.75);
+    const impliedWacc=solveBisection(fvWacc,price,Math.max(n(input.terminalGrowth,.025)+.002,.03),.25);
+    return {price,impliedGrowth,impliedMargin,impliedWacc,
+      growthGap:impliedGrowth==null?null:impliedGrowth-n(input.growthY5),
+      marginGap:impliedMargin==null?null:impliedMargin-n(input.targetEbitMarginY5),
+      waccGap:impliedWacc==null?null:impliedWacc-n(input.wacc)};
+  }
+  function jukaSensitivity(input={},waccSteps=null,growthSteps=null){
+    const wc=waccSteps||[-.02,-.01,0,.01,.02].map(x=>n(input.wacc)+x);
+    const gc=growthSteps||[-.01,-.005,0,.005,.01].map(x=>n(input.terminalGrowth)+x);
+    return {wacc:wc,terminalGrowth:gc,values:wc.map(w=>gc.map(g=>{if(w<=g)return null;const r=jukaDcf10Y({...input,wacc:w,terminalGrowth:g});return r?.fairValue??null;}))};
+  }
+
+  function jukaRelativeValuation({price,epsTtm,epsY5,fairValue}={}){
+    price=n(price,NaN); epsTtm=n(epsTtm,NaN); epsY5=n(epsY5,NaN); fairValue=n(fairValue,NaN);
+    const pe=epsTtm>0?price/epsTtm:null, peY5=epsY5>0?price/epsY5:null, epsGrowth=epsTtm>0&&epsY5>0?Math.pow(epsY5/epsTtm,1/5)-1:null, fairPe=epsTtm>0&&Number.isFinite(fairValue)?fairValue/epsTtm:null;
+    return {pe,peY5,epsGrowth,fairPe};
+  }
+
+
+  function lastFinite(rows,key,endIndex){
+    for(let i=endIndex;i>=0;i--){const v=Number(rows[i]?.[key]);if(Number.isFinite(v))return {index:i,value:v,row:rows[i]};}
+    return null;
+  }
+  function fieldCagr(rows,key,endIndex,years=5){
+    const end=lastFinite(rows,key,endIndex); if(!end||end.value<=0)return null;
+    let start=null;
+    for(let i=end.index-1;i>=0;i--){const v=Number(rows[i]?.[key]); if(Number.isFinite(v)&&v>0&&end.index-i>=years){start={index:i,value:v};break;}}
+    if(!start){for(let i=0;i<end.index;i++){const v=Number(rows[i]?.[key]);if(Number.isFinite(v)&&v>0){start={index:i,value:v};break;}}}
+    if(!start)return null; return cagr(start.value,end.value,end.index-start.index);
+  }
+  function medianField(rows,key,start,end){return median(rows.slice(Math.max(0,start),end+1).map(r=>Number(r?.[key])).filter(Number.isFinite));}
+  function deriveFundamentals(annualFacts=[]){
+    const rows=(annualFacts||[]).map(x=>({...x})).filter(x=>x&&x.date).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    for(let i=0;i<rows.length;i++){
+      const r=rows[i], prev=rows[i-1];
+      const revenue=Number(r.revenue), ebit=Number(r.operatingIncome), ni=Number(r.netIncome), fcf=Number(r.fcf), da=Number(r.da), debt=Number(r.debt), cash=Number(r.cash), equity=Number(r.equity), pretax=Number(r.pretaxIncome), tax=Number(r.incomeTax), interest=Number(r.interestExpense), sbc=Number(r.sbc);
+      r.operatingMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(ebit)?ebit/revenue:null;
+      r.netMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(ni)?ni/revenue:null;
+      r.fcfMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(fcf)?fcf/revenue:null;
+      r.taxRate=Number.isFinite(pretax)&&pretax>0&&Number.isFinite(tax)?clamp(tax/pretax,0,.45):null;
+      r.ebitda=Number.isFinite(ebit)&&Number.isFinite(da)?ebit+da:null;
+      r.netDebt=Number.isFinite(debt)&&Number.isFinite(cash)?debt-cash:null;
+      r.netCash=Number.isFinite(cash)&&Number.isFinite(debt)?cash-debt:(Number.isFinite(Number(r.netCash))?Number(r.netCash):null);
+      r.netDebtToEbitda=Number.isFinite(r.netDebt)&&Number.isFinite(r.ebitda)&&r.ebitda!==0?r.netDebt/r.ebitda:null;
+      r.interestCoverage=Number.isFinite(ebit)&&Number.isFinite(interest)&&interest>0?ebit/interest:null;
+      const invested=Number.isFinite(equity)&&Number.isFinite(debt)&&Number.isFinite(cash)?equity+debt-cash:null;
+      const nopat=Number.isFinite(ebit)?ebit*(1-(Number.isFinite(r.taxRate)?r.taxRate:.21)):null;
+      r.roic=Number.isFinite(nopat)&&Number.isFinite(invested)&&invested>0?nopat/invested:null;
+      r.fcfConversion=Number.isFinite(fcf)&&Number.isFinite(ni)&&ni!==0?fcf/ni:null;
+      r.sbcToRevenue=Number.isFinite(sbc)&&Number.isFinite(revenue)&&revenue!==0?sbc/revenue:null;
+      r.revenueGrowthYoY=prev&&Number(prev.revenue)>0&&Number.isFinite(revenue)?revenue/Number(prev.revenue)-1:null;
+      r.fcfGrowthYoY=prev&&Number(prev.fcf)>0&&Number.isFinite(fcf)?fcf/Number(prev.fcf)-1:null;
+      r.shareGrowthYoY=prev&&Number(prev.shares)>0&&Number(r.shares)>0?Number(r.shares)/Number(prev.shares)-1:null;
+      r.revenueCagr5y=fieldCagr(rows,'revenue',i,5); r.fcfCagr5y=fieldCagr(rows,'fcf',i,5); r.dilutionPa=fieldCagr(rows,'shares',i,5);
+      r.revenueCagr3y=fieldCagr(rows,'revenue',i,3); r.epsCagr3y=fieldCagr(rows,'eps',i,3);
+      const roic3=lastFinite(rows,'roic',Math.max(0,i-3)); r.roicTrend=Number.isFinite(r.roic)&&roic3&&roic3.index<i?r.roic-roic3.value:null;
+    }
+    return rows;
+  }
+  function qualityInputFromAnnual(annualFacts=[]){
+    const rows=deriveFundamentals(annualFacts); const r=rows.at(-1); if(!r)return null;
+    return {roic:r.roic,ebitMargin:r.operatingMargin,revenueCagr5y:r.revenueCagr5y,fcfCagr5y:r.fcfCagr5y,fcfConversion:r.fcfConversion,sbcToRevenue:r.sbcToRevenue,netDebtToEbitda:r.netDebtToEbitda,interestCoverage:r.interestCoverage,dilutionPa:r.dilutionPa,roicTrend:r.roicTrend};
+  }
+  function dcfInputFromAnnual(annualFacts=[],endIndex=null,assumptions={}){
+    const rows=deriveFundamentals(annualFacts); if(!rows.length)return null; const i=endIndex==null?rows.length-1:clamp(Math.round(endIndex),0,rows.length-1), r=rows[i];
+    const revenue=Number(r.revenue),ebit=Number(r.operatingIncome),da=Number(r.da),capex=Number(r.capex),shares=Number(r.shares);
+    if(!(revenue>0&&Number.isFinite(ebit)&&Number.isFinite(da)&&Number.isFinite(capex)&&shares>0))return null;
+    const gHist=fieldCagr(rows,'revenue',i,3)??fieldCagr(rows,'revenue',i,5)??.06;
+    const g1=clamp(n(assumptions.growthY1,gHist),-.05,.30), terminalGrowth=n(assumptions.terminalGrowth,.025), g5=clamp(n(assumptions.growthY5,Math.max(terminalGrowth+.01,g1*.60)),terminalGrowth,.20);
+    const marginMedian=medianField(rows,'operatingMargin',i-2,i)??r.operatingMargin??ebit/revenue;
+    const capexPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.capex)/Number(x.revenue)).filter(Number.isFinite));
+    const daPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.da)/Number(x.revenue)).filter(Number.isFinite));
+    const nwcPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.deltaNwc)/Number(x.revenue)).filter(Number.isFinite));
+    const taxRate=Number.isFinite(r.taxRate)?r.taxRate:n(assumptions.taxRate,.21); const terminalRoic=clamp(n(assumptions.terminalRoic,Number.isFinite(r.roic)?r.roic:.15),Math.max(terminalGrowth+.01,.06),.35);
+    const netFin=Number.isFinite(Number(r.netFinancialPosition))?Number(r.netFinancialPosition):(Number.isFinite(Number(r.debt))&&Number.isFinite(Number(r.cash))?Number(r.debt)-Number(r.cash):0);
+    return {revenue,ebit,taxRate,da,capex,deltaNwc:Number.isFinite(Number(r.deltaNwc))?Number(r.deltaNwc):0,shares,netFinancialPosition:netFin,growthY1:g1,growthY5:g5,targetEbitMarginY5:clamp(n(assumptions.targetEbitMarginY5,marginMedian),-.05,.60),wacc:n(assumptions.wacc,.09),terminalGrowth,terminalRoic,capexPctY5:n(assumptions.capexPctY5,Number.isFinite(capexPct)?capexPct:capex/revenue),daPctY5:n(assumptions.daPctY5,Number.isFinite(daPct)?daPct:da/revenue),nwcPctY5:n(assumptions.nwcPctY5,Number.isFinite(nwcPct)?nwcPct:0),bearGrowthAdj:n(assumptions.bearGrowthAdj,-.03),bearMarginAdj:n(assumptions.bearMarginAdj,-.03),bearWaccAdj:n(assumptions.bearWaccAdj,.015),bullGrowthAdj:n(assumptions.bullGrowthAdj,.03),bullMarginAdj:n(assumptions.bullMarginAdj,.03),bullWaccAdj:n(assumptions.bullWaccAdj,-.01),sourceFy:r.fy,sourceDate:r.date,availableFrom:r.filed||r.date};
+  }
+  function buildHistoricalJukaFairSeries(priceRows,annualFacts,assumptions={}){
+    if(!Array.isArray(priceRows)||!priceRows.length)return [];
+    const facts=deriveFundamentals(annualFacts); const dated=facts.map((x,i)=>({x,i,available:String(x.filed||x.date)})).sort((a,b)=>a.available.localeCompare(b.available));
+    const cache=new Map();
+    return priceRows.map(row=>{const d=String(row.date).slice(0,10);let chosen=null;for(const f of dated){if(f.available<=d)chosen=f;else break;} if(!chosen)return {...row,base:null,bear:null,bull:null,model:'none'};
+      if(!cache.has(chosen.i)){const inp=dcfInputFromAnnual(facts,chosen.i,assumptions),sc=inp?jukaDcfScenarios(inp):null;cache.set(chosen.i,{inp,sc});}
+      const {inp,sc}=cache.get(chosen.i); if(sc)return {...row,base:sc.base,bear:sc.bear,bull:sc.bull,model:'juka-10y',sourceFy:inp.sourceFy,availableFrom:inp.availableFrom};
+      const f=chosen.x,growth=Number.isFinite(f.revenueCagr3y)?clamp(f.revenueCagr3y,-.02,.22):n(assumptions.growth,.08),legacy=scenarioValues({fcf0:n(f.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:10,netCash:n(f.netCash),shares:n(f.shares)});
+      return {...row,base:legacy?.base??null,bear:legacy?.bear??null,bull:legacy?.bull??null,model:legacy?'fcf-fallback':'none',sourceFy:f.fy,availableFrom:f.filed||f.date};
+    });
+  }
+
+
+  // Bank / Insurance model ported from Excel Bank_Insurance.
+  function jukaBankInsurance(input={}){
+    const bookValuePerShare=n(input.bookValuePerShare,NaN), roe=n(input.roe,NaN), costOfEquity=n(input.costOfEquity,NaN), growth=n(input.growth,NaN), mos=n(input.marginOfSafety,.20), price=n(input.price,NaN);
+    function calc(r,k,g){if(!(bookValuePerShare>0&&r>=0&&k>g))return null;const justifiedPb=(r-g)/(k-g);return {justifiedPb,fairValue:bookValuePerShare*justifiedPb};}
+    const bear=calc(Math.max(roe-.02,0),costOfEquity+.01,Math.max(growth-.005,0));
+    const base=calc(roe,costOfEquity,growth);
+    const bull=calc(roe+.02,Math.max(costOfEquity-.01,.001),growth+.005);
+    if(!base)return null;
+    const impliedRoe=Number.isFinite(price)&&price>0?growth+(price/bookValuePerShare)*(costOfEquity-growth):null;
+    const impliedCostOfEquity=Number.isFinite(price)&&price>0?growth+(roe-growth)/(price/bookValuePerShare):null;
+    return {bear:bear?.fairValue??null,base:base.fairValue,bull:bull?.fairValue??null,detail:{bear,base,bull},buyZone:base.fairValue*(1-mos),impliedRoe,impliedCostOfEquity,marketVsBase:Number.isFinite(price)?price/base.fairValue-1:null};
+  }
+
+  // REIT model ported from Excel REIT: AFFO growth + exit P/AFFO.
+  function jukaReit(input={}){
+    const affo=n(input.affoPerShare,NaN), growth=n(input.affoGrowth5y,NaN), exit=n(input.exitPAffo,NaN), cost=n(input.costOfEquity,NaN), mos=n(input.marginOfSafety,.20), price=n(input.price,NaN);
+    function calc(g,m,k){if(!(affo>0&&m>0&&k>0))return null;const affoY5=affo*Math.pow(1+g,5),valueY5=affoY5*m,fairValue=valueY5/Math.pow(1+k,5);return {affoY5,valueY5,fairValue};}
+    const bear=calc(Math.max(growth-.02,0),Math.max(exit-2,1),cost+.01),base=calc(growth,exit,cost),bull=calc(growth+.02,exit+2,Math.max(cost-.01,.001));
+    if(!base)return null;
+    const impliedGrowth=Number.isFinite(price)&&price>0?Math.pow(price*Math.pow(1+cost,5)/(affo*exit),1/5)-1:null;
+    const impliedExit=Number.isFinite(price)&&price>0?price*Math.pow(1+cost,5)/(affo*Math.pow(1+growth,5)):null;
+    return {bear:bear?.fairValue??null,base:base.fairValue,bull:bull?.fairValue??null,detail:{bear,base,bull},buyZone:base.fairValue*(1-mos),impliedGrowth,impliedExit,marketVsBase:Number.isFinite(price)?price/base.fairValue-1:null};
+  }
+
+  function classifyValuationModel(stock={}){
+    const explicit=String(stock.valuationModel||stock.model||'').toLowerCase();
+    if(explicit.includes('bank')||explicit.includes('insurance'))return 'bank-insurance';
+    if(explicit.includes('reit'))return 'reit';
+    const sector=String(stock.sector||'').toLowerCase();
+    if(/bank|insurance|versicher/.test(sector))return 'bank-insurance';
+    if(/reit|real estate investment trust/.test(sector))return 'reit';
+    return 'operating-company';
+  }
+
+  function jukaRelativeByModel(model,input={}){
+    model=String(model||'operating-company'); const price=n(input.price,NaN);
+    if(model==='reit'){
+      const affo=n(input.affoPerShare,NaN),affoY5=n(input.affoY5,NaN);
+      return {model,paFFO:Number.isFinite(price)&&affo>0?price/affo:null,paFFOY5:Number.isFinite(price)&&affoY5>0?price/affoY5:null,exitPAffo:n(input.exitPAffo,NaN)};
+    }
+    if(model==='bank-insurance'){
+      const eps=n(input.epsTtm,NaN),bvps=n(input.bookValuePerShare,NaN);
+      return {model,pe:Number.isFinite(price)&&eps>0?price/eps:null,pb:Number.isFinite(price)&&bvps>0?price/bvps:null,roe:n(input.roe,NaN)};
+    }
+    return {model,...jukaRelativeValuation(input)};
+  }
+
   function filterPeriod(rows,period){const months={"1Y":12,"3Y":36,"5Y":60,"MAX":9999}[period]||60;return rows.slice(Math.max(0,rows.length-months-1));}
+  function dataRoute(stock={}){const region=String(stock.region||'').toUpperCase();if(region==='US')return {market:'twelve-data',fundamentals:'sec',filings:'sec',currency:stock.currency||'USD'};if(region==='EU')return {market:'twelve-data-or-eod-adapter',fundamentals:'eu-adapter',filings:'issuer-reports',currency:stock.currency||'EUR'};return {market:'generic-adapter',fundamentals:'generic-adapter',filings:'issuer-reports',currency:stock.currency||'USD'};}
   function buildFairSeries(priceRows, annualFacts, assumptions={}){
     if(!Array.isArray(priceRows)||!priceRows.length)return [];
     const facts=(annualFacts||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-    return priceRows.map(row=>{
-      const d=String(row.date); let fact=null; for(const f of facts){if(String(f.date)<=d)fact=f;else break;}
-      if(!fact)return {...row,base:null,bear:null,bull:null};
-      const growth=Number.isFinite(fact.revenueCagr3y)?clamp(fact.revenueCagr3y,-.02,.22):n(assumptions.growth,.08);
-      const input={fcf0:n(fact.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:n(assumptions.years,10),netCash:n(fact.netCash),shares:n(fact.shares)};
-      const s=scenarioValues(input); return {...row,base:s?.base??null,bear:s?.bear??null,bull:s?.bull??null};
-    });
+    return priceRows.map(row=>{const d=String(row.date);let fact=null;for(const f of facts){if(String(f.date)<=d)fact=f;else break;}if(!fact)return {...row,base:null,bear:null,bull:null};const growth=Number.isFinite(fact.revenueCagr3y)?clamp(fact.revenueCagr3y,-.02,.22):n(assumptions.growth,.08);const inp={fcf0:n(fact.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:n(assumptions.years,10),netCash:n(fact.netCash),shares:n(fact.shares)};const s=scenarioValues(inp);return {...row,base:s?.base??null,bear:s?.bear??null,bull:s?.bull??null};});
   }
-  return {n,clamp,median,cagr,valuationPct,qualityScore,dcfFairValue,scenarioValues,filterPeriod,buildFairSeries};
+  return {n,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,jukaRelativeByModel,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,buildHistoricalJukaFairSeries,filterPeriod,dataRoute,buildFairSeries};
 });
 
 </script>
 <script>
 const stocks=[
- {s:'META',n:'Meta Platforms',m:'NASDAQ · USA'},{s:'AAPL',n:'Apple',m:'NASDAQ · USA'},{s:'MSFT',n:'Microsoft',m:'NASDAQ · USA'},{s:'NVDA',n:'NVIDIA',m:'NASDAQ · USA'},{s:'AMZN',n:'Amazon',m:'NASDAQ · USA'},{s:'GOOGL',n:'Alphabet',m:'NASDAQ · USA'},{s:'BRK.B',n:'Berkshire Hathaway',m:'NYSE · USA'},{s:'JPM',n:'JPMorgan Chase',m:'NYSE · USA'},{s:'V',n:'Visa',m:'NYSE · USA'},{s:'LLY',n:'Eli Lilly',m:'NYSE · USA'},
- {s:'SAP',n:'SAP SE',m:'Xetra · Deutschland'},{s:'SIE',n:'Siemens',m:'Xetra · Deutschland'},{s:'ALV',n:'Allianz',m:'Xetra · Deutschland'},{s:'DTE',n:'Deutsche Telekom',m:'Xetra · Deutschland'},{s:'ASML',n:'ASML Holding',m:'Euronext · Niederlande'},{s:'MC',n:'LVMH',m:'Euronext Paris · Frankreich'},{s:'OR',n:"L'Oréal",m:'Euronext Paris · Frankreich'},{s:'NOVO-B',n:'Novo Nordisk',m:'Nasdaq Copenhagen · Dänemark'},{s:'NESN',n:'Nestlé',m:'SIX · Schweiz'},{s:'ROG',n:'Roche',m:'SIX · Schweiz'}
+ {s:'META',n:'Meta Platforms',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'META'},
+ {s:'AAPL',n:'Apple',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'AAPL'},
+ {s:'MSFT',n:'Microsoft',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'MSFT'},
+ {s:'NVDA',n:'NVIDIA',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'NVDA'},
+ {s:'AMZN',n:'Amazon',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'AMZN'},
+ {s:'GOOGL',n:'Alphabet',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'GOOGL',aliases:['Google']},
+ {s:'BRK.B',n:'Berkshire Hathaway',m:'NYSE · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'BRK.B'},
+ {s:'JPM',n:'JPMorgan Chase',valuationModel:'bank-insurance',sector:'Bank',m:'NYSE · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'JPM'},
+ {s:'V',n:'Visa',m:'NYSE · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'V'},
+ {s:'LLY',n:'Eli Lilly',m:'NYSE · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'LLY'},
+ {s:'COST',n:'Costco',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'COST'},
+ {s:'AVGO',n:'Broadcom',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'AVGO'},
+ {s:'MA',n:'Mastercard',m:'NYSE · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'MA'},
+ {s:'NFLX',n:'Netflix',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'NFLX'},
+ {s:'ADBE',n:'Adobe',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'ADBE'},
+ {s:'O',n:'Realty Income',m:'NYSE · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'O',valuationModel:'reit',sector:'REIT'},
+ {s:'PLD',n:'Prologis',m:'NYSE · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'PLD',valuationModel:'reit',sector:'REIT'},
+
+ {s:'SAP',n:'SAP SE',m:'Xetra · Deutschland',region:'EU',country:'Deutschland',currency:'EUR',marketSymbol:'SAP:XETR',aliases:['SAP.DE']},
+ {s:'SIE',n:'Siemens',m:'Xetra · Deutschland',region:'EU',country:'Deutschland',currency:'EUR',marketSymbol:'SIE:XETR',aliases:['SIE.DE']},
+ {s:'ALV',n:'Allianz',valuationModel:'bank-insurance',sector:'Insurance',m:'Xetra · Deutschland',region:'EU',country:'Deutschland',currency:'EUR',marketSymbol:'ALV:XETR',aliases:['ALV.DE']},
+ {s:'DTE',n:'Deutsche Telekom',m:'Xetra · Deutschland',region:'EU',country:'Deutschland',currency:'EUR',marketSymbol:'DTE:XETR',aliases:['DTE.DE']},
+ {s:'MUV2',n:'Munich Re',valuationModel:'bank-insurance',sector:'Insurance',m:'Xetra · Deutschland',region:'EU',country:'Deutschland',currency:'EUR',marketSymbol:'MUV2:XETR',aliases:['Münchener Rück','Munich Reinsurance']},
+ {s:'MBG',n:'Mercedes-Benz Group',m:'Xetra · Deutschland',region:'EU',country:'Deutschland',currency:'EUR',marketSymbol:'MBG:XETR',aliases:['Mercedes']},
+ {s:'BMW',n:'BMW',m:'Xetra · Deutschland',region:'EU',country:'Deutschland',currency:'EUR',marketSymbol:'BMW:XETR'},
+ {s:'DB1',n:'Deutsche Börse',m:'Xetra · Deutschland',region:'EU',country:'Deutschland',currency:'EUR',marketSymbol:'DB1:XETR'},
+ {s:'AIR',n:'Airbus',m:'Euronext Paris · Frankreich',region:'EU',country:'Frankreich',currency:'EUR',marketSymbol:'AIR:EPA'},
+ {s:'MC',n:'LVMH',m:'Euronext Paris · Frankreich',region:'EU',country:'Frankreich',currency:'EUR',marketSymbol:'MC:EPA',aliases:['Louis Vuitton Moët Hennessy']},
+ {s:'OR',n:"L'Oréal",m:'Euronext Paris · Frankreich',region:'EU',country:'Frankreich',currency:'EUR',marketSymbol:'OR:EPA',aliases:['Loreal']},
+ {s:'SU',n:'Schneider Electric',m:'Euronext Paris · Frankreich',region:'EU',country:'Frankreich',currency:'EUR',marketSymbol:'SU:EPA'},
+ {s:'TTE',n:'TotalEnergies',m:'Euronext Paris · Frankreich',region:'EU',country:'Frankreich',currency:'EUR',marketSymbol:'TTE:EPA'},
+ {s:'SAN',n:'Sanofi',m:'Euronext Paris · Frankreich',region:'EU',country:'Frankreich',currency:'EUR',marketSymbol:'SAN:EPA'},
+ {s:'BNP',n:'BNP Paribas',valuationModel:'bank-insurance',sector:'Bank',m:'Euronext Paris · Frankreich',region:'EU',country:'Frankreich',currency:'EUR',marketSymbol:'BNP:EPA'},
+ {s:'ASML',n:'ASML Holding',m:'Euronext Amsterdam · Niederlande',region:'EU',country:'Niederlande',currency:'EUR',marketSymbol:'ASML:AMS'},
+ {s:'ADYEN',n:'Adyen',m:'Euronext Amsterdam · Niederlande',region:'EU',country:'Niederlande',currency:'EUR',marketSymbol:'ADYEN:AMS'},
+ {s:'UNA',n:'Unilever',m:'Euronext Amsterdam · Niederlande',region:'EU',country:'Niederlande',currency:'EUR',marketSymbol:'UNA:AMS'},
+ {s:'NOVO-B',n:'Novo Nordisk',m:'Nasdaq Copenhagen · Dänemark',region:'EU',country:'Dänemark',currency:'DKK',marketSymbol:'NOVO-B:CPH',aliases:['Novo']},
+ {s:'MAERSK-B',n:'A.P. Møller - Mærsk',m:'Nasdaq Copenhagen · Dänemark',region:'EU',country:'Dänemark',currency:'DKK',marketSymbol:'MAERSK-B:CPH',aliases:['Maersk']},
+ {s:'NESN',n:'Nestlé',m:'SIX · Schweiz',region:'EU',country:'Schweiz',currency:'CHF',marketSymbol:'NESN:SIX',aliases:['Nestle']},
+ {s:'ROG',n:'Roche',m:'SIX · Schweiz',region:'EU',country:'Schweiz',currency:'CHF',marketSymbol:'ROG:SIX'},
+ {s:'NOVN',n:'Novartis',m:'SIX · Schweiz',region:'EU',country:'Schweiz',currency:'CHF',marketSymbol:'NOVN:SIX'},
+ {s:'ABBN',n:'ABB',m:'SIX · Schweiz',region:'EU',country:'Schweiz',currency:'CHF',marketSymbol:'ABBN:SIX'},
+ {s:'UBSG',n:'UBS Group',valuationModel:'bank-insurance',sector:'Bank',m:'SIX · Schweiz',region:'EU',country:'Schweiz',currency:'CHF',marketSymbol:'UBSG:SIX'},
+ {s:'SHEL',n:'Shell',m:'London Stock Exchange · UK',region:'EU',country:'UK',currency:'GBP',marketSymbol:'SHEL:LSE'},
+ {s:'AZN',n:'AstraZeneca',m:'London Stock Exchange · UK',region:'EU',country:'UK',currency:'GBP',marketSymbol:'AZN:LSE'},
+ {s:'ULVR',n:'Unilever',m:'London Stock Exchange · UK',region:'EU',country:'UK',currency:'GBP',marketSymbol:'ULVR:LSE'},
+ {s:'DGE',n:'Diageo',m:'London Stock Exchange · UK',region:'EU',country:'UK',currency:'GBP',marketSymbol:'DGE:LSE'},
+ {s:'REL',n:'RELX',m:'London Stock Exchange · UK',region:'EU',country:'UK',currency:'GBP',marketSymbol:'REL:LSE'}
 ];
+
+
+const businessProfiles={
+ META:'betreibt mit Facebook, Instagram, Messenger, WhatsApp und Threads ein globales Ökosystem sozialer Apps. Der Großteil des Umsatzes stammt aus digitaler Werbung. Zusätzlich investiert das Unternehmen stark in KI-Infrastruktur, Wearables sowie Virtual- und Augmented-Reality.',
+ AAPL:'entwickelt und verkauft Hardware wie iPhone, Mac, iPad und Wearables und verbindet diese mit einem eng integrierten Software- und Service-Ökosystem. Wiederkehrende Erlöse entstehen unter anderem über App Store, iCloud, Apple Music und weitere Services.',
+ MSFT:'verdient Geld mit Unternehmenssoftware, Cloud-Infrastruktur und Produktivitätslösungen. Zu den wichtigsten Plattformen zählen Azure, Microsoft 365, Windows, Dynamics, GitHub und LinkedIn; hinzu kommen Gaming und KI-Dienste.',
+ NVDA:'entwickelt Hochleistungsprozessoren und Plattformen für beschleunigtes Rechnen. Das Geschäft wird vor allem von Rechenzentren und KI-Infrastruktur getragen; weitere Bereiche sind Gaming, professionelle Visualisierung und Automotive.',
+ AMZN:'kombiniert Onlinehandel, einen großen Drittanbieter-Marktplatz, Logistik, Werbung und das Cloudgeschäft AWS. AWS und Werbung sind besonders margenstark, während der Handel hohe Umsätze bei vergleichsweise niedrigeren Margen erzielt.',
+ GOOGL:'betreibt mit Google Search, YouTube, Android und weiteren Diensten ein digitales Ökosystem, das überwiegend durch Werbung monetarisiert wird. Google Cloud, Abonnements und KI-Produkte bilden zusätzliche Wachstumssäulen.',
+ 'BRK.B':'ist eine diversifizierte Holding mit vollständig kontrollierten Unternehmen und großen Beteiligungen an börsennotierten Gesellschaften. Wichtige Bereiche sind Versicherungen, Eisenbahn, Energie, Industrie, Dienstleistungen und Konsumgüter.',
+ JPM:'ist eine global tätige Universalbank mit Privat- und Firmenkundengeschäft, Kreditkarten, Investmentbanking, Handel, Zahlungsverkehr sowie Vermögensverwaltung. Einnahmen entstehen vor allem aus Zinsmargen und Gebühren.',
+ V:'betreibt ein globales Zahlungsnetzwerk und verdient überwiegend an der Verarbeitung elektronischer Zahlungen. Visa vergibt im Regelfall nicht selbst die Kredite, sondern stellt Infrastruktur und Netzwerke zwischen Banken, Händlern und Kunden bereit.',
+ LLY:'ist ein forschungsorientierter Pharmakonzern. Das Unternehmen entwickelt und vermarktet verschreibungspflichtige Medikamente, unter anderem in den Bereichen Diabetes, Adipositas, Onkologie, Immunologie und Neurowissenschaften.',
+ O:'ist ein REIT mit einem breit diversifizierten Immobilienportfolio und langfristigen Mietverträgen. Für die Bewertung stehen AFFO je Aktie, AFFO-Wachstum und ein nachhaltiges P/AFFO-Multiple im Mittelpunkt.',
+ PLD:'ist ein globaler Logistikimmobilien-REIT. Das Unternehmen besitzt und entwickelt Lager- und Distributionsflächen; für die Bewertung sind AFFO, Wachstum und das langfristig tragfähige P/AFFO entscheidend.',
+ SAP:'entwickelt Unternehmenssoftware für Finanzen, Lieferketten, Personalwesen, Beschaffung und weitere Geschäftsprozesse. Der strategische Schwerpunkt liegt auf Cloud-Abonnements rund um SAP S/4HANA und ergänzende Unternehmensanwendungen.',
+ SIE:'ist ein Industriekonzern mit Schwerpunkt auf Automatisierung, Digitalisierung, Gebäudetechnik, Mobilität und industrieller Software. Siemens verbindet Hardware, Software und Services für Industrie- und Infrastrukturkunden.',
+ ALV:'ist ein internationaler Versicherungs- und Vermögensverwaltungskonzern. Einnahmen stammen vor allem aus Schaden- und Unfallversicherung, Lebens- und Krankenversicherung sowie Asset Management, unter anderem über PIMCO und Allianz Global Investors.',
+ DTE:'ist ein Telekommunikationskonzern mit Mobilfunk-, Festnetz-, Breitband- und IT-Dienstleistungen. Ein wesentlicher Werttreiber ist die Beteiligung an T-Mobile US; in Europa betreibt der Konzern weitere Telekommunikationsnetze.',
+ ASML:'entwickelt und produziert Lithografiesysteme, mit denen Halbleiterhersteller Strukturen auf Chips belichten. Besonders wichtig sind EUV-Systeme für modernste Fertigungsprozesse sowie Service- und Upgrade-Erlöse für die installierte Maschinenbasis.',
+ MC:'ist ein Luxusgüterkonzern mit Marken aus Mode und Lederwaren, Uhren und Schmuck, Parfüm und Kosmetik, Wein und Spirituosen sowie selektivem Einzelhandel. Zu den bekanntesten Marken gehören Louis Vuitton, Dior, Tiffany & Co. und Bulgari.',
+ OR:'ist ein globaler Kosmetikkonzern mit Marken aus Hautpflege, Haarpflege, Make-up und Düften. Das Portfolio reicht von Massenmarkt- über Luxusmarken bis zu professioneller und dermatologischer Kosmetik.',
+ 'NOVO-B':'ist ein Pharmaunternehmen mit Schwerpunkt auf Diabetes, Adipositas und seltenen Erkrankungen. Ein großer Teil des Wachstums wird von GLP-1-basierten Medikamenten und der globalen Diabetesversorgung getragen.',
+ NESN:'ist ein globaler Nahrungsmittel- und Getränkekonzern mit Marken in Kaffee, Tiernahrung, Wasser, Babynahrung, Süßwaren und Gesundheitsprodukten. Das Geschäftsmodell basiert auf starken Marken, globalem Vertrieb und wiederkehrendem Konsum.',
+ ROG:'ist ein forschungsorientierter Gesundheitskonzern mit Pharma- und Diagnostikgeschäft. Roche entwickelt Medikamente insbesondere in Onkologie, Immunologie und Neurologie und betreibt zugleich ein großes Geschäft mit Labor- und Diagnostiklösungen.',
+ MUV2:'ist ein weltweit tätiger Rückversicherungs- und Erstversicherungskonzern. Das Kerngeschäft besteht in der Übernahme und Preisgestaltung großer Versicherungsrisiken; über ERGO ist der Konzern auch im direkten Versicherungsgeschäft aktiv.',
+ MBG:'entwickelt und verkauft Premium-Pkw und Vans. Das Geschäftsmodell verbindet Fahrzeugverkauf mit Finanzierungs-, Leasing- und Servicedienstleistungen und fokussiert sich stärker auf margenstarke Premium- und Luxussegmente.',
+ BMW:'entwickelt und verkauft Premiumfahrzeuge und Motorräder der Marken BMW, MINI und Rolls-Royce. Ergänzt wird das Fahrzeuggeschäft durch Finanzierungs- und Mobilitätsdienstleistungen.',
+ DB1:'betreibt Börsen-, Clearing-, Abwicklungs- und Datendienste für Finanzmärkte. Einnahmen entstehen aus Handel, Nachhandel, Index- und Marktdaten sowie Fonds- und Verwahrdienstleistungen.',
+ AIR:'entwickelt und produziert Verkehrsflugzeuge, Hubschrauber sowie militärische Luft- und Raumfahrtsysteme. Der größte Ergebnistreiber ist das Geschäft mit kommerziellen Flugzeugen und der langfristige Auftragsbestand.',
+ SU:'liefert Energiemanagement-, Automatisierungs- und Digitalisierungslösungen für Gebäude, Rechenzentren, Industrie und Infrastruktur. Das Unternehmen profitiert von Elektrifizierung, Energieeffizienz und wachsender Rechenzentrumsnachfrage.',
+ TTE:'ist ein integrierter Energiekonzern mit Öl- und Gasförderung, LNG, Raffinerie, Chemie, Stromerzeugung und erneuerbaren Energien. Das Portfolio wird schrittweise um Strom- und Low-Carbon-Geschäfte erweitert.',
+ SAN:'ist ein globaler Pharmakonzern mit Schwerpunkt auf verschreibungspflichtigen Medikamenten und Impfstoffen. Wichtige Forschungsgebiete umfassen Immunologie, seltene Erkrankungen, Neurologie und Impfstoffe.',
+ BNP:'ist eine europäische Universalbank mit Firmen- und Privatkundengeschäft, Investmentbanking, Zahlungsverkehr, Leasing und Vermögensverwaltung.',
+ ADYEN:'stellt Unternehmen eine globale Plattform für Zahlungsabwicklung, Acquiring, Risikomanagement und Finanzprodukte bereit. Die Plattform verbindet Online-, App- und stationäre Zahlungen auf einer einheitlichen Infrastruktur.',
+ UNA:'verkauft weltweit Konsumgüter in den Bereichen Körperpflege, Haushalt, Ernährung und Eiscreme. Das Geschäftsmodell basiert auf starken Marken, globalem Vertrieb und hoher Wiederkaufsfrequenz.',
+ 'MAERSK-B':'ist ein globaler Logistik- und Containertransportkonzern. Das Unternehmen verbindet Seefracht, Terminals, Lagerung und integrierte Logistiklösungen für internationale Lieferketten.',
+ NOVN:'ist ein forschungsorientierter Pharmakonzern mit Fokus auf innovative verschreibungspflichtige Medikamente, unter anderem in Onkologie, Immunologie, Neurowissenschaften und Herz-Kreislauf-Erkrankungen.',
+ ABBN:'liefert Elektrifizierungs-, Automatisierungs- und Antriebstechnik für Industrie, Gebäude und Infrastruktur. Das Unternehmen profitiert von Energieeffizienz, Automatisierung und Elektrifizierung.',
+ UBSG:'ist ein globaler Vermögensverwalter und eine Universalbank mit Schwerpunkt auf Wealth Management, Schweizer Bankgeschäft, Asset Management und Investment Banking.',
+ SHEL:'ist ein integrierter Energiekonzern mit Öl, Gas, LNG, Raffinerie, Chemie, Stromhandel und erneuerbaren Energien. LNG und integrierte Gasaktivitäten sind wichtige Cashflow-Treiber.',
+ AZN:'ist ein globaler biopharmazeutischer Konzern mit Schwerpunkten in Onkologie, Herz-Kreislauf- und Stoffwechselerkrankungen, Atemwegserkrankungen sowie seltenen Krankheiten.',
+ ULVR:'verkauft weltweit Markenprodukte in den Bereichen Körperpflege, Haushalt und Ernährung. Das Modell basiert auf globalen Marken, breiter Distribution und wiederkehrender Konsumnachfrage.',
+ DGE:'ist ein globaler Spirituosenkonzern mit Marken wie Johnnie Walker, Guinness, Smirnoff und Don Julio. Werttreiber sind Markenstärke, Premiumisierung und globale Distribution.',
+ REL:'ist ein Informations- und Analysekonzern für professionelle Kunden. Die Geschäfte umfassen wissenschaftliche und medizinische Informationen, Risikoanalyse, Rechtsinformationen und Fachmessen.'
+};
+function updateBusiness(z){
+  const text=businessProfiles[z?.s]||'Für dieses Unternehmen ist noch kein JuKa-Kurzprofil hinterlegt.';
+  document.getElementById('businessText').innerHTML=`<strong>${z?.n||z?.s||'Unternehmen'}</strong> ${text}`;
+  document.getElementById('businessSource').textContent='Kurzprofil · JuKa Stocks';
+}
+function prepareStock(z){
+  activeCurrency=z?.currency||'USD';
+  document.getElementById('name').textContent=z?.n||z?.s||'—';
+  document.getElementById('symbol').textContent=z?.s||'—';
+  document.getElementById('market').textContent=(z?.m||'')+' · Daten werden geladen';
+  document.getElementById('price').textContent='—';
+  document.getElementById('priceDate').textContent='Aktienkurs · wird geladen';
+  document.getElementById('fvMetric').textContent='—';
+  document.getElementById('valuationMetric').textContent='—';
+  ['peMetric','forwardPeMetric','revenueMetric','ebitMetric','marginMetric','epsMetric','fcfMetric','netCashMetric'].forEach(id=>document.getElementById(id).textContent='—');
+  const vm=JuKaCore.classifyValuationModel(z||{});
+  renderRealityCheck({model:vm});
+  document.getElementById('realityDrivers').innerHTML='<div class="scoreItem"><span>Status</span><strong>Wartet auf Kurs- und Fundamentaldaten.</strong></div>';
+  document.getElementById('realityBreaker').textContent='Mit echten Fundamentaldaten wird hier die kursimplizite Kernannahme angezeigt.';
+  renderPeerComparison(z?.s||'',{},[],vm);
+  document.getElementById('qualityScore').textContent='—';
+  document.getElementById('qualityGrade').textContent='wird geladen';
+  document.querySelector('.bar>div').style.width='0%';
+  document.getElementById('scoreBreakdown').innerHTML='<div class="scoreItem"><span>Status</span><strong>Daten werden geladen</strong></div>';
+  document.getElementById('fundNote').textContent='Daten werden für '+(z?.s||'den Titel')+' geladen.';
+  document.getElementById('fundamentalHistory').innerHTML='<tr><td colspan="8">Daten werden geladen …</td></tr>'; document.getElementById('historySource').textContent='Quelle: wird geladen'; document.getElementById('historyAvailability').textContent='Historischer DCF: wird geladen'; document.getElementById('historyCoverage').textContent='Datenabdeckung: wird geladen';
+  updateBusiness(z);
+}
 
 const q=document.getElementById('search'),r=document.getElementById('results');
 const LIVE_CAPABLE=(location.protocol==='http:'||location.protocol==='https:') && !['localhost','127.0.0.1'].includes(location.hostname);
-function fmtBig(v){if(v==null||!Number.isFinite(Number(v)))return '—'; const x=Number(v),a=Math.abs(x); if(a>=1e12)return '$'+(x/1e12).toFixed(2)+' Bio.'; if(a>=1e9)return '$'+(x/1e9).toFixed(2)+' Mrd.'; if(a>=1e6)return '$'+(x/1e6).toFixed(1)+' Mio.'; return '$'+x.toLocaleString('en-US',{maximumFractionDigits:0});}
-function setStatus(text,live=false){const e=document.getElementById('dataStatus');e.textContent='MVP 0.6 · '+text;e.style.borderColor=live?'#3b7859':'#2b3e4d';}
+function fmtBig(v){if(v==null||!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:activeCurrency||'USD',notation:'compact',maximumFractionDigits:2}).format(Number(v));}
+function setStatus(text,live=false){const e=document.getElementById('dataStatus');e.textContent='MVP 1.4 · '+text;e.style.borderColor=live?'#3b7859':'#2b3e4d';}
 function latestFacts(annual){return (annual||[]).filter(x=>x&&x.date).sort((a,b)=>String(a.date).localeCompare(String(b.date))).at(-1)||null;}
 function annualEpsGrowth(annual){const a=(annual||[]).filter(x=>Number.isFinite(Number(x.eps))&&Number(x.eps)>0);if(a.length<4)return .08;return JuKaCore.clamp(JuKaCore.cagr(Number(a.at(-4).eps),Number(a.at(-1).eps),3)??.08,-.02,.20);}
+function fmtPctMaybe(v){return Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—';}
+function fmtX(v){return Number.isFinite(Number(v))?Number(v).toFixed(1)+'×':'—';}
+function renderFundamentalHistory(annual,source='SEC Company Facts'){
+  const rows=JuKaCore.deriveFundamentals(annual).slice(-6).reverse();
+  document.getElementById('fundamentalHistory').innerHTML=rows.length?rows.map(x=>`<tr><td>${x.fy??'—'}</td><td>${fmtBig(x.revenue)}</td><td>${fmtPctMaybe(x.operatingMargin)}</td><td>${fmtBig(x.fcf)}</td><td>${Number.isFinite(Number(x.eps))?money(x.eps):'—'}</td><td>${fmtPctMaybe(x.roic)}</td><td>${fmtX(x.netDebtToEbitda)}</td><td>${x.filed?new Date(x.filed).toLocaleDateString('de-DE'):'—'}</td></tr>`).join(''):'<tr><td colspan="8">Keine historischen Fundamentaldaten verfügbar.</td></tr>';
+  const latest=rows[0], fields=latest?['revenue','operatingIncome','fcf','eps','da','capex','shares','cash','debt','equity','sbc','interestExpense'].filter(k=>Number.isFinite(Number(latest[k]))).length:0;
+  document.getElementById('historySource').textContent='Quelle: '+source; document.getElementById('historyAvailability').textContent='Historischer DCF: Filing-Datum berücksichtigt'; document.getElementById('historyCoverage').textContent=`Datenabdeckung: ${fields}/12 Kernfelder`;
+}
 function updateFromLive(symbol,marketData,secData){
-  const prices=(marketData.values||[]).slice().reverse().map(x=>({date:new Date(String(x.datetime).slice(0,10)),price:Number(x.close)})).filter(x=>Number.isFinite(x.price));
+  const z=stocks.find(x=>x.s===symbol); activeCurrency=marketData.meta?.currency||z?.currency||'USD';
+  const prices=(marketData.values||[]).slice().reverse().map(x=>({date:String(x.datetime).slice(0,10),price:Number(x.close)})).filter(x=>Number.isFinite(x.price));
   if(!prices.length)throw new Error('Keine Kursdaten erhalten');
-  const annual=secData?.annual||[]; const withFair=JuKaCore.buildFairSeries(prices.map(x=>({date:x.date.toISOString().slice(0,10),price:x.price})),annual,{wacc:.09,terminalGrowth:.025,fadeGrowth:.04,years:10}).map(x=>({...x,date:new Date(x.date)}));
-  chartData=withFair; const last=chartData.at(-1), fact=latestFacts(annual); const fair=last?.base; const vp=JuKaCore.valuationPct(last.price,fair);
+  const annual=JuKaCore.deriveFundamentals(secData?.annual||[]);
+  const withFair=JuKaCore.buildHistoricalJukaFairSeries(prices,annual,{wacc:.09,terminalGrowth:.025}).map(x=>({...x,date:new Date(x.date)}));
+  chartData=withFair; const last=chartData.at(-1),fact=annual.at(-1),fair=last?.base,vp=JuKaCore.valuationPct(last.price,fair);
   document.getElementById('price').textContent=money(last.price); document.getElementById('priceDate').textContent='Aktienkurs · Stand '+last.date.toLocaleDateString('de-DE');
-  document.getElementById('name').textContent=secData?.name||marketData.meta?.symbol||symbol; document.getElementById('symbol').textContent=symbol;
-  document.getElementById('market').textContent=[marketData.meta?.exchange,marketData.meta?.currency,'Live-Daten'].filter(Boolean).join(' · ');
+  document.getElementById('name').textContent=secData?.name||marketData.meta?.symbol||symbol; document.getElementById('symbol').textContent=symbol; updateBusiness(z||{s:symbol,n:secData?.name||symbol});
+  document.getElementById('market').textContent=[marketData.meta?.exchange,activeCurrency,'Live-Daten'].filter(Boolean).join(' · ');
   document.getElementById('fvMetric').textContent=fair?money(fair):'—'; document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
   if(fact){
-    const eps=Number(fact.eps), eg=annualEpsGrowth(annual); const eps5=eps>0?eps*Math.pow(1+eg,5):null;
+    const eps=Number(fact.eps),eg=annualEpsGrowth(annual),eps5=eps>0?eps*Math.pow(1+eg,5):null;
     document.getElementById('peMetric').textContent=eps>0?(last.price/eps).toFixed(1)+'×':'—'; document.getElementById('forwardPeMetric').textContent=eps5>0?(last.price/eps5).toFixed(1)+'×':'—';
-    document.getElementById('revenueMetric').textContent=fmtBig(fact.revenue); document.getElementById('ebitMetric').textContent=fmtBig(fact.operatingIncome); document.getElementById('marginMetric').textContent=Number.isFinite(fact.operatingMargin)?(fact.operatingMargin*100).toFixed(1)+'%':'—'; document.getElementById('epsMetric').textContent=Number.isFinite(eps)?money(eps):'—'; document.getElementById('fcfMetric').textContent=fmtBig(fact.fcf); document.getElementById('netCashMetric').textContent=fmtBig(fact.netCash);
-    const prev=annual.at(-4); const epsC=prev?.eps>0&&eps>0?JuKaCore.cagr(prev.eps,eps,3):null; const shareC=prev?.shares>0&&fact.shares>0?JuKaCore.cagr(prev.shares,fact.shares,3):null; const nde=fact.operatingIncome?(-fact.netCash)/fact.operatingIncome:null;
-    const qs=JuKaCore.qualityScore({operatingMargin:fact.operatingMargin,revenueCagr3y:fact.revenueCagr3y,epsCagr3y:epsC,fcfMargin:fact.fcfMargin,netDebtToEbit:nde,shareCagr3y:shareC}); document.getElementById('qualityScore').textContent=qs.score; document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label; document.querySelector('.bar>div').style.width=qs.score+'%'; document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${p.points}/${p.max} · ${p.reason}</strong></div>`).join('');
+    document.getElementById('revenueMetric').textContent=fmtBig(fact.revenue); document.getElementById('ebitMetric').textContent=fmtBig(fact.operatingIncome); document.getElementById('marginMetric').textContent=fmtPctMaybe(fact.operatingMargin); document.getElementById('epsMetric').textContent=Number.isFinite(eps)?money(eps):'—'; document.getElementById('fcfMetric').textContent=fmtBig(fact.fcf); document.getElementById('netCashMetric').textContent=fmtBig(fact.netCash);
+    const qi=JuKaCore.qualityInputFromAnnual(annual), available=qi?Object.values(qi).filter(Number.isFinite).length:0;
+    if(qi&&available>=6){const qs=JuKaCore.jukaQualityScore(qi);document.getElementById('qualityScore').textContent=Number.isInteger(qs.score)?qs.score:qs.score.toFixed(1);document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+` · ${available}/10 Faktoren`;document.querySelector('.bar>div').style.width=qs.score+'%';document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label} · ${(p.weight*100).toFixed(0)}%</span><strong>${p.value==null?'n/v':p.rawScore+'/10 → '+p.weightedScore.toFixed(1)+' Pkt. · '+p.reason}</strong></div>`).join('');}
+    else{const qs=JuKaCore.qualityScore({roic:fact.roic,operatingMargin:fact.operatingMargin,revenueCagr3y:fact.revenueCagr3y,epsCagr3y:fact.epsCagr3y,fcfMargin:fact.fcfMargin,netDebtToEbit:fact.operatingIncome?fact.netDebt/fact.operatingIncome:null,shareCagr3y:fact.dilutionPa});document.getElementById('qualityScore').textContent=qs.score;document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+' · Daten-Fallback';document.querySelector('.bar>div').style.width=qs.score+'%';document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${p.points}/${p.max} · ${p.reason}</strong></div>`).join('');}
   }
-  document.getElementById('fundNote').textContent='Fundamentaldaten: SEC Company Facts · Fair Value: transparentes JuKa-DCF v0.5.'; document.getElementById('chartNote').textContent='Echte tägliche Schlusskurse. Fair Value/Bear/Bull werden für jeden historischen Punkt aus den zu diesem Zeitpunkt verfügbaren Jahres-Fundamentaldaten neu berechnet.'; setStatus('LIVE',true); draw();
+  renderFundamentalHistory(annual,secData?.source||'SEC Company Facts');
+  const modelName=last?.model==='juka-10y'?'10J-FCFF-DCF':'FCF-Fallback'; document.getElementById('fundNote').textContent=`Fundamentaldaten: SEC Company Facts · Bewertungsengine: ${modelName}.`; document.getElementById('chartNote').textContent='Echte Tageskurse. Historische Fair Values werden nur mit Fundamentaldaten berechnet, deren Filing-Datum am jeweiligen Kurstag bereits bekannt war.'; setStatus('LIVE · Engine v1',true); draw();
 }
-async function loadLiveStock(symbol){
-  if(!LIVE_CAPABLE)throw new Error('Live-APIs sind erst nach Deployment verfügbar.'); setStatus('lädt…');
-  const start=new Date();start.setFullYear(start.getFullYear()-10); const startDate=start.toISOString().slice(0,10);
-  const [mr,sr]=await Promise.all([fetch(`/api/market?action=time_series&symbol=${encodeURIComponent(symbol)}&start_date=${startDate}`),fetch(`/api/sec?symbol=${encodeURIComponent(symbol)}`)]); const market=await mr.json(); const sec=await sr.json();
-  if(!mr.ok)throw new Error(market.error||market.message||'Kursdaten nicht verfügbar'); if(!sr.ok)throw new Error(sec.error||'SEC-Fundamentaldaten nicht verfügbar'); updateFromLive(symbol,market,sec);
+function updateFromSnapshot(symbol,snap){
+  const z=stocks.find(x=>x.s===symbol)||{s:symbol,n:snap?.fundamentals?.name||symbol};
+  activeCurrency=snap.currency||z.currency||'USD';
+  if(!snap.market?.prices?.length)throw new Error('Keine Kursdaten erhalten');
+  chartData=(snap.historical||[]).map(x=>({...x,date:new Date(x.date),price:Number(x.price)}));
+  if(!chartData.length)chartData=snap.market.prices.map(x=>({date:new Date(x.date),price:Number(x.close),base:null,bear:null,bull:null}));
+  const last=chartData.at(-1),fact=snap.latest,fair=snap.valuation?.base??last?.base??null,vp=JuKaCore.valuationPct(snap.price,fair);
+  document.getElementById('price').textContent=money(snap.price);document.getElementById('priceDate').textContent='Aktienkurs · Stand '+last.date.toLocaleDateString('de-DE');
+  document.getElementById('name').textContent=snap.fundamentals?.name||z.n||symbol;document.getElementById('symbol').textContent=symbol;updateBusiness(z);
+  document.getElementById('market').textContent=[snap.exchange,activeCurrency,'Pipeline LIVE',snap.model].filter(Boolean).join(' · ');
+  document.getElementById('fvMetric').textContent=Number.isFinite(fair)?money(fair):'—';document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
+  if(fact){
+    document.getElementById('revenueMetric').textContent=fmtBig(fact.revenue);document.getElementById('ebitMetric').textContent=fmtBig(fact.operatingIncome);document.getElementById('marginMetric').textContent=fmtPctMaybe(fact.operatingMargin);
+    document.getElementById('epsMetric').textContent=Number.isFinite(Number(fact.eps))?money(fact.eps):'—';document.getElementById('fcfMetric').textContent=fmtBig(fact.fcf);document.getElementById('netCashMetric').textContent=fmtBig(fact.netCash);
+    document.getElementById('peMetric').textContent=Number.isFinite(snap.multiples?.pe)?snap.multiples.pe.toFixed(1)+'×':'—';document.getElementById('forwardPeMetric').textContent=Number.isFinite(snap.relative?.peY5)?snap.relative.peY5.toFixed(1)+'×':'—';
+  }
+  if(snap.quality){const qs=snap.quality;document.getElementById('qualityScore').textContent=Number.isInteger(qs.score)?qs.score:qs.score.toFixed(1);document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label;document.querySelector('.bar>div').style.width=qs.score+'%';document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${p.value==null?'n/v':p.rawScore+'/10 · '+p.reason}</strong></div>`).join('');}
+  renderFundamentalHistory(snap.fundamentals?.annual||[],snap.fundamentals?.source||'Pipeline');
+  renderMotorAudit(snap);
+  renderAutoAssumptions(snap.autoAssumptions||null);
+  renderScenarioForecast(snap.forecastScenarios||null,snap.returnMatrix||null,activeCurrency);
+  renderForecast(snap.forecast||null,snap.returnBridge||null,activeCurrency);
+  renderRealityCheck({model:snap.model,price:snap.price,fairValue:fair,qualityScore:snap.quality?.score,relative:snap.relative,reverse:snap.reverse});
+  renderPeerComparison(symbol,snap.multiples||{},[],snap.model);
+  const warningText=(snap.warnings||[]).length?' · Hinweise: '+snap.warnings.join(' | '):'';
+  const readyText=snap.modelReadiness?` · Modell-Readiness: ${snap.modelReadiness.label}`:'';
+  document.getElementById('fundNote').textContent=`Datenpipeline: ${snap.market?.source||'Marktdaten'} + ${snap.fundamentals?.source||'Fundamentaldaten'} · Status: ${snap.analysisStatus||'—'} · Modell: ${snap.model}${readyText}.${warningText}`;
+  document.getElementById('chartNote').textContent='Historische Fair Values respektieren das jeweilige Filing-Datum. EU-Fundamentals laufen über Alpha Vantage, sofern ein serverseitiger API-Key gesetzt ist. Fehlen Daten oder Key, bleibt JuKa bewusst im Market-only-Modus.';
+  setStatus('LIVE · Pipeline v1.8',true);draw();
 }
 
-function render(v=''){const x=v.trim().toLowerCase(); const a=stocks.filter(z=>!x||z.s.toLowerCase().includes(x)||z.n.toLowerCase().includes(x)).slice(0,8);r.innerHTML=a.map(z=>`<div class="result" data-s="${z.s}"><span><span class="ticker">${z.s}</span> &nbsp; ${z.n}</span><span class="country">${z.m}</span></div>`).join('');r.style.display=a.length?'block':'none';document.querySelectorAll('.result').forEach(el=>el.onclick=()=>select(el.dataset.s));}
+function fmtLiveDate(v){if(!v)return '—';try{return new Date(v).toLocaleDateString('de-DE')}catch{return String(v)}}
+function setLiveCell(id,state){const e=document.getElementById(id);if(!e)return;e.classList.remove('ok','warn','bad');if(state)e.classList.add(state)}
+function renderLiveBeta(payload,httpOk=true){
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=(v===null||v===undefined||v==='')?'—':String(v)};
+ if(!payload){set('liveMode','Demo/Fallback');set('liveStatusText','Keine Live-Antwort');setLiveCell('liveModeCell','warn');return}
+ const status=payload.analysisStatus||payload.status||'unknown',prov=payload.provenance||{},warnings=Array.isArray(payload.warnings)?payload.warnings:[];
+ const market=payload.market?.source||prov.market?.source||prov.market||'Twelve Data';
+ const fund=payload.fundamentals?.source||prov.fundamentals?.source||prov.fundamentals||(((payload.stock?.region||'').toUpperCase()==='US')?'SEC':'Alpha Vantage');
+ const facts=payload.fundamentals?.annual||payload.annualFacts||[],latest=Array.isArray(facts)&&facts.length?facts[0]:null;
+ const coverage=payload.dataCoverage??payload.dataQuality?.coverage??payload.modelReadiness?.coverage;
+ const liveOk=httpOk&&['complete','partial','market-only'].includes(status);
+ set('liveMode',liveOk?'LIVE':'FEHLER');set('liveStatusText',status);set('marketSource',typeof market==='string'?market:(market?.source||'—'));set('marketDate',fmtLiveDate(payload.market?.date||payload.priceDate||payload.asOf));set('fundSource',typeof fund==='string'?fund:(fund?.source||'—'));set('fundDate',fmtLiveDate(latest?.filed||latest?.date||payload.dataQuality?.latestDate));set('liveCoverage',typeof coverage==='number'?(coverage<=1?Math.round(coverage*100):Math.round(coverage))+'%':coverage||'—');set('liveValuationStatus',payload.valuationStatus||payload.modelReadiness?.label||'—');set('liveWarnings',warnings.length?warnings.length+' Warnung(en)':'Keine Warnungen');set('liveEngine',payload.engine||payload.modelReadiness?.valuationEngine||'JuKa');
+ setLiveCell('liveModeCell',liveOk?'ok':'bad');setLiveCell('warningCell',warnings.length?'warn':'ok');setLiveCell('coverageCell',status==='complete'?'ok':status==='partial'?'warn':'bad');
+ const debug={symbol:payload.stock?.symbol||payload.stock?.s||payload.symbol,analysisStatus:status,valuationStatus:payload.valuationStatus,model:payload.model||payload.valuationModel,modelReadiness:payload.modelReadiness,dataQuality:payload.dataQuality,autoAssumptions:payload.autoAssumptions||payload.engineAssumptions,warnings,provenance:prov,latestAnnual:latest};set('liveDebugOutput',JSON.stringify(debug,null,2));
+}
+async function loadLiveStock(symbol){
+  if(!LIVE_CAPABLE)throw new Error('Live-APIs sind erst nach Deployment verfügbar.');
+  setStatus('Pipeline lädt…');
+  const z=stocks.find(x=>x.s===symbol)||{s:symbol,region:'US',marketSymbol:symbol,currency:'USD'};
+  const params=new URLSearchParams({symbol:z.s,region:z.region||'US',currency:z.currency||'USD',market_symbol:z.marketSymbol||z.s,name:z.n||z.s,model:z.valuationModel||'',sector:z.sector||''});
+  const ar=await fetch('/api/analysis?'+params.toString()),snap=await ar.json();
+  renderLiveBeta(snap,ar.ok);
+  if(!ar.ok)throw new Error(snap.error||'Analyse-Pipeline nicht verfügbar');
+  updateFromSnapshot(symbol,snap);
+}
+
+
+const META_DCF_INPUT={revenue:228247,ebit:86926,taxRate:.18,da:22729,capex:89325,deltaNwc:-724,shares:2567,netFinancialPosition:-6596,growthY1:.18,growthY5:.10,targetEbitMarginY5:.40,wacc:.095,terminalGrowth:.03,terminalRoic:.20,capexPctY5:.22,daPctY5:.12,nwcPctY5:.005,bearGrowthAdj:-.03,bearMarginAdj:-.03,bearWaccAdj:.015,bullGrowthAdj:.03,bullMarginAdj:.03,bullWaccAdj:-.01};
+const META_QUALITY_INPUT={roic:.3263451104996406,ebitMargin:.3808418073402936,revenueCagr5y:.10,fcfCagr5y:.10,fcfConversion:.90,sbcToRevenue:.11012631053201137,netDebtToEbitda:1,interestCoverage:10,dilutionPa:.01,roicTrend:-.02207032486907895};
+const META_PRICE=616.77, META_EPS=26.53, META_EPS_Y5=45;
+let metaChartReference=null;
+function renderExactQuality(){
+  const qs=JuKaCore.jukaQualityScore(META_QUALITY_INPUT);
+  document.getElementById('qualityScore').textContent=Number.isInteger(qs.score)?qs.score:qs.score.toFixed(1);
+  document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label;
+  document.querySelector('.bar>div').style.width=qs.score+'%';
+  document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label} · ${(p.weight*100).toFixed(0)}%</span><strong>${p.rawScore}/10 → ${p.weightedScore.toFixed(1)} Pkt. · ${p.reason}</strong></div>`).join('');
+}
+function readMetaAssumptions(){
+  const v=id=>Number(document.getElementById(id).value)/100;
+  return {...META_DCF_INPUT,growthY1:v('dcfG1'),growthY5:v('dcfG5'),targetEbitMarginY5:v('dcfMargin5'),wacc:v('dcfWacc'),terminalGrowth:v('dcfTg')};
+}
+function renderRealityCheck(input){
+  const rc=JuKaCore.jukaRealityCheck(input);
+  const el=id=>document.getElementById(id);
+  if(!el('realityLabel'))return rc;
+  el('realityLabel').textContent=rc.label;
+  el('realityScore').textContent=(rc.total>0?'+':'')+rc.total+' · '+rc.model;
+  el('realityConfidence').textContent=rc.confidence+'/3 Kernsignale';
+  el('realityDrivers').innerHTML=rc.drivers.map((x,i)=>`<div class="scoreItem"><span>${i===0?'Bewertung':i===1?'Qualität':'Relative Bewertung'}</span><strong>${x}</strong></div>`).join('');
+  el('realityBreaker').textContent=rc.breaker;
+  return rc;
+}
+
+const PEER_GROUPS={
+ META:['GOOGL','SNAP','PINS'],AAPL:['MSFT','GOOGL'],MSFT:['GOOGL','ORCL','ADBE'],NVDA:['AVGO','AMD'],V:['MA'],
+ JPM:['BAC','C','WFC'],O:['NNN','ADC','WPC'],PLD:['REXR','TRNO'],SAP:['ORCL','MSFT','CRM'],ASML:['AMAT','LRCX','KLAC'],
+ ALV:['MUV2','AXA'],MUV2:['ALV','SWISSRE'],LLY:['NVO','MRK','JNJ'],'NOVO-B':['LLY','AZN','SAN']
+};
+
+
+
+
+function renderMotorAudit(snap){
+  const e=id=>document.getElementById(id);
+  if(!snap){e('motorModel').textContent='—';e('motorReady').textContent='—';e('motorRisk').textContent='—';e('motorAuditTable').innerHTML='<tr><td>Keine Live-Snapshot-Daten.</td></tr>';return;}
+  e('motorModel').textContent=snap.model||'—';
+  e('motorReady').textContent=snap.modelReadiness?.label||'—';
+  e('motorRisk').textContent=snap.riskAudit?.severity||'—';
+  const miss=snap.modelReadiness?.missingRequired||[],issues=snap.riskAudit?.issues||[],pos=snap.riskAudit?.positives||[];
+  e('motorAuditTable').innerHTML='<thead><tr><th>Audit</th><th>Ergebnis</th></tr></thead><tbody>'+
+    `<tr><td>Pflichtdaten</td><td>${miss.length?'Fehlt: '+miss.join(', '):'vollständig'}</td></tr>`+
+    `<tr><td>Risiken</td><td>${issues.length?issues.join(' · '):'keine kritischen Motor-Warnungen'}</td></tr>`+
+    `<tr><td>Positive Signale</td><td>${pos.length?pos.join(' · '):'—'}</td></tr>`+
+    `<tr><td>Valuation Status</td><td>${snap.valuationStatus||'—'}</td></tr>`+
+    '</tbody>';
+}
+
+function renderAutoAssumptions(auto){
+  const e=id=>document.getElementById(id), p=v=>Number.isFinite(v)?(v*100).toFixed(1)+'%':'—';
+  if(!auto){e('dqScore').textContent='—';e('dqConfidence').textContent='—';e('dqProfile').textContent='—';e('autoAssumptionTable').innerHTML='<tr><td>Wartet auf echte Fundamentaldaten.</td></tr>';return;}
+  e('dqScore').textContent=auto.dataQuality.score+'/100 · '+auto.dataQuality.label;
+  e('dqConfidence').textContent=auto.confidence;
+  e('dqProfile').textContent=auto.profile.profile.join(' · ');
+  const a=auto.assumptions;
+  e('autoAssumptionTable').innerHTML='<thead><tr><th>Annahme</th><th>Auto-Wert</th><th>Begründung</th></tr></thead><tbody>'+
+   `<tr><td>Umsatzwachstum J1</td><td>${p(a.growthY1)}</td><td>historisches Wachstum${auto.profile.cyclical?' mit Zyklik-Abschlag':''}</td></tr>`+
+   `<tr><td>Umsatzwachstum J5</td><td>${p(a.growthY5)}</td><td>Fade Richtung reiferes Wachstum</td></tr>`+
+   `<tr><td>EBIT-Marge J5</td><td>${p(a.targetEbitMarginY5)}</td><td>Median der letzten Jahre${auto.profile.cyclical?' konservativ normalisiert':''}</td></tr>`+
+   `<tr><td>FCF-Marge J5</td><td>${p(a.targetFcfMarginY5)}</td><td>${auto.profile.capitalIntensive?'Kapitalintensität berücksichtigt':'historische FCF-Marge'}</td></tr>`+
+   `<tr><td>Aktienzahl p.a.</td><td>${p(a.shareGrowth)}</td><td>${auto.profile.dilution?'Verwässerung':'Buybacks/neutral'}</td></tr>`+
+   '</tbody>';
+  e('dqNote').textContent='Datenabdeckung '+(auto.dataQuality.coverage*100).toFixed(0)+'% · '+auto.dataQuality.years+' Geschäftsjahre. Auto-Annahmen sind Startpunkte und bleiben überschreibbar.';
+}
+
+function renderScenarioForecast(scenarios,matrix,currency=activeCurrency){
+  const e=id=>document.getElementById(id), pct=v=>Number.isFinite(v)?(v*100).toFixed(1)+'%':'—', money0=v=>Number.isFinite(v)?money(v,currency):'—';
+  if(!scenarios||!matrix){
+    ['scenarioBearReturn','scenarioBaseReturn','scenarioBullReturn'].forEach(id=>e(id).textContent='—');
+    e('scenarioTable').innerHTML='<tr><td>Wartet auf echte Fundamentaldaten.</td></tr>';
+    e('returnMatrixTable').innerHTML=''; return;
+  }
+  e('scenarioBearReturn').textContent=pct(matrix.scenarios.bear?.totalReturnCagr);
+  e('scenarioBaseReturn').textContent=pct(matrix.scenarios.base?.totalReturnCagr);
+  e('scenarioBullReturn').textContent=pct(matrix.scenarios.bull?.totalReturnCagr);
+  e('scenarioTable').innerHTML='<thead><tr><th>Szenario</th><th>EPS J5</th><th>Umsatzwachstum 5J</th><th>EBIT-Marge J5</th><th>Exit-KGV</th><th>Zielkurs J5</th><th>Rendite p.a.</th></tr></thead><tbody>'+
+    ['bear','base','bull'].map(k=>{const f=scenarios[k]?.summary||{}, r=matrix.scenarios[k]||{};return `<tr><td>${k.toUpperCase()}</td><td>${money0(f.epsY5)}</td><td>${pct(f.revenueGrowth)}</td><td>${pct(f.marginY5)}</td><td>${Number.isFinite(r.exitPe)?r.exitPe.toFixed(1)+'×':'—'}</td><td>${money0(r.targetPrice)}</td><td>${pct(r.totalReturnCagr)}</td></tr>`}).join('')+'</tbody>';
+  const lookup={};
+  matrix.matrix.forEach(x=>lookup[x.forecast+'-'+x.exitMultiple]=x);
+  e('returnMatrixTable').innerHTML='<thead><tr><th>Forecast \\ Exit-KGV</th><th>Bear Multiple</th><th>Base Multiple</th><th>Bull Multiple</th></tr></thead><tbody>'+
+    ['bear','base','bull'].map(f=>`<tr><td>${f.toUpperCase()}</td>`+['bear','base','bull'].map(m=>`<td>${pct(lookup[f+'-'+m]?.returnCagr)}</td>`).join('')+'</tr>').join('')+'</tbody>';
+}
+
+function renderForecast(forecast,bridge,currency=activeCurrency){
+  const e=id=>document.getElementById(id), p=v=>Number.isFinite(v)?(v*100).toFixed(1)+'%':'—';
+  if(!forecast){['forecastRevenueGrowth','forecastEpsGrowth','forecastFcfGrowth','forecastMargin5','forecastPeg','forecastReturn'].forEach(id=>e(id).textContent='—');e('forecastTable').innerHTML='<tr><td>Wartet auf echte Fundamentaldaten.</td></tr>';return;}
+  const s=forecast.summary||{};
+  e('forecastRevenueGrowth').textContent=p(s.revenueGrowth);e('forecastEpsGrowth').textContent=p(s.epsGrowth);e('forecastFcfGrowth').textContent=p(s.fcfGrowth);e('forecastMargin5').textContent=p(s.marginY5);
+  e('forecastPeg').textContent=Number.isFinite(bridge?.peg)?bridge.peg.toFixed(2)+'×':'—';e('forecastReturn').textContent=Number.isFinite(bridge?.totalReturnCagr)?p(bridge.totalReturnCagr):'—';
+  e('forecastTable').innerHTML='<thead><tr><th>Jahr</th><th>Umsatz</th><th>Wachstum</th><th>EBIT-Marge</th><th>EPS</th><th>FCF</th></tr></thead><tbody>'+forecast.rows.map(r=>`<tr><td>J${r.year}</td><td>${money(r.revenue/1000,currency)} Mrd.</td><td>${p(r.growth)}</td><td>${p(r.margin)}</td><td>${money(r.eps,currency)}</td><td>${money(r.fcf/1000,currency)} Mrd.</td></tr>`).join('')+'</tbody>';
+  e('forecastNote').textContent='Wachstum wird bis Jahr 5 normalisiert; Margen laufen auf ein Zielniveau. '+(Number.isFinite(bridge?.exitPe)?'Renditebrücke nutzt '+bridge.exitPe.toFixed(1)+'× Exit-KGV.':'');
+}
+
+function renderPeerComparison(symbol,subject,peers,model){
+  const group=PEER_GROUPS[symbol]||[],pc=JuKaCore.jukaPeerComparison(subject||{},peers||[],model),labels={pe:'KGV',evEbit:'EV/EBIT',pFcf:'P/FCF',pb:'K/B',paFFO:'P/AFFO'};
+  document.getElementById('peerGroup').textContent=group.length?group.join(' · '):'noch nicht hinterlegt';
+  document.getElementById('peerLabel').textContent=pc.label;
+  document.getElementById('peerCoverage').textContent=pc.available+'/'+pc.metrics.length+' Multiples';
+  document.getElementById('peerRows').innerHTML=pc.metrics.map(k=>{const c=pc.comparisons[k];return `<div class="scoreItem"><span>${labels[k]||k}</span><strong>${c?`${c.subject.toFixed(1)}× vs. Peer-Median ${c.median.toFixed(1)}× · ${(c.delta*100).toFixed(1)}%`:'wartet auf echte Peer-Daten'}</strong></div>`}).join('');
+  return pc;
+}
+function applyMetaModel(scaleChart=true){
+  const inp=readMetaAssumptions(), sc=JuKaCore.jukaDcfScenarios(inp); if(!sc)return;
+  const rev=JuKaCore.jukaReverseDcf(inp,META_PRICE), pp=v=>Number.isFinite(v)?(v*100).toFixed(1)+'%':'—';
+  document.getElementById('reverseGrowth').textContent=pp(rev?.impliedGrowth); document.getElementById('reverseMargin').textContent=pp(rev?.impliedMargin); document.getElementById('reverseWacc').textContent=pp(rev?.impliedWacc);
+  const sen=JuKaCore.jukaSensitivity(inp); document.getElementById('sensitivityTable').innerHTML='<thead><tr><th>WACC \ g</th>'+sen.terminalGrowth.map(g=>'<th>'+pp(g)+'</th>').join('')+'</tr></thead><tbody>'+sen.wacc.map((w,i)=>'<tr><th>'+pp(w)+'</th>'+sen.values[i].map(v=>'<td>'+(Number.isFinite(v)?money(v):'—')+'</td>').join('')+'</tr>').join('')+'</tbody>';
+  const rv=JuKaCore.jukaRelativeValuation({price:META_PRICE,epsTtm:META_EPS,epsY5:META_EPS_Y5,fairValue:sc.base});
+  const base=sc.detail.base;
+  const metaForecast={rows:base.rows.slice(0,5).map(r=>({year:r.year,revenue:r.revenue,growth:r.growth,margin:r.margin,eps:META_EPS*Math.pow(META_EPS_Y5/META_EPS,r.year/5),fcf:r.fcff})),summary:{revenueY5:base.rows[4].revenue,ebitY5:base.rows[4].ebit,epsY5:META_EPS_Y5,fcfY5:base.rows[4].fcff,revenueGrowth:Math.pow(base.rows[4].revenue/META_REVENUE,1/5)-1,epsGrowth:Math.pow(META_EPS_Y5/META_EPS,1/5)-1,fcfGrowth:null,marginY5:base.rows[4].margin,fcfMarginY5:base.rows[4].fcff/base.rows[4].revenue}};
+  const returnBridge=JuKaCore.jukaReturnBridge({price:META_PRICE,epsTtm:META_EPS,epsY5:META_EPS_Y5,fairValue:sc.base});
+  const metaScenarios={
+    bear:{summary:{...metaForecast.summary,epsY5:META_EPS_Y5*.82,revenueGrowth:metaForecast.summary.revenueGrowth-.035,marginY5:metaForecast.summary.marginY5-.035}},
+    base:metaForecast,
+    bull:{summary:{...metaForecast.summary,epsY5:META_EPS_Y5*1.18,revenueGrowth:metaForecast.summary.revenueGrowth+.035,marginY5:metaForecast.summary.marginY5+.035}}
+  };
+  const metaReturnMatrix=JuKaCore.jukaExpectedReturnMatrix({price:META_PRICE,epsTtm:META_EPS,scenarios:metaScenarios,fairValues:{bear:sc.bear,base:sc.base,bull:sc.bull}});
+  const metaAuto={assumptions:{growthY1:inputs.growth1,growthY5:inputs.growth5,targetEbitMarginY5:inputs.margin5,targetFcfMarginY5:null,taxRate:META_TAX,shareGrowth:0},profile:{profile:['High Growth','Hohe Marge','Net Cash'],cyclical:false,capitalIntensive:false,dilution:false},dataQuality:{score:96,label:'sehr gut',coverage:.96,years:5},confidence:'hoch'};
+  const vp=JuKaCore.valuationPct(META_PRICE,sc.base);
+  renderMotorAudit({model:'operating-company',modelReadiness:{label:'vollständig',missingRequired:[]},riskAudit:JuKaCore.jukaRiskAudit({model:'operating-company',price:META_PRICE,valuation:{base:sc.base},quality:{score:quality.score},readiness:{ready:true,missingRequired:[]},dataQuality:{score:96},reverse}),valuationStatus:'ready'});
+  renderAutoAssumptions(metaAuto);
+  renderScenarioForecast(metaScenarios,metaReturnMatrix,'USD');
+  renderForecast(metaForecast,returnBridge,'USD');
+  renderRealityCheck({model:'operating-company',price:META_PRICE,fairValue:sc.base,qualityScore:JuKaCore.jukaQualityScore(META_QUALITY_INPUT).score,relative:rv,reverse:rev});
+  renderPeerComparison('META',{pe:rv.pe},[],'operating-company');
+  document.getElementById('fvMetric').textContent=money(sc.base); document.getElementById('valuationMetric').textContent=`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
+  document.getElementById('peMetric').textContent=rv.pe.toFixed(2)+'×'; document.getElementById('forwardPeMetric').textContent=rv.peY5.toFixed(2)+'×';
+  document.getElementById('bearModel').textContent=money(sc.bear); document.getElementById('baseModel').textContent=money(sc.base); document.getElementById('bullModel').textContent=money(sc.bull);
+  document.getElementById('terminalShare').textContent=(sc.detail.base.terminalShare*100).toFixed(1)+'%'; document.getElementById('fairPe').textContent=rv.fairPe.toFixed(1)+'×'; document.getElementById('epsGrowth5').textContent=(rv.epsGrowth*100).toFixed(1)+'% p.a.';
+  if(scaleChart&&metaChartReference){
+    const ref={bear:400.1574408699634,base:654.4325829130363,bull:1011.5660866959147};
+    chartData=metaChartReference.map(x=>({...x,base:x.base*(sc.base/ref.base),bear:x.bear*(sc.bear/ref.bear),bull:x.bull*(sc.bull/ref.bull)}));
+    const l=chartData.at(-1); l.price=META_PRICE;l.base=sc.base;l.bear=sc.bear;l.bull=sc.bull; draw();
+  }
+}
+function loadMetaDemo(){
+  const z=stocks.find(x=>x.s==='META'); activeCurrency='USD'; updateBusiness(z);
+  document.getElementById('name').textContent='Meta Platforms'; document.getElementById('symbol').textContent='META'; document.getElementById('market').textContent='NASDAQ · USA · USD · Excel-Modell';
+  document.getElementById('price').textContent=money(META_PRICE); document.getElementById('priceDate').textContent='Aktienkurs · Referenzwert aus Excel-Modell';
+  document.getElementById('revenueMetric').textContent='$228.25 Mrd.'; document.getElementById('ebitMetric').textContent='$86.93 Mrd.'; document.getElementById('marginMetric').textContent='38.1%'; document.getElementById('epsMetric').textContent='$26.53'; document.getElementById('fcfMetric').textContent='$5.41 Mrd.'; document.getElementById('netCashMetric').textContent='−$6.60 Mrd.';
+  document.getElementById('modelBox').style.display='block'; renderExactQuality();
+  document.getElementById('fundamentalHistory').innerHTML='<tr><td>TTM</td><td>$228,25 Mrd.</td><td>38,1%</td><td>$5,41 Mrd.</td><td>$26,53</td><td>32,6%</td><td>—</td><td>Excel-Referenz</td></tr>'; document.getElementById('historySource').textContent='Quelle: Excel-Referenz'; document.getElementById('historyAvailability').textContent='Historischer DCF: Demo-Reihe'; document.getElementById('historyCoverage').textContent='Datenabdeckung: Referenzmodell';
+  if(metaChartReference) chartData=metaChartReference.map(x=>({...x})); applyMetaModel(true);
+  document.getElementById('fundNote').textContent='META-Referenzwerte und Bewertungslogik stammen aus deiner Excel-Datei. DCF und Quality Score sind gegen Excel getestet; Motor 3.0 bündelt Bewertungs-Orchestrierung, Modell-Readiness, Excel-paritäres Reverse DCF, Risiko-Audit und transparente Annahmen in einer gemeinsamen Engine.';
+  document.getElementById('chartNote').textContent='Demo-Historie; aktueller Bear/Fair/Bull-Wert kommt exakt aus deinem 10-Jahres-DCF. Änderungen der DCF-Annahmen skalieren die Fair-Value-Bänder sofort neu.';
+  setStatus('Excel-Parität · META'); draw();
+}
+['dcfG1','dcfG5','dcfMargin5','dcfWacc','dcfTg'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{if(document.getElementById('symbol').textContent==='META')applyMetaModel(true);}));
+
+function render(v=''){const x=v.trim().toLowerCase(); const a=stocks.filter(z=>{const hay=[z.s,z.n,z.country,z.m,...(z.aliases||[])].join(' ').toLowerCase();return !x||hay.includes(x);}).slice(0,10);r.innerHTML=a.map(z=>`<div class="result" data-s="${z.s}"><span><span class="ticker">${z.s}</span> &nbsp; ${z.n}</span><span class="country">${z.country} · ${z.currency}</span></div>`).join('');r.style.display=a.length?'block':'none';document.querySelectorAll('.result').forEach(el=>el.onclick=()=>select(el.dataset.s));}
 function demoForStock(s){
+  if(s==='META'){loadMetaDemo();return;}
   const z=stocks.find(x=>x.s===s)||{s,n:s,m:'Demo'};
+  document.getElementById('modelBox').style.display='none';
+  updateBusiness(z);
   // Deterministische Demo-Reihe je Ticker. Keine externen/fingierten Echtwerte.
   let seed=[...s].reduce((a,c)=>a+c.charCodeAt(0),0); const rand=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
   const start=new Date('2018-09-08'), end=new Date('2026-09-08'); const months=(end.getFullYear()-start.getFullYear())*12+(end.getMonth()-start.getMonth());
   const baseStart=80+rand()*120, baseEnd=160+rand()*520; chartData=[];
   for(let i=0;i<=months;i++){const d=new Date(start.getFullYear(),start.getMonth()+i,8),t=i/months;const wave=Math.sin(i*.23+rand())*(10+baseEnd*.05);const price=Math.max(20,baseStart+(baseEnd-baseStart)*t+wave);const fair=Math.max(25,baseStart*1.05+(baseEnd*1.04-baseStart)*t+Math.sin(i*.09)*12);chartData.push({date:d,price,base:fair,bear:fair*.72,bull:fair*1.32});}
   const last=chartData.at(-1),vp=JuKaCore.valuationPct(last.price,last.base);
-  document.getElementById('name').textContent=z.n; document.getElementById('symbol').textContent=z.s; document.getElementById('market').textContent=z.m+' · Demo-Daten';
+  document.getElementById('name').textContent=z.n; document.getElementById('symbol').textContent=z.s; const vm=JuKaCore.classifyValuationModel(z); const vmLabel=vm==='bank-insurance'?'Bank / Insurance · Residual Income':vm==='reit'?'REIT · AFFO + Exit-Multiple':'Operating Company · 10J-FCFF-DCF'; document.getElementById('market').textContent=z.m+' · '+vmLabel+' · Demo-Daten';
   document.getElementById('price').textContent=money(last.price); document.getElementById('priceDate').textContent='Aktienkurs · Demo · '+last.date.toLocaleDateString('de-DE');
   document.getElementById('fvMetric').textContent=money(last.base); document.getElementById('valuationMetric').textContent=`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'} (Demo)`;
   ['peMetric','forwardPeMetric','revenueMetric','ebitMetric','marginMetric','epsMetric','fcfMetric','netCashMetric'].forEach(id=>document.getElementById(id).textContent='—');
+  renderMotorAudit(null);
+  renderAutoAssumptions(null);
+  renderScenarioForecast(null,null,z.currency||'USD');
+  renderForecast(null,null,z.currency||'USD');
+  renderRealityCheck({model:vm,price:last.price,fairValue:last.base});
+  renderPeerComparison(s,{},[],vm);
+  document.getElementById('realityDrivers').innerHTML='<div class="scoreItem"><span>Status</span><strong>Demo-Kurs/Fair-Value vorhanden; Qualitäts- und Relative-Signale warten auf echte Fundamentaldaten.</strong></div>';
+  document.getElementById('realityBreaker').textContent='Mit echten Fundamentaldaten wird hier die kursimplizite Kernannahme angezeigt.';
   document.getElementById('qualityScore').textContent='—'; document.getElementById('qualityGrade').textContent='Live-Fundamentals noch nicht geladen'; document.querySelector('.bar>div').style.width='0%';
   document.getElementById('scoreBreakdown').innerHTML='<div class="scoreItem"><span>Status</span><strong>Wird aus echten Fundamentaldaten berechnet</strong></div>';
-  document.getElementById('fundNote').textContent='Suchfunktion aktiv. Für diesen Titel werden in der lokalen Vorschau bewusst keine erfundenen Fundamentaldaten angezeigt.';
+  document.getElementById('fundNote').textContent='Bewertungsmodell automatisch gewählt: '+vmLabel+'. In der Demo werden bewusst keine erfundenen Fundamentaldaten angezeigt.';
   document.getElementById('chartNote').textContent='Interaktive Demo-Zeitreihe für '+z.s+'. Nach öffentlichem Deployment werden unterstützte Ticker durch echte Tageskurse und Fundamentaldaten ersetzt.';
   setStatus('Demo · '+z.s); draw();
 }
-async function select(s){const z=stocks.find(x=>x.s===s);q.value='';r.style.display='none';document.getElementById('dashboard').style.opacity='1';
+async function select(s){const z=stocks.find(x=>x.s===s)||{s,n:s,m:'Unbekannter Markt'};q.value='';r.style.display='none';document.getElementById('dashboard').style.opacity='1';
+  prepareStock(z); setStatus('lädt '+s+'…');
   if(!LIVE_CAPABLE){demoForStock(s);return;}
-  document.getElementById('name').textContent=z?.n||s;document.getElementById('symbol').textContent=s;
-  try{await loadLiveStock(s);}catch(err){demoForStock(s);document.getElementById('fundNote').textContent='Live-Daten konnten nicht geladen werden: '+(err.message||err)+' — deshalb Demo-Fallback.';}
+  try{await loadLiveStock(s);}catch(err){renderLiveBeta({analysisStatus:'fallback',warnings:[String(err.message||err)]},false);demoForStock(s);document.getElementById('fundNote').textContent='Live-Daten konnten noch nicht geladen werden: '+(err.message||err)+' — deshalb Demo-Fallback ohne veraltete Werte.';}
 }
-q.addEventListener('input',()=>render(q.value));q.addEventListener('focus',()=>render(q.value));q.addEventListener('keydown',e=>{if(e.key==='Enter'){const x=q.value.trim().toLowerCase();const hit=stocks.find(z=>z.s.toLowerCase()===x)||stocks.find(z=>z.n.toLowerCase().includes(x)||z.s.toLowerCase().includes(x));if(hit){e.preventDefault();select(hit.s);}}});
+q.addEventListener('input',()=>render(q.value));q.addEventListener('focus',()=>render(q.value));q.addEventListener('keydown',e=>{if(e.key==='Enter'){const x=q.value.trim().toLowerCase();const hit=stocks.find(z=>z.s.toLowerCase()===x)||stocks.find(z=>[z.n,z.s,...(z.aliases||[])].join(' ').toLowerCase().includes(x));if(hit){e.preventDefault();select(hit.s);}}});
 document.addEventListener('click',e=>{if(!e.target.closest('.searchWrap'))r.style.display='none'});
 
 // Demo-Zeitreihe: Interaktion ist echt, Daten werden später durch Live-/Historien-Daten ersetzt.
@@ -181,10 +822,11 @@ for(let i=0;i<=months;i++){
 const last=chartData[chartData.length-1]; last.price=616.77; last.base=654.43; last.bear=400.16; last.bull=1011.57;
 
 const svg=document.getElementById('valuationChart'), tooltip=document.getElementById('chartTooltip');
-let currentPeriod='5Y';
+let currentPeriod='5Y'; let activeCurrency='USD';
 const NS='http://www.w3.org/2000/svg';
 const periods={"1Y":12,"3Y":36,"5Y":60,"MAX":9999};
-function money(v){return '$'+v.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2});}
+function money(v,currency=activeCurrency){if(!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:currency||'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v));}
+metaChartReference=chartData.map(x=>({...x})); renderExactQuality(); applyMetaModel(false);
 function pct(v){return (v>=0?'+':'')+v.toLocaleString('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1})+'%';}
 function fmtDate(d){return d.toLocaleDateString('de-DE',{month:'short',year:'numeric'});}
 function node(tag,attrs={},text=''){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));if(text)n.textContent=text;return n;}
@@ -214,17 +856,55 @@ if(new URLSearchParams(location.search).get('selftest')==='1'){
   setTimeout(()=>{
     const checks=[]; const ok=(name,cond)=>checks.push({name,ok:!!cond});
     q.value='SAP'; q.dispatchEvent(new Event('input',{bubbles:true}));
-    ok('search-results',r.textContent.includes('SAP SE'));
+    ok('search-results',r.textContent.includes('SAP SE')); ok('eu-search-currency',r.textContent.includes('EUR'));
     q.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
     ok('stock-switch',document.getElementById('symbol').textContent==='SAP');
+    ok('business-switch',document.getElementById('businessText').textContent.includes('Unternehmenssoftware')); ok('currency-switch',activeCurrency==='EUR');
+    ok('no-stale-meta-business',!document.getElementById('businessText').textContent.includes('Facebook'));
     ok('demo-fallback',document.getElementById('dataStatus').textContent.includes('SAP'));
     const one=document.querySelector('[data-period="1Y"]'); one.click();
     ok('period-switch',one.classList.contains('active')&&document.getElementById('periodLabel').textContent.includes('1J'));
     ok('chart-rendered',document.querySelectorAll('#valuationChart path').length>=4);
     ok('quality-position',document.querySelector('.chartCard').compareDocumentPosition(document.querySelector('.quality')) & Node.DOCUMENT_POSITION_FOLLOWING);
+    loadMetaDemo(); const msc=JuKaCore.jukaDcfScenarios(META_DCF_INPUT); ok('excel-dcf-parity',Math.abs(msc.base-654.4325829130363)<1e-8); ok('excel-quality-parity',JuKaCore.jukaQualityScore(META_QUALITY_INPUT).score===73); ok('model-controls',document.getElementById('bearModel').textContent.length>0&&document.getElementById('bullModel').textContent.length>0);
     const out=document.createElement('pre'); out.id='selftest-result'; out.textContent=JSON.stringify({passed:checks.every(x=>x.ok),checks}); document.body.appendChild(out);
   },150);
 }
 
+
+const JuKaStore={keyWatch:'juka.watchlist.v1',keySaved:'juka.saved.v1',read(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}},write(k,v){localStorage.setItem(k,JSON.stringify(v));return v},watch(){return this.read(this.keyWatch,[])},saved(){return this.read(this.keySaved,[])},toggleWatch(s){let a=this.watch(),i=a.indexOf(s);i>=0?a.splice(i,1):a.unshift(s);return this.write(this.keyWatch,[...new Set(a)].slice(0,30))},save(x){let a=this.saved().filter(v=>v.symbol!==x.symbol);a.unshift(x);return this.write(this.keySaved,a.slice(0,50))},removeSaved(s){return this.write(this.keySaved,this.saved().filter(x=>x.symbol!==s))}};
+function productToast(t){const e=document.getElementById('productToast');e.textContent=t;e.classList.add('show');clearTimeout(productToast.t);productToast.t=setTimeout(()=>e.classList.remove('show'),1400)}
+function currentStock(){return stocks.find(x=>x.s===activeSymbol)||stocks[0]}
+function renderWatchlist(){const b=document.getElementById('watchStrip'),btn=document.getElementById('watchBtn'),a=JuKaStore.watch(),s=currentStock();btn.classList.toggle('active',a.includes(s.s));btn.textContent=a.includes(s.s)?'★ Watchlist':'☆ Watchlist';b.innerHTML=a.length?a.map(sym=>{const x=stocks.find(z=>z.s===sym);return x?`<button class="watchChip" data-w="${x.s}"><b>${x.s}</b> <small>${x.n}</small></button>`:''}).join(''):'<span class="emptyWatch">Noch keine Titel gespeichert.</span>';b.querySelectorAll('[data-w]').forEach(x=>x.onclick=()=>select(x.dataset.w))}
+function snapshotForSave(){const s=currentStock(),t=id=>document.getElementById(id)?.textContent||'—';return {symbol:s.s,name:s.n,price:t('price'),fair:t('fairValue')==='—'?t('fair'):t('fairValue'),quality:t('qualityScore'),model:t('motorModel'),risk:t('motorRisk'),savedAt:new Date().toISOString()}}
+function renderSaved(){const b=document.getElementById('savedGrid'),a=JuKaStore.saved();b.innerHTML=a.length?a.map(x=>`<div class="savedCard"><h4>${x.symbol} · ${x.name}</h4><p>Kurs: <b>${x.price}</b> · Fair Value: <b>${x.fair}</b></p><p>Modell: ${x.model} · Risiko: ${x.risk}</p><p>Stand: ${new Date(x.savedAt).toLocaleString('de-DE')}</p><div class="rowActions"><button class="productBtn" data-o="${x.symbol}">Öffnen</button><button class="productBtn" data-d="${x.symbol}">Löschen</button></div></div>`).join(''):'<p class="emptyWatch">Noch keine Analyse gespeichert.</p>';b.querySelectorAll('[data-o]').forEach(x=>x.onclick=()=>select(x.dataset.o));b.querySelectorAll('[data-d]').forEach(x=>x.onclick=()=>{JuKaStore.removeSaved(x.dataset.d);renderSaved();productToast('Analyse gelöscht')})}
+function productAfterStockChange(){renderWatchlist()}
+document.getElementById('watchBtn').onclick=()=>{JuKaStore.toggleWatch(currentStock().s);renderWatchlist();productToast('Watchlist aktualisiert')};
+document.getElementById('saveAnalysisBtn').onclick=()=>{JuKaStore.save(snapshotForSave());renderSaved();productToast('Analyse gespeichert')};
+document.getElementById('savedToggleBtn').onclick=()=>{document.getElementById('savedPanel').classList.toggle('open');renderSaved()};
+renderWatchlist();renderSaved();
+
+function syncInvestmentSummary(){
+  const get=id=>document.getElementById(id)?.textContent?.trim()||'—';
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v||'—'};
+  set('summaryFair',get('fvMetric'));
+  set('summaryValuation',get('valuationMetric'));
+  const q=get('qualityScore'),grade=get('qualityGrade');
+  set('summaryQuality',q==='—'?'—':q+'/100');
+  set('summaryQualityNote',grade);
+  const baseReturn=get('scenarioBaseReturn');
+  set('summaryReturn',baseReturn!=='—'?baseReturn:get('forecastReturn'));
+  set('summaryRisk',get('motorRisk'));
+  const model=get('motorModel');
+  set('summaryModel',model);
+  set('summaryReadiness','Readiness '+get('motorReady'));
+}
+function installSummarySync(){
+  const ids=['fvMetric','valuationMetric','qualityScore','qualityGrade','scenarioBaseReturn','forecastReturn','motorRisk','motorModel','motorReady'];
+  const obs=new MutationObserver(()=>syncInvestmentSummary());
+  ids.forEach(id=>{const e=document.getElementById(id);if(e)obs.observe(e,{subtree:true,childList:true,characterData:true})});
+  syncInvestmentSummary();
+}
+installSummarySync();
 </script>
-</body></html>
+<div class="toast" id="productToast"></div></body></html>

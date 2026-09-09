@@ -1,0 +1,14 @@
+const assert=require('assert');
+const C=require('../core');
+assert.equal(C.classifyValuationModel({sector:'Bank'}),'bank-insurance');
+assert.equal(C.classifyValuationModel({valuationModel:'reit'}),'reit');
+assert.equal(C.classifyValuationModel({sector:'Software'}),'operating-company');
+const b=C.jukaBankInsurance({bookValuePerShare:100,roe:.14,costOfEquity:.10,growth:.03,marginOfSafety:.20,price:150});
+const expectedBank=100*((.14-.03)/(.10-.03));
+assert.ok(Math.abs(b.base-expectedBank)<1e-10); assert.ok(Math.abs(b.buyZone-expectedBank*.8)<1e-10); assert.ok(Math.abs(b.impliedRoe-(.03+1.5*(.10-.03)))<1e-10);
+const r=C.jukaReit({affoPerShare:4,affoGrowth5y:.05,exitPAffo:18,costOfEquity:.09,marginOfSafety:.20,price:70});
+const expectedReit=(4*Math.pow(1.05,5)*18)/Math.pow(1.09,5);
+assert.ok(Math.abs(r.base-expectedReit)<1e-10); assert.ok(Math.abs(r.buyZone-expectedReit*.8)<1e-10); assert.ok(Number.isFinite(r.impliedGrowth)); assert.ok(Number.isFinite(r.impliedExit));
+const br=C.jukaRelativeByModel('bank-insurance',{price:150,epsTtm:10,bookValuePerShare:100,roe:.14}); assert.equal(br.pe,15); assert.equal(br.pb,1.5);
+const rr=C.jukaRelativeByModel('reit',{price:70,affoPerShare:4,affoY5:5,exitPAffo:18}); assert.equal(rr.paFFO,17.5); assert.equal(rr.paFFOY5,14);
+console.log('valuation-models.test.js: OK');

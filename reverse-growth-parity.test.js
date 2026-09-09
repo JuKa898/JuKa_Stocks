@@ -1,0 +1,10 @@
+const assert=require('assert');const C=require('../core');
+const input={revenue:228247,ebit:86926,taxRate:.18,da:22729,capex:89325,deltaNwc:-724,shares:2567,netFinancialPosition:-6596,growthY1:.18,growthY5:.10,targetEbitMarginY5:.40,wacc:.095,terminalGrowth:.03,terminalRoic:.20,capexPctY5:.22,daPctY5:.12,nwcPctY5:.005};
+const base=C.jukaDcf10Y(input).fairValue,r=C.jukaReverseDcf(input,base);
+assert.ok(Math.abs(r.impliedGrowthAdjustment)<1e-7,String(r.impliedGrowthAdjustment));
+assert.ok(Math.abs(r.impliedGrowthY1-.18)<1e-7);
+assert.ok(Math.abs(r.impliedGrowthY5-.10)<1e-7);
+const target=C.jukaDcf10Y(input,{growthAdj:.02}).fairValue,ru=C.jukaReverseDcf(input,target);
+assert.ok(Math.abs(ru.impliedGrowthAdjustment-.02)<5e-5,String(ru.impliedGrowthAdjustment));
+assert.ok(Math.abs((ru.impliedGrowthY1-ru.impliedGrowthY5)-.08)<1e-9);
+console.log('reverse-growth-parity.test.js: OK');

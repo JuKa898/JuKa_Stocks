@@ -1,0 +1,1 @@
+const assert=require('assert'),fs=require('fs'),path=require('path');const h=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');for(const x of ['JuKaStore','juka.watchlist.v1','juka.saved.v1','watchBtn','saveAnalysisBtn','savedGrid','snapshotForSave','renderWatchlist','renderSaved'])assert.ok(h.includes(x),x);console.log('product-persistence.test.js: OK');
