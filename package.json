@@ -1,6 +1,6 @@
 {
   "name": "juka-stocks-live-deploy-clean",
-  "version": "3.3.2",
+  "version": "3.3.6",
   "private": true,
   "engines": {
     "node": ">=18"

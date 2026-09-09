@@ -40,7 +40,7 @@ details[id]{scroll-margin-top:56px}
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Product 3.3.5 · Live Integrity</span></div>
+  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Product 3.3.6 · Frontend Boot Fix</span></div>
 
   <div class="productBar"><div><strong>Meine Aktien</strong><div class="watchStrip" id="watchStrip"></div></div><div class="productActions"><button class="productBtn" id="watchBtn">☆ Watchlist</button><button class="productBtn" id="saveAnalysisBtn">Analyse speichern</button><button class="productBtn" id="savedToggleBtn">Gespeichert</button></div></div>
   <div class="savedPanel" id="savedPanel"><details open><summary>Gespeicherte Analysen</summary><div class="savedGrid" id="savedGrid"></div></details></div>
@@ -124,7 +124,7 @@ details[id]{scroll-margin-top:56px}
 
     <div class="analysisHeading">Unternehmen</div><div class="card business sectionCard" id="businessSection"><h3>Geschäftsmodell in 30 Sekunden</h3><p id="businessText"><strong>Meta Platforms</strong> betreibt mit Facebook, Instagram, Messenger, WhatsApp und Threads ein globales Ökosystem sozialer Apps. Der überwiegende Teil des Umsatzes entsteht durch digitale Werbung: Unternehmen bezahlen dafür, Nutzer innerhalb dieser Apps zielgerichtet zu erreichen. Daneben investiert Meta stark in KI, Recheninfrastruktur, Wearables sowie Virtual- und Augmented-Reality-Produkte.</p><span class="pill" id="businessSource">Kurzprofil · JuKa Stocks</span></div>
   </section>
-  <div class="footer">JuKa Stocks Product 3.3.5 Live Integrity · Private Research Prototype · keine Anlageberatung</div>
+  <div class="footer">JuKa Stocks Product 3.3.6 Frontend Boot Fix · Private Research Prototype · keine Anlageberatung</div>
 </div>
 <script>
 (function(root,factory){
@@ -596,10 +596,10 @@ function renderLiveBeta(payload,httpOk=true){
  const status=payload.analysisStatus||payload.status||'unknown',prov=payload.provenance||{},warnings=Array.isArray(payload.warnings)?payload.warnings:[];
  const market=payload.market?.source||prov.market?.source||prov.market||'Twelve Data';
  const fund=payload.fundamentals?.source||prov.fundamentals?.source||prov.fundamentals||(((payload.stock?.region||'').toUpperCase()==='US')?'SEC':'Alpha Vantage');
- const facts=payload.fundamentals?.annual||payload.annualFacts||[],latest=Array.isArray(facts)&&facts.length?facts[0]:null;
+ const facts=payload.fundamentals?.annual||payload.annualFacts||[],latest=Array.isArray(facts)&&facts.length?facts[facts.length-1]:null;
  const coverage=payload.dataCoverage??payload.dataQuality?.coverage??payload.modelReadiness?.coverage;
  const liveOk=httpOk&&['complete','partial','market-only'].includes(status);
- set('liveMode',liveOk?'LIVE':'FEHLER');set('liveStatusText',status);set('marketSource',typeof market==='string'?market:(market?.source||'—'));set('marketDate',fmtLiveDate(payload.market?.date||payload.priceDate||payload.asOf));set('fundSource',typeof fund==='string'?fund:(fund?.source||'—'));set('fundDate',fmtLiveDate(latest?.filed||latest?.date||payload.dataQuality?.latestDate));set('liveCoverage',typeof coverage==='number'?(coverage<=1?Math.round(coverage*100):Math.round(coverage))+'%':coverage||'—');set('liveValuationStatus',payload.valuationStatus||payload.modelReadiness?.label||'—');set('liveWarnings',warnings.length?warnings.length+' Warnung(en)':'Keine Warnungen');set('liveEngine',payload.engine||payload.modelReadiness?.valuationEngine||'JuKa');
+ set('liveMode',liveOk?'LIVE':'FEHLER');set('liveStatusText',status);set('marketSource',typeof market==='string'?market:(market?.source||'—'));set('marketDate',fmtLiveDate(payload.market?.asOf||payload.market?.date||payload.priceDate||payload.asOf||prov.market?.asOf));set('fundSource',typeof fund==='string'?fund:(fund?.source||'—'));set('fundDate',fmtLiveDate(latest?.filed||latest?.date||payload.dataQuality?.latestDate));set('liveCoverage',typeof coverage==='number'?(coverage<=1?Math.round(coverage*100):Math.round(coverage))+'%':coverage||'—');set('liveValuationStatus',payload.valuationStatus||payload.modelReadiness?.label||'—');set('liveWarnings',warnings.length?warnings.length+' Warnung(en)':'Keine Warnungen');set('liveEngine',payload.engine||payload.modelReadiness?.valuationEngine||'JuKa');
  setLiveCell('liveModeCell',liveOk?'ok':'bad');setLiveCell('warningCell',warnings.length?'warn':'ok');setLiveCell('coverageCell',status==='complete'?'ok':status==='partial'?'warn':'bad');
  const debug={symbol:payload.stock?.symbol||payload.stock?.s||payload.symbol,analysisStatus:status,valuationStatus:payload.valuationStatus,model:payload.model||payload.valuationModel,modelReadiness:payload.modelReadiness,dataQuality:payload.dataQuality,autoAssumptions:payload.autoAssumptions||payload.engineAssumptions,warnings,provenance:prov,latestAnnual:latest};set('liveDebugOutput',JSON.stringify(debug,null,2));
 }
@@ -608,9 +608,12 @@ async function loadLiveStock(symbol){
   setStatus('Pipeline lädt…');
   const z=stocks.find(x=>x.s===symbol)||{s:symbol,region:'US',marketSymbol:symbol,currency:'USD'};
   const params=new URLSearchParams({symbol:z.s,region:z.region||'US',currency:z.currency||'USD',market_symbol:z.marketSymbol||z.s,name:z.n||z.s,model:z.valuationModel||'',sector:z.sector||''});
-  const ar=await fetch('/api/analysis?'+params.toString()),snap=await ar.json();
+  const ar=await fetch('/api/analysis?'+params.toString());
+  const raw=await ar.text();
+  let snap;
+  try{snap=JSON.parse(raw)}catch{throw new Error('Analyse-API lieferte kein gültiges JSON (HTTP '+ar.status+').')}
   renderLiveBeta(snap,ar.ok);
-  if(!ar.ok)throw new Error(snap.error||'Analyse-Pipeline nicht verfügbar');
+  if(!ar.ok)throw new Error(snap.error||('Analyse-Pipeline nicht verfügbar (HTTP '+ar.status+')'));
   updateFromSnapshot(symbol,snap);
 }
 
@@ -726,7 +729,7 @@ function applyMetaModel(scaleChart=true){
   const sen=JuKaCore.jukaSensitivity(inp); document.getElementById('sensitivityTable').innerHTML='<thead><tr><th>WACC \ g</th>'+sen.terminalGrowth.map(g=>'<th>'+pp(g)+'</th>').join('')+'</tr></thead><tbody>'+sen.wacc.map((w,i)=>'<tr><th>'+pp(w)+'</th>'+sen.values[i].map(v=>'<td>'+(Number.isFinite(v)?money(v):'—')+'</td>').join('')+'</tr>').join('')+'</tbody>';
   const rv=JuKaCore.jukaRelativeValuation({price:META_PRICE,epsTtm:META_EPS,epsY5:META_EPS_Y5,fairValue:sc.base});
   const base=sc.detail.base;
-  const metaForecast={rows:base.rows.slice(0,5).map(r=>({year:r.year,revenue:r.revenue,growth:r.growth,margin:r.margin,eps:META_EPS*Math.pow(META_EPS_Y5/META_EPS,r.year/5),fcf:r.fcff})),summary:{revenueY5:base.rows[4].revenue,ebitY5:base.rows[4].ebit,epsY5:META_EPS_Y5,fcfY5:base.rows[4].fcff,revenueGrowth:Math.pow(base.rows[4].revenue/META_REVENUE,1/5)-1,epsGrowth:Math.pow(META_EPS_Y5/META_EPS,1/5)-1,fcfGrowth:null,marginY5:base.rows[4].margin,fcfMarginY5:base.rows[4].fcff/base.rows[4].revenue}};
+  const metaForecast={rows:base.rows.slice(0,5).map(r=>({year:r.year,revenue:r.revenue,growth:r.growth,margin:r.margin,eps:META_EPS*Math.pow(META_EPS_Y5/META_EPS,r.year/5),fcf:r.fcff})),summary:{revenueY5:base.rows[4].revenue,ebitY5:base.rows[4].ebit,epsY5:META_EPS_Y5,fcfY5:base.rows[4].fcff,revenueGrowth:Math.pow(base.rows[4].revenue/META_DCF_INPUT.revenue,1/5)-1,epsGrowth:Math.pow(META_EPS_Y5/META_EPS,1/5)-1,fcfGrowth:null,marginY5:base.rows[4].margin,fcfMarginY5:base.rows[4].fcff/base.rows[4].revenue}};
   const returnBridge=JuKaCore.jukaReturnBridge({price:META_PRICE,epsTtm:META_EPS,epsY5:META_EPS_Y5,fairValue:sc.base});
   const metaScenarios={
     bear:{summary:{...metaForecast.summary,epsY5:META_EPS_Y5*.82,revenueGrowth:metaForecast.summary.revenueGrowth-.035,marginY5:metaForecast.summary.marginY5-.035}},
@@ -734,9 +737,9 @@ function applyMetaModel(scaleChart=true){
     bull:{summary:{...metaForecast.summary,epsY5:META_EPS_Y5*1.18,revenueGrowth:metaForecast.summary.revenueGrowth+.035,marginY5:metaForecast.summary.marginY5+.035}}
   };
   const metaReturnMatrix=JuKaCore.jukaExpectedReturnMatrix({price:META_PRICE,epsTtm:META_EPS,scenarios:metaScenarios,fairValues:{bear:sc.bear,base:sc.base,bull:sc.bull}});
-  const metaAuto={assumptions:{growthY1:inputs.growth1,growthY5:inputs.growth5,targetEbitMarginY5:inputs.margin5,targetFcfMarginY5:null,taxRate:META_TAX,shareGrowth:0},profile:{profile:['High Growth','Hohe Marge','Net Cash'],cyclical:false,capitalIntensive:false,dilution:false},dataQuality:{score:96,label:'sehr gut',coverage:.96,years:5},confidence:'hoch'};
+  const metaAuto={assumptions:{growthY1:inp.growthY1,growthY5:inp.growthY5,targetEbitMarginY5:inp.targetEbitMarginY5,targetFcfMarginY5:null,taxRate:inp.taxRate,shareGrowth:0},profile:{profile:['High Growth','Hohe Marge','Net Cash'],cyclical:false,capitalIntensive:false,dilution:false},dataQuality:{score:96,label:'sehr gut',coverage:.96,years:5},confidence:'hoch'};
   const vp=JuKaCore.valuationPct(META_PRICE,sc.base);
-  renderMotorAudit({model:'operating-company',modelReadiness:{label:'vollständig',missingRequired:[]},riskAudit:JuKaCore.jukaRiskAudit({model:'operating-company',price:META_PRICE,valuation:{base:sc.base},quality:{score:quality.score},readiness:{ready:true,missingRequired:[]},dataQuality:{score:96},reverse}),valuationStatus:'ready'});
+  const metaQuality=JuKaCore.jukaQualityScore(META_QUALITY_INPUT); renderMotorAudit({model:'operating-company',modelReadiness:{label:'vollständig',missingRequired:[]},riskAudit:JuKaCore.jukaRiskAudit({model:'operating-company',price:META_PRICE,valuation:{base:sc.base},quality:{score:metaQuality.score},readiness:{ready:true,missingRequired:[]},dataQuality:{score:96},reverse}),valuationStatus:'ready'});
   renderAutoAssumptions(metaAuto);
   renderScenarioForecast(metaScenarios,metaReturnMatrix,'USD');
   renderForecast(metaForecast,returnBridge,'USD');
@@ -827,7 +830,13 @@ let currentPeriod='5Y'; let activeCurrency='USD';
 const NS='http://www.w3.org/2000/svg';
 const periods={"1Y":12,"3Y":36,"5Y":60,"MAX":9999};
 function money(v,currency=activeCurrency){if(!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:currency||'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v));}
-metaChartReference=chartData.map(x=>({...x})); renderExactQuality(); applyMetaModel(false);
+metaChartReference=chartData.map(x=>({...x}));
+try{
+  renderExactQuality();
+  applyMetaModel(false);
+}catch(err){
+  console.warn('JuKa optional demo initialization skipped:',err);
+}
 function pct(v){return (v>=0?'+':'')+v.toLocaleString('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1})+'%';}
 function fmtDate(d){return d.toLocaleDateString('de-DE',{month:'short',year:'numeric'});}
 function node(tag,attrs={},text=''){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));if(text)n.textContent=text;return n;}
@@ -907,7 +916,16 @@ function installSummarySync(){
   syncInvestmentSummary();
 }
 installSummarySync();
-// Initial live load after the complete UI has initialized.
-select('META');
+
+window.addEventListener('error',ev=>{
+  console.error('JuKa Frontendfehler:',ev.error||ev.message);
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('liveMode','FRONTEND-FEHLER');
+  set('liveStatusText',String(ev.message||'Unbekannter JavaScript-Fehler'));
+  setLiveCell('liveModeCell','bad');
+});
+
+// Final startup action. Keeping this isolated means an optional module can no longer block the live call.
+setTimeout(()=>{select('META');},0);
 </script>
 <div class="toast" id="productToast"></div></body></html>
