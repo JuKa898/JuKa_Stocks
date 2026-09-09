@@ -41,7 +41,7 @@ details[id]{scroll-margin-top:56px}
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Analysis 2.0 · Reliable</span></div>
+  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Analysis 2.0.1 · Chart Period Fix</span></div>
 
   <div class="productBar"><div><strong>Meine Aktien</strong><div class="watchStrip" id="watchStrip"></div></div><div class="productActions"><button class="productBtn" id="watchBtn">☆ Watchlist</button><button class="productBtn" id="saveAnalysisBtn">Analyse speichern</button><button class="productBtn" id="savedToggleBtn">Gespeichert</button></div></div>
   <div class="savedPanel" id="savedPanel"><details open><summary>Gespeicherte Analysen</summary><div class="savedGrid" id="savedGrid"></div></details></div>
@@ -129,7 +129,7 @@ details[id]{scroll-margin-top:56px}
 <div class="businessGrid"><div class="businessBox"><b>Wie verdient die Firma Geld?</b><span id="businessRevenue">—</span></div><div class="businessBox"><b>Wichtigste Werttreiber</b><span id="businessDrivers">—</span></div><div class="businessBox"><b>Wettbewerbsvorteile / Moat</b><span id="businessMoat">—</span></div><div class="businessBox"><b>Zentrale Risiken</b><span id="businessRisks">—</span></div></div>
 <p class="note" id="businessCapital">Kapitalallokation: —</p><span class="pill" id="businessSource">Unternehmensprofil · JuKa Stocks</span></div>
   </section>
-  <div class="footer">JuKa Stocks Analysis 2.0 Reliable · Private Research Prototype · keine Anlageberatung</div>
+  <div class="footer">JuKa Stocks Analysis 2.0.1 Chart Period Fix · Private Research Prototype · keine Anlageberatung</div>
 </div>
 <script>
 (function(root,factory){
@@ -760,7 +760,7 @@ async function loadLiveStock(symbol){
    setStatus('LIVE · Detailanalyse wird geladen…',true);
    const snap=await fetchJson('/api/analysis?'+new URLSearchParams(baseParams).toString(),'Detailanalyse',35000);
    updateFromSnapshot(symbol,snap);
-   document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse. Bear/Base/Bull nutzen nur zu diesem Zeitpunkt bereits veröffentlichte Fundamentaldaten. Zwischen zwei Filings wird der DCF mit dem jeweiligen Diskontsatz zeitlich fortgeschrieben; beim nächsten Filing wird neu bewertet.';
+   document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse. Die Zeitraum-Schalter filtern nach echten Kalenderjahren (1J/3J/5J), nicht nach Datenpunkten. Bear/Base/Bull nutzen nur bereits veröffentlichte Fundamentaldaten; zwischen Filings wird der DCF zeitlich fortgeschrieben und beim nächsten Filing neu bewertet.';
    setStatus('LIVE · Analyse 2.0',true);
  }catch(detailErr){
    const msg=String(detailErr?.message||detailErr);console.warn('JuKa detail enrichment failed:',detailErr);
@@ -1009,7 +1009,7 @@ const last=chartData[chartData.length-1]; last.price=616.77; last.base=654.43; l
 const svg=document.getElementById('valuationChart'), tooltip=document.getElementById('chartTooltip');
 let currentPeriod='5Y'; let activeCurrency='USD';
 const NS='http://www.w3.org/2000/svg';
-const periods={"1Y":12,"3Y":36,"5Y":60,"MAX":9999};
+const periods={"1Y":1,"3Y":3,"5Y":5,"MAX":null};
 function money(v,currency=activeCurrency){if(!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:currency||'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v));}
 metaChartReference=chartData.map(x=>({...x}));
 if(!LIVE_CAPABLE){
@@ -1025,11 +1025,20 @@ if(!LIVE_CAPABLE){
 function pct(v){return (v>=0?'+':'')+v.toLocaleString('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1})+'%';}
 function fmtDate(d){return d.toLocaleDateString('de-DE',{month:'short',year:'numeric'});}
 function node(tag,attrs={},text=''){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));if(text)n.textContent=text;return n;}
-function getSlice(){const count=periods[currentPeriod]; return chartData.slice(Math.max(0,chartData.length-count-1));}
+function getSlice(){
+  if(!chartData.length)return [];
+  if(currentPeriod==='MAX')return chartData;
+  const years=periods[currentPeriod];
+  const last=chartData.at(-1)?.date;
+  if(!(last instanceof Date)||Number.isNaN(last.getTime())||!Number.isFinite(years))return chartData;
+  const from=new Date(last);
+  from.setFullYear(from.getFullYear()-years);
+  return chartData.filter(row=>row?.date instanceof Date&&!Number.isNaN(row.date.getTime())&&row.date>=from);
+}
 function draw(){
   svg.innerHTML=''; const data=getSlice(); const W=760,H=350,L=55,R=18,T=18,B=44; const pw=W-L-R,ph=H-T-B;
   const vals=data.flatMap(d=>[d.price,d.base,d.bear,d.bull]).filter(Number.isFinite); if(!vals.length)return; let min=Math.min(...vals),max=Math.max(...vals); const pad=(max-min)*.08; min=Math.max(0,min-pad); max+=pad;
-  const x=i=>L+(i/(data.length-1))*pw, y=v=>T+(max-v)/(max-min)*ph;
+  const x=i=>L+((data.length<=1?0:i/(data.length-1)))*pw, y=v=>T+(max-v)/(max-min||1)*ph;
   for(let k=0;k<5;k++){const yy=T+k*ph/4;const val=max-k*(max-min)/4;svg.append(node('line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:'#1f2c37'}));svg.append(node('text',{x:5,y:yy+4,fill:'#8093a4','font-size':'11'},'$'+Math.round(val)));}
   const tickCount=5; for(let k=0;k<tickCount;k++){const idx=Math.round(k*(data.length-1)/(tickCount-1));svg.append(node('text',{x:x(idx),y:H-15,fill:'#8093a4','font-size':'11','text-anchor':k===0?'start':k===tickCount-1?'end':'middle'},data[idx].date.toLocaleDateString('de-DE',{year:'numeric',month:currentPeriod==='1Y'?'short':undefined})));}
   const series=[['price','#76b7ff',3],['base','#8be0b0',3],['bear','#ff8a8a',2],['bull','#ffd36a',2]];
