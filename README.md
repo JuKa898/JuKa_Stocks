@@ -58,3 +58,9 @@ Root cause: the legacy META demo initializer referenced undefined variables and 
 The live request therefore never started even though `/api/analysis` itself worked.
 3.3.6 fixes those references, isolates optional demo initialization, improves API parse errors, shows frontend boot errors,
 and keeps the initial live load as the final startup action.
+
+## 3.3.7 Fast Live UI
+The deployed UI no longer waits for the enormous full `/api/analysis` payload.
+It loads the compact `/api/analysis?...&summary=1` result and real Twelve Data history in parallel.
+The chart uses real daily prices. Bear/Base/Bull are current valuation reference lines only.
+Production no longer falls back to synthetic/demo charts if a live request fails.
