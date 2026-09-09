@@ -1,3 +1,8 @@
+function fetchWithTimeout(url,options={},ms=12000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),ms);
+  return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));
+}
 const Symbols=require('../lib/symbols');
 const Core=require('../core');
 const Pipeline=require('../lib/pipeline');
@@ -8,7 +13,7 @@ const UA=()=>process.env.SEC_USER_AGENT||'JuKa Stocks research app contact@examp
 let tickerCache={time:0,map:null};
 async function secTickerMap(){
   if(tickerCache.map&&Date.now()-tickerCache.time<86400000)return tickerCache.map;
-  const r=await fetch('https://www.sec.gov/files/company_tickers.json',{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}});
+  const r=await fetchWithTimeout('https://www.sec.gov/files/company_tickers.json',{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}});
   if(!r.ok)throw new Error('SEC ticker map '+r.status);
   const j=await r.json(),map={};
   Object.values(j).forEach(x=>map[String(x.ticker).toUpperCase()]={cik:String(x.cik_str).padStart(10,'0'),name:x.title});
@@ -32,7 +37,7 @@ async function secAdapter(stock){
   if(resolved.region!=='US'){const e=new Error('SEC-Adapter nur für US-Titel');e.code='SEC_REGION';throw e;}
   const map=await secTickerMap(),sym=resolved.secSymbol,found=map[sym];
   if(!found){const e=new Error('Ticker nicht in SEC gefunden');e.code='SEC_NOT_FOUND';throw e;}
-  const r=await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${found.cik}.json`,{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}});
+  const r=await fetchWithTimeout(`https://data.sec.gov/api/xbrl/companyfacts/CIK${found.cik}.json`,{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}});
   if(!r.ok)throw new Error('SEC companyfacts '+r.status);
   const j=await r.json(),f=j.facts||{};
   const sets={
@@ -77,7 +82,7 @@ async function marketAdapter(stock){
   const start=new Date();start.setFullYear(start.getFullYear()-10);
   const u=new URL('https://api.twelvedata.com/time_series');
   u.searchParams.set('symbol',resolved.marketSymbol);u.searchParams.set('interval','1day');u.searchParams.set('adjust','all');u.searchParams.set('outputsize','5000');u.searchParams.set('start_date',start.toISOString().slice(0,10));
-  const r=await fetch(u,{headers:{Authorization:`apikey ${key}`}}),j=await r.json();
+  const r=await fetchWithTimeout(u,{headers:{Authorization:`apikey ${key}`}}),j=await r.json();
   if(!r.ok||j.status==='error'){const e=new Error(j.message||'Marktdatenfehler');e.code='MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e;}
   if(!Array.isArray(j.values)||!j.values.length){const e=new Error('Keine Kursdaten vom Marktprovider');e.code='NO_MARKET_DATA';e.httpStatus=404;throw e;}
   return {...j,source:'Twelve Data',status:'ok',resolvedSymbol:resolved.marketSymbol};

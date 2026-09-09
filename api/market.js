@@ -1,3 +1,8 @@
+function fetchWithTimeout(url,options={},ms=12000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),ms);
+  return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));
+}
 const Symbols=require('../lib/symbols');
 module.exports = async function handler(req,res){
   try{
@@ -12,7 +17,7 @@ module.exports = async function handler(req,res){
       url=new URL(base+'/time_series'); url.searchParams.set('symbol',resolved.marketSymbol); url.searchParams.set('interval','1day'); url.searchParams.set('adjust','all'); url.searchParams.set('outputsize','5000');
       if(start_date)url.searchParams.set('start_date',start_date); if(end_date)url.searchParams.set('end_date',end_date);
     }
-    const r=await fetch(url,{headers:{Authorization:`apikey ${key}`}}); const data=await r.json();
+    const r=await fetchWithTimeout(url,{headers:{Authorization:`apikey ${key}`}}); const data=await r.json();
     res.setHeader('Cache-Control',action==='search'?'s-maxage=86400, stale-while-revalidate=86400':'s-maxage=21600, stale-while-revalidate=86400');
     if(!r.ok||data?.status==='error')return res.status(r.status||502).json({error:data?.message||'Marktdatenfehler',code:'MARKET_PROVIDER_ERROR'});
     return res.status(200).json({...data,resolvedSymbol:resolved.marketSymbol});

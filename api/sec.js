@@ -1,9 +1,14 @@
+function fetchWithTimeout(url,options={},ms=12000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),ms);
+  return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));
+}
 const Symbols=require('../lib/symbols');
 const tickerCache={time:0,map:null};
 const UA=()=>process.env.SEC_USER_AGENT||'JuKa Stocks research app contact@example.com';
 async function tickerMap(){
   if(tickerCache.map&&Date.now()-tickerCache.time<86400000)return tickerCache.map;
-  const r=await fetch('https://www.sec.gov/files/company_tickers.json',{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}});
+  const r=await fetchWithTimeout('https://www.sec.gov/files/company_tickers.json',{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}});
   if(!r.ok)throw new Error('SEC ticker map '+r.status); const j=await r.json(),map={};
   Object.values(j).forEach(x=>map[String(x.ticker).toUpperCase()]={cik:String(x.cik_str).padStart(10,'0'),name:x.title}); tickerCache.map=map;tickerCache.time=Date.now();return map;
 }
@@ -23,7 +28,7 @@ module.exports=async function handler(req,res){
     const resolved=Symbols.resolveSymbol({symbol:req.query?.symbol||'META',region:req.query?.region||'US',market_symbol:req.query?.market_symbol});
     if(resolved.region!=='US')return res.status(200).json({symbol:resolved.displaySymbol,name:req.query?.name||resolved.displaySymbol,annual:[],source:'EU fundamentals adapter pending',status:'pending',warning:'EU-Fundamentaldatenquelle noch nicht aktiviert',providerCode:'EU_FUNDAMENTALS_PENDING'});
     const symbol=resolved.secSymbol,map=await tickerMap(),found=map[symbol]; if(!found)return res.status(404).json({error:'Ticker nicht in SEC gefunden',code:'SEC_NOT_FOUND'});
-    const r=await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${found.cik}.json`,{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}}); if(!r.ok)return res.status(r.status).json({error:'SEC companyfacts Fehler '+r.status});
+    const r=await fetchWithTimeout(`https://data.sec.gov/api/xbrl/companyfacts/CIK${found.cik}.json`,{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}}); if(!r.ok)return res.status(r.status).json({error:'SEC companyfacts Fehler '+r.status});
     const j=await r.json(),f=j.facts||{};
     const rev=candidates(f,['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet'],'USD');
     const op=candidates(f,['OperatingIncomeLoss'],'USD'),ni=candidates(f,['NetIncomeLoss','ProfitLoss'],'USD'),eps=candidates(f,['EarningsPerShareDiluted'],'USD/shares');
