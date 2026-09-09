@@ -40,7 +40,7 @@ details[id]{scroll-margin-top:56px}
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Product 3.3.8 · Summary First</span></div>
+  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Product 3.3.9 · Hard Bootstrap</span></div>
 
   <div class="productBar"><div><strong>Meine Aktien</strong><div class="watchStrip" id="watchStrip"></div></div><div class="productActions"><button class="productBtn" id="watchBtn">☆ Watchlist</button><button class="productBtn" id="saveAnalysisBtn">Analyse speichern</button><button class="productBtn" id="savedToggleBtn">Gespeichert</button></div></div>
   <div class="savedPanel" id="savedPanel"><details open><summary>Gespeicherte Analysen</summary><div class="savedGrid" id="savedGrid"></div></details></div>
@@ -124,7 +124,7 @@ details[id]{scroll-margin-top:56px}
 
     <div class="analysisHeading">Unternehmen</div><div class="card business sectionCard" id="businessSection"><h3>Geschäftsmodell in 30 Sekunden</h3><p id="businessText"><strong>Meta Platforms</strong> betreibt mit Facebook, Instagram, Messenger, WhatsApp und Threads ein globales Ökosystem sozialer Apps. Der überwiegende Teil des Umsatzes entsteht durch digitale Werbung: Unternehmen bezahlen dafür, Nutzer innerhalb dieser Apps zielgerichtet zu erreichen. Daneben investiert Meta stark in KI, Recheninfrastruktur, Wearables sowie Virtual- und Augmented-Reality-Produkte.</p><span class="pill" id="businessSource">Kurzprofil · JuKa Stocks</span></div>
   </section>
-  <div class="footer">JuKa Stocks Product 3.3.8 Summary First · Private Research Prototype · keine Anlageberatung</div>
+  <div class="footer">JuKa Stocks Product 3.3.9 Hard Bootstrap · Private Research Prototype · keine Anlageberatung</div>
 </div>
 <script>
 (function(root,factory){
@@ -499,26 +499,25 @@ function updateBusiness(z){
 }
 function prepareStock(z){
   activeCurrency=z?.currency||'USD';
-  document.getElementById('name').textContent=z?.n||z?.s||'—';
-  document.getElementById('symbol').textContent=z?.s||'—';
-  document.getElementById('market').textContent=(z?.m||'')+' · Daten werden geladen';
-  document.getElementById('price').textContent='—';
-  document.getElementById('priceDate').textContent='Aktienkurs · wird geladen';
-  document.getElementById('fvMetric').textContent='—';
-  document.getElementById('valuationMetric').textContent='—';
-  ['peMetric','forwardPeMetric','revenueMetric','ebitMetric','marginMetric','epsMetric','fcfMetric','netCashMetric'].forEach(id=>document.getElementById(id).textContent='—');
-  const vm=JuKaCore.classifyValuationModel(z||{});
-  renderRealityCheck({model:vm});
-  document.getElementById('realityDrivers').innerHTML='<div class="scoreItem"><span>Status</span><strong>Wartet auf Kurs- und Fundamentaldaten.</strong></div>';
-  document.getElementById('realityBreaker').textContent='Mit echten Fundamentaldaten wird hier die kursimplizite Kernannahme angezeigt.';
-  renderPeerComparison(z?.s||'',{},[],vm);
-  document.getElementById('qualityScore').textContent='—';
-  document.getElementById('qualityGrade').textContent='wird geladen';
-  document.querySelector('.bar>div').style.width='0%';
-  document.getElementById('scoreBreakdown').innerHTML='<div class="scoreItem"><span>Status</span><strong>Daten werden geladen</strong></div>';
-  document.getElementById('fundNote').textContent='Daten werden für '+(z?.s||'den Titel')+' geladen.';
-  document.getElementById('fundamentalHistory').innerHTML='<tr><td colspan="8">Daten werden geladen …</td></tr>'; document.getElementById('historySource').textContent='Quelle: wird geladen'; document.getElementById('historyAvailability').textContent='Historischer DCF: wird geladen'; document.getElementById('historyCoverage').textContent='Datenabdeckung: wird geladen';
-  updateBusiness(z);
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('name',z?.n||z?.s||'—');
+  set('symbol',z?.s||'—');
+  set('market',(z?.m||'')+' · Daten werden geladen');
+  set('price','—');
+  set('priceDate','Aktienkurs · wird geladen');
+  set('fvMetric','—');
+  set('valuationMetric','—');
+  ['peMetric','forwardPeMetric','revenueMetric','ebitMetric','marginMetric','epsMetric','fcfMetric','netCashMetric'].forEach(id=>set(id,'—'));
+  set('qualityScore','—');
+  set('qualityGrade','wird geladen');
+  const bar=document.querySelector('.bar>div'); if(bar)bar.style.width='0%';
+  const score=document.getElementById('scoreBreakdown'); if(score)score.innerHTML='<div class="scoreItem"><span>Status</span><strong>Daten werden geladen</strong></div>';
+  set('fundNote','Daten werden für '+(z?.s||'den Titel')+' geladen.');
+  const hist=document.getElementById('fundamentalHistory'); if(hist)hist.innerHTML='<tr><td colspan="8">Daten werden geladen …</td></tr>';
+  set('historySource','Quelle: wird geladen');
+  set('historyAvailability','Historischer DCF: wird geladen');
+  set('historyCoverage','Datenabdeckung: wird geladen');
+  try{updateBusiness(z)}catch{}
 }
 
 const q=document.getElementById('search'),r=document.getElementById('results');
@@ -934,20 +933,38 @@ function demoForStock(s){
   document.getElementById('chartNote').textContent='Interaktive Demo-Zeitreihe für '+z.s+'. Nach öffentlichem Deployment werden unterstützte Ticker durch echte Tageskurse und Fundamentaldaten ersetzt.';
   setStatus('Demo · '+z.s); draw();
 }
-async function select(s){activeSymbol=s;const z=stocks.find(x=>x.s===s)||{s,n:s,m:'Unbekannter Markt'};q.value='';r.style.display='none';document.getElementById('dashboard').style.opacity='1';
-  prepareStock(z); setStatus('lädt '+s+'…');
-  if(!LIVE_CAPABLE){demoForStock(s);return;}
-  try{await loadLiveStock(s);}catch(err){
+async function select(s){activeSymbol=s;
+  try{
+    const z=stocks.find(x=>x.s===s)||{s,n:s,m:'Unbekannter Markt'};
+    q.value='';
+    r.style.display='none';
+    const dash=document.getElementById('dashboard'); if(dash)dash.style.opacity='1';
+
+    prepareStock(z);
+    setStatus('lädt '+s+'…');
+
+    if(!LIVE_CAPABLE){
+      demoForStock(s);
+      return;
+    }
+
+    await loadLiveStock(s);
+  }catch(err){
     const msg=String(err?.message||err);
-    renderLiveBeta({analysisStatus:'error',warnings:[msg],symbol:s},false);
-    clearLiveChart();
-    document.getElementById('price').textContent='—';
-    document.getElementById('priceDate').textContent='Live-Fehler';
-    document.getElementById('fvMetric').textContent='—';
-    document.getElementById('valuationMetric').textContent='—';
-    document.getElementById('fundNote').textContent='Analyse konnte nicht geladen werden: '+msg;
-    document.getElementById('chartNote').textContent='Kein Demo-Fallback. Fehler: '+msg;
-    setStatus('LIVE-FEHLER · '+msg);
+    console.error('JuKa select/load error:',err);
+    try{renderLiveBeta({analysisStatus:'error',warnings:[msg],symbol:s},false)}catch{}
+    try{clearLiveChart()}catch{}
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+    set('price','—');
+    set('priceDate','Live-Fehler');
+    set('fvMetric','—');
+    set('valuationMetric','—');
+    set('fundNote','Analyse konnte nicht geladen werden: '+msg);
+    set('chartNote','Kein Demo-Fallback. Fehler: '+msg);
+    set('liveMode','LIVE-FEHLER');
+    set('liveStatusText',msg);
+    try{setLiveCell('liveModeCell','bad')}catch{}
+    try{setStatus('LIVE-FEHLER · '+msg)}catch{}
   }
 }
 q.addEventListener('input',()=>render(q.value));q.addEventListener('focus',()=>render(q.value));q.addEventListener('keydown',e=>{if(e.key==='Enter'){const x=q.value.trim().toLowerCase();const hit=stocks.find(z=>z.s.toLowerCase()===x)||stocks.find(z=>[z.n,z.s,...(z.aliases||[])].join(' ').toLowerCase().includes(x));if(hit){e.preventDefault();select(hit.s);}}});
@@ -1032,6 +1049,18 @@ if(new URLSearchParams(location.search).get('selftest')==='1'){
 }
 
 
+function showHardBootError(prefix,err){
+  const msg=prefix+': '+String(err?.message||err||'Unbekannter Fehler');
+  console.error(msg,err);
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('liveMode','FRONTEND-FEHLER');
+  set('liveStatusText',msg);
+  set('priceDate',msg);
+  try{setLiveCell('liveModeCell','bad')}catch{}
+}
+window.addEventListener('error',ev=>showHardBootError('JS',ev.error||ev.message));
+window.addEventListener('unhandledrejection',ev=>showHardBootError('Promise',ev.reason));
+
 const JuKaStore={keyWatch:'juka.watchlist.v1',keySaved:'juka.saved.v1',read(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}},write(k,v){localStorage.setItem(k,JSON.stringify(v));return v},watch(){return this.read(this.keyWatch,[])},saved(){return this.read(this.keySaved,[])},toggleWatch(s){let a=this.watch(),i=a.indexOf(s);i>=0?a.splice(i,1):a.unshift(s);return this.write(this.keyWatch,[...new Set(a)].slice(0,30))},save(x){let a=this.saved().filter(v=>v.symbol!==x.symbol);a.unshift(x);return this.write(this.keySaved,a.slice(0,50))},removeSaved(s){return this.write(this.keySaved,this.saved().filter(x=>x.symbol!==s))}};
 function productToast(t){const e=document.getElementById('productToast');e.textContent=t;e.classList.add('show');clearTimeout(productToast.t);productToast.t=setTimeout(()=>e.classList.remove('show'),1400)}
 function currentStock(){return stocks.find(x=>x.s===activeSymbol)||stocks[0]}
@@ -1039,10 +1068,10 @@ function renderWatchlist(){const b=document.getElementById('watchStrip'),btn=doc
 function snapshotForSave(){const s=currentStock(),t=id=>document.getElementById(id)?.textContent||'—';return {symbol:s.s,name:s.n,price:t('price'),fair:t('fairValue')==='—'?t('fair'):t('fairValue'),quality:t('qualityScore'),model:t('motorModel'),risk:t('motorRisk'),savedAt:new Date().toISOString()}}
 function renderSaved(){const b=document.getElementById('savedGrid'),a=JuKaStore.saved();b.innerHTML=a.length?a.map(x=>`<div class="savedCard"><h4>${x.symbol} · ${x.name}</h4><p>Kurs: <b>${x.price}</b> · Fair Value: <b>${x.fair}</b></p><p>Modell: ${x.model} · Risiko: ${x.risk}</p><p>Stand: ${new Date(x.savedAt).toLocaleString('de-DE')}</p><div class="rowActions"><button class="productBtn" data-o="${x.symbol}">Öffnen</button><button class="productBtn" data-d="${x.symbol}">Löschen</button></div></div>`).join(''):'<p class="emptyWatch">Noch keine Analyse gespeichert.</p>';b.querySelectorAll('[data-o]').forEach(x=>x.onclick=()=>select(x.dataset.o));b.querySelectorAll('[data-d]').forEach(x=>x.onclick=()=>{JuKaStore.removeSaved(x.dataset.d);renderSaved();productToast('Analyse gelöscht')})}
 function productAfterStockChange(){renderWatchlist()}
-document.getElementById('watchBtn').onclick=()=>{JuKaStore.toggleWatch(currentStock().s);renderWatchlist();productToast('Watchlist aktualisiert')};
-document.getElementById('saveAnalysisBtn').onclick=()=>{JuKaStore.save(snapshotForSave());renderSaved();productToast('Analyse gespeichert')};
-document.getElementById('savedToggleBtn').onclick=()=>{document.getElementById('savedPanel').classList.toggle('open');renderSaved()};
-renderWatchlist();renderSaved();
+if(document.getElementById('watchBtn'))document.getElementById('watchBtn').onclick=()=>{JuKaStore.toggleWatch(currentStock().s);renderWatchlist();productToast('Watchlist aktualisiert')};
+if(document.getElementById('saveAnalysisBtn'))document.getElementById('saveAnalysisBtn').onclick=()=>{JuKaStore.save(snapshotForSave());renderSaved();productToast('Analyse gespeichert')};
+if(document.getElementById('savedToggleBtn'))document.getElementById('savedToggleBtn').onclick=()=>{document.getElementById('savedPanel').classList.toggle('open');renderSaved()};
+try{renderWatchlist();renderSaved();}catch(err){console.warn('JuKa localStorage UI skipped:',err);}
 
 function syncInvestmentSummary(){
   const get=id=>document.getElementById(id)?.textContent?.trim()||'—';
@@ -1067,15 +1096,7 @@ function installSummarySync(){
 }
 installSummarySync();
 
-window.addEventListener('error',ev=>{
-  console.error('JuKa Frontendfehler:',ev.error||ev.message);
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
-  set('liveMode','FRONTEND-FEHLER');
-  set('liveStatusText',String(ev.message||'Unbekannter JavaScript-Fehler'));
-  setLiveCell('liveModeCell','bad');
-});
-
-// Final startup action. Keeping this isolated means an optional module can no longer block the live call.
+// Hard bootstrap after UI setup. select() now catches its complete path.
 setTimeout(()=>{select('META');},0);
 </script>
 <div class="toast" id="productToast"></div></body></html>

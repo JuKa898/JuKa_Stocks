@@ -71,3 +71,14 @@ It first calls the exact compact `/api/analysis?...&summary=1` endpoint that was
 fair value, quality, multiples, current fundamentals, model readiness and risk immediately.
 Only after those numbers are visible does it request the real Twelve Data chart. A chart failure cannot hide the analysis.
 Both frontend requests now have explicit browser-side timeouts, so the UI cannot remain in an endless loading state.
+
+## 3.3.9 Hard Bootstrap
+Root cause confirmed from the frozen UI state: the header was partially reset by `prepareStock()`, but the page stayed at `Start`.
+That means the failure occurred before `loadLiveStock()` began. In older builds, `prepareStock()` was outside the try/catch and
+called optional Reality/Peer UI functions. An exception there rejected the async `select()` Promise silently.
+
+3.3.9 fixes the architecture:
+- the entire select/load path is caught;
+- prepareStock is DOM-only and cannot call optional model modules;
+- unhandled Promise rejections and JS errors are displayed in the live status;
+- watchlist/localStorage cannot block the bootstrap.
