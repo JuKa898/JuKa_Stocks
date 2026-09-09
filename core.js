@@ -41,7 +41,7 @@
     ];
     let total=0; const parts=[];
     for(const d of defs){
-      const v=Number(m[d.key]); const available=Number.isFinite(v); const raw=available?d.score(v):0; const weighted=raw*d.weight*10; total+=weighted;
+      const rawValue=m[d.key]; const v=(rawValue===null||rawValue===undefined||rawValue==='')?NaN:Number(rawValue); const available=Number.isFinite(v); const raw=available?d.score(v):0; const weighted=raw*d.weight*10; total+=weighted;
       let reason='nicht verfügbar'; if(available){reason=d.fmt==='x'?`${v.toFixed(1)}×`:d.fmt==='pp'?`${(v*100).toFixed(1)} pp`:`${(v*100).toFixed(1)}%`;}
       parts.push({key:d.key,label:d.label,value:available?v:null,weight:d.weight,rawScore:raw,weightedScore:weighted,max:d.weight*100,reason});
     }
@@ -153,7 +153,7 @@
     const recent=rows.slice(-5);
     const fields=['revenue','operatingIncome','netIncome','eps','fcf','shares','cash','debt','equity','capex'];
     let present=0,total=recent.length*fields.length;
-    recent.forEach(r=>fields.forEach(f=>{if(Number.isFinite(Number(r[f])))present++;}));
+    recent.forEach(r=>fields.forEach(f=>{const v=r[f];if(v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v)))present++;}));
     const coverage=total?present/total:0;
     const chronology=recent.every((r,i)=>i===0||!r.date||!recent[i-1].date||String(r.date)>=String(recent[i-1].date));
     const years=recent.length;
@@ -383,7 +383,11 @@
   }
   function qualityInputFromAnnual(annualFacts=[]){
     const rows=deriveFundamentals(annualFacts); const r=rows.at(-1); if(!r)return null;
-    return {roic:r.roic,ebitMargin:r.operatingMargin,revenueCagr5y:r.revenueCagr5y,fcfCagr5y:r.fcfCagr5y,fcfConversion:r.fcfConversion,sbcToRevenue:r.sbcToRevenue,netDebtToEbitda:r.netDebtToEbitda,interestCoverage:r.interestCoverage,dilutionPa:r.dilutionPa,roicTrend:r.roicTrend};
+    const hasCoverage=r.interestCoverage!==null&&r.interestCoverage!==undefined&&r.interestCoverage!==''&&Number.isFinite(Number(r.interestCoverage));
+    const interestCoverage=hasCoverage
+      ? Number(r.interestCoverage)
+      : (r.netDebt!==null&&r.netDebt!==undefined&&Number.isFinite(Number(r.netDebt))&&Number(r.netDebt)<=0?99:null);
+    return {roic:r.roic,ebitMargin:r.operatingMargin,revenueCagr5y:r.revenueCagr5y,fcfCagr5y:r.fcfCagr5y,fcfConversion:r.fcfConversion,sbcToRevenue:r.sbcToRevenue,netDebtToEbitda:r.netDebtToEbitda,interestCoverage,dilutionPa:r.dilutionPa,roicTrend:r.roicTrend};
   }
   function dcfInputFromAnnual(annualFacts=[],endIndex=null,assumptions={}){
     const rows=deriveFundamentals(annualFacts); if(!rows.length)return null; const i=endIndex==null?rows.length-1:clamp(Math.round(endIndex),0,rows.length-1), r=rows[i];
