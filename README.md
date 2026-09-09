@@ -82,3 +82,6 @@ called optional Reality/Peer UI functions. An exception there rejected the async
 - prepareStock is DOM-only and cannot call optional model modules;
 - unhandled Promise rejections and JS errors are displayed in the live status;
 - watchlist/localStorage cannot block the bootstrap.
+
+## Analysis 2.0 Reliable
+Summary-first plus non-blocking full enrichment; filing-aware fair-value roll-forward; expanded fundamentals; richer business profiles; debug collapsed.

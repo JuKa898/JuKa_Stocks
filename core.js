@@ -405,16 +405,38 @@
   }
   function buildHistoricalJukaFairSeries(priceRows,annualFacts,assumptions={}){
     if(!Array.isArray(priceRows)||!priceRows.length)return [];
-    const facts=deriveFundamentals(annualFacts); const dated=facts.map((x,i)=>({x,i,available:String(x.filed||x.date)})).sort((a,b)=>a.available.localeCompare(b.available));
+    const facts=deriveFundamentals(annualFacts);
+    const dated=facts.map((x,i)=>({x,i,available:String(x.filed||x.date)})).filter(x=>x.available).sort((a,b)=>a.available.localeCompare(b.available));
     const cache=new Map();
-    return priceRows.map(row=>{const d=String(row.date).slice(0,10);let chosen=null;for(const f of dated){if(f.available<=d)chosen=f;else break;} if(!chosen)return {...row,base:null,bear:null,bull:null,model:'none'};
-      if(!cache.has(chosen.i)){const inp=dcfInputFromAnnual(facts,chosen.i,assumptions),sc=inp?jukaDcfScenarios(inp):null;cache.set(chosen.i,{inp,sc});}
-      const {inp,sc}=cache.get(chosen.i); if(sc)return {...row,base:sc.base,bear:sc.bear,bull:sc.bull,model:'juka-10y',sourceFy:inp.sourceFy,availableFrom:inp.availableFrom};
-      const f=chosen.x,growth=Number.isFinite(f.revenueCagr3y)?clamp(f.revenueCagr3y,-.02,.22):n(assumptions.growth,.08),legacy=scenarioValues({fcf0:n(f.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:10,netCash:n(f.netCash),shares:n(f.shares)});
-      return {...row,base:legacy?.base??null,bear:legacy?.bear??null,bull:legacy?.bull??null,model:legacy?'fcf-fallback':'none',sourceFy:f.fy,availableFrom:f.filed||f.date};
+    function roll(v,rate,days){
+      if(!Number.isFinite(Number(v)))return null;
+      const r=Number.isFinite(Number(rate))?Number(rate):n(assumptions.wacc,.09);
+      return Number(v)*Math.pow(1+r,Math.max(0,days)/365.25);
+    }
+    return priceRows.map(row=>{
+      const d=String(row.date).slice(0,10);let chosen=null;
+      for(const f of dated){if(f.available<=d)chosen=f;else break;}
+      if(!chosen)return {...row,base:null,bear:null,bull:null,model:'none'};
+      if(!cache.has(chosen.i)){
+        const inp=dcfInputFromAnnual(facts,chosen.i,assumptions),sc=inp?jukaDcfScenarios(inp):null;
+        cache.set(chosen.i,{inp,sc});
+      }
+      const {inp,sc}=cache.get(chosen.i),available=inp?.availableFrom||chosen.available;
+      const days=Math.max(0,(Date.parse(d)-Date.parse(available))/86400000);
+      if(sc)return {...row,
+        base:roll(sc.base,sc.detail?.base?.wacc??inp.wacc,days),
+        bear:roll(sc.bear,sc.detail?.bear?.wacc??(inp.wacc+inp.bearWaccAdj),days),
+        bull:roll(sc.bull,sc.detail?.bull?.wacc??(inp.wacc+inp.bullWaccAdj),days),
+        model:'juka-10y',rollForward:true,sourceFy:inp.sourceFy,availableFrom:available};
+      const f=chosen.x,growth=Number.isFinite(f.revenueCagr3y)?clamp(f.revenueCagr3y,-.02,.22):n(assumptions.growth,.08);
+      const legacy=scenarioValues({fcf0:n(f.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:10,netCash:n(f.netCash),shares:n(f.shares)});
+      return {...row,
+        base:legacy?roll(legacy.base,n(assumptions.wacc,.09),days):null,
+        bear:legacy?roll(legacy.bear,n(assumptions.wacc,.09)+.015,days):null,
+        bull:legacy?roll(legacy.bull,Math.max(.001,n(assumptions.wacc,.09)-.01),days):null,
+        model:legacy?'fcf-fallback':'none',rollForward:!!legacy,sourceFy:f.fy,availableFrom:f.filed||f.date};
     });
   }
-
 
   // Bank / Insurance model ported from Excel Bank_Insurance.
   function jukaBankInsurance(input={}){
