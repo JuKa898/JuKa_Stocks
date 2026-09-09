@@ -71,3 +71,7 @@ Die Oberfläche hat jetzt eine Investment Summary mit Fair Value, Bewertungsabst
 
 ## Product 3.3 Live Beta
 Controlled live validation build. Shows provider/status/date/coverage/warnings for the existing /api/analysis pipeline. Secrets remain server-side. Also fixes the Product 3.1 watchlist/saved-analysis navigation handler.
+
+
+## Product 3.3.1 Live Fix
+Fixes live startup: `activeSymbol` is initialized before watchlist rendering, every stock selection updates it, and META is explicitly selected after all UI listeners are installed. This ensures the first `/api/analysis` request actually starts on page load.

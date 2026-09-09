@@ -1,6 +1,6 @@
 {
-  "name": "juka-stocks-product-3.3-live-beta",
-  "version": "3.3.0",
+  "name": "juka-stocks-product-3.3.1-live-fix",
+  "version": "3.3.1",
   "private": true,
   "scripts": {
     "test": "node tests/run-all.js",
