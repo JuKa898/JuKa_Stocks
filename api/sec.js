@@ -15,14 +15,32 @@ async function tickerMap(){
 function units(facts,tag,unit){return facts?.['us-gaap']?.[tag]?.units?.[unit]||[]}
 function annualRows(items){
   const priority={'10-K':4,'10-K/A':3,'20-F':2,'20-F/A':1},by={};
-  for(const x of items||[]){if(x.fy==null||!priority[x.form])continue;const k=String(x.fy),cur=by[k];if(!cur||priority[x.form]>priority[cur.form]||(priority[x.form]===priority[cur.form]&&String(x.filed)>String(cur.filed)))by[k]=x;}
-  return Object.values(by).sort((a,b)=>Number(a.fy)-Number(b.fy));
+  for(const x of items||[]){
+    if(!x.end||!priority[x.form])continue;
+    const k=String(x.end), endYear=Number(k.slice(0,4)), fy=Number(x.fy);
+    const distance=Number.isFinite(fy)?Math.abs(fy-endYear):99;
+    const cur=by[k];
+    const curFy=cur?Number(cur.fy):NaN, curDistance=cur&&Number.isFinite(curFy)?Math.abs(curFy-endYear):99;
+    const better=!cur
+      || distance<curDistance
+      || (distance===curDistance&&priority[x.form]>priority[cur.form])
+      || (distance===curDistance&&priority[x.form]===priority[cur.form]&&String(x.filed)>String(cur.filed));
+    if(better)by[k]=x;
+  }
+  return Object.values(by).sort((a,b)=>String(a.end).localeCompare(String(b.end)));
 }
 function candidates(facts,tags,unit){
-  const maps=tags.map(tag=>annualRows(units(facts,tag,unit))); const fys=[...new Set(maps.flat().map(x=>x.fy))].sort((a,b)=>a-b),out=[];
-  for(const fy of fys){for(const rows of maps){const x=rows.find(r=>String(r.fy)===String(fy));if(x){out.push(x);break;}}} return out;
+  const maps=tags.map(tag=>annualRows(units(facts,tag,unit)));
+  const dates=[...new Set(maps.flat().map(x=>x.end).filter(Boolean))].sort(),out=[];
+  for(const date of dates){
+    for(const rows of maps){
+      const x=rows.find(r=>String(r.end)===String(date));
+      if(x){out.push(x);break;}
+    }
+  }
+  return out;
 }
-function closest(rows,fy){return rows.find(x=>String(x.fy)===String(fy))||null}
+function closest(rows,date){return rows.find(x=>String(x.end)===String(date))||null}
 module.exports=async function handler(req,res){
   try{
     const resolved=Symbols.resolveSymbol({symbol:req.query?.symbol||'META',region:req.query?.region||'US',market_symbol:req.query?.market_symbol});
@@ -41,13 +59,15 @@ module.exports=async function handler(req,res){
     const pretax=candidates(f,['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'],'USD');
     const tax=candidates(f,['IncomeTaxExpenseBenefit'],'USD'),equity=candidates(f,['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],'USD');
     const ar=candidates(f,['AccountsReceivableNetCurrent','AccountsNotesAndLoansReceivableNetCurrent'],'USD'),inventory=candidates(f,['InventoryNet'],'USD'),ap=candidates(f,['AccountsPayableCurrent'],'USD');
-    const fys=[...new Set([rev,op,ni,cfo].flat().map(x=>x.fy))].sort((a,b)=>a-b); let priorNwc=null;
-    const annual=fys.map(fy=>{
-      const R=closest(rev,fy),O=closest(op,fy),N=closest(ni,fy),E=closest(eps,fy),C=closest(cfo,fy),X=closest(capex,fy),Ca=closest(cash,fy),Dc=closest(debtCur,fy),Dn=closest(debtNon,fy),S=closest(shares,fy),D=closest(da,fy),Sb=closest(sbc,fy),I=closest(interest,fy),P=closest(pretax,fy),T=closest(tax,fy),Eq=closest(equity,fy),Ar=closest(ar,fy),Inv=closest(inventory,fy),Ap=closest(ap,fy);
+    const periods=[...new Set([rev,op,ni,cfo].flat().map(x=>x.end).filter(Boolean))].sort(); let priorNwc=null;
+    const annual=periods.map(date=>{
+      const R=closest(rev,date),O=closest(op,date),N=closest(ni,date),E=closest(eps,date),C=closest(cfo,date),X=closest(capex,date),Ca=closest(cash,date),Dc=closest(debtCur,date),Dn=closest(debtNon,date),S=closest(shares,date),D=closest(da,date),Sb=closest(sbc,date),I=closest(interest,date),P=closest(pretax,date),T=closest(tax,date),Eq=closest(equity,date),Ar=closest(ar,date),Inv=closest(inventory,date),Ap=closest(ap,date);
       const revenue=R?.val??null,operatingIncome=O?.val??null,cfoVal=C?.val??null,capexVal=X?.val??null,fcf=(cfoVal!=null&&capexVal!=null)?cfoVal-capexVal:null,cashVal=Ca?.val??null,debt=(Dc?.val??0)+(Dn?.val??0);
       const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null,deltaNwc=(nwc!=null&&priorNwc!=null)?nwc-priorNwc:null; if(nwc!=null)priorNwc=nwc;
       const filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||R?.filed||O?.filed||N?.filed||null;
-      return {fy,date:R?.end||O?.end||N?.end,filed,revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo:cfoVal,capex:capexVal,fcf,cash:cashVal,debt,netCash:cashVal!=null?cashVal-debt:null,shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,nwc,deltaNwc};
+      const periodDate=R?.end||O?.end||N?.end||date;
+      const fy=Number(R?.fy??O?.fy??N?.fy??String(periodDate).slice(0,4));
+      return {fy,date:periodDate,filed,revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo:cfoVal,capex:capexVal,fcf,cash:cashVal,debt,netCash:cashVal!=null?cashVal-debt:null,shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,nwc,deltaNwc};
     }).filter(x=>x.date);
     for(let i=0;i<annual.length;i++){const x=annual[i];x.operatingMargin=(x.revenue&&x.operatingIncome!=null)?x.operatingIncome/x.revenue:null;x.fcfMargin=(x.revenue&&x.fcf!=null)?x.fcf/x.revenue:null;const p=i>=3?annual[i-3]:null;x.revenueCagr3y=(p?.revenue>0&&x.revenue>0)?Math.pow(x.revenue/p.revenue,1/(i-(i-3)))-1:null;}
     res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400'); return res.status(200).json({symbol,name:j.entityName||found.name,cik:found.cik,annual,source:'SEC companyfacts',engine:'fundamentals-v1'});
