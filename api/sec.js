@@ -17,14 +17,18 @@ function annualRows(items){
   const priority={'10-K':4,'10-K/A':3,'20-F':2,'20-F/A':1},by={};
   for(const x of items||[]){
     if(!x.end||!priority[x.form])continue;
+    if(x.start){
+      const days=(Date.parse(x.end)-Date.parse(x.start))/86400000;
+      if(!Number.isFinite(days)||days<300||days>430)continue;
+    }
     const k=String(x.end), endYear=Number(k.slice(0,4)), fy=Number(x.fy);
     const distance=Number.isFinite(fy)?Math.abs(fy-endYear):99;
     const cur=by[k];
     const curFy=cur?Number(cur.fy):NaN, curDistance=cur&&Number.isFinite(curFy)?Math.abs(curFy-endYear):99;
     const better=!cur
       || distance<curDistance
-      || (distance===curDistance&&priority[x.form]>priority[cur.form])
-      || (distance===curDistance&&priority[x.form]===priority[cur.form]&&String(x.filed)>String(cur.filed));
+      || (distance===curDistance&&String(x.filed)<String(cur.filed))
+      || (distance===curDistance&&String(x.filed)===String(cur.filed)&&priority[x.form]>priority[cur.form]);
     if(better)by[k]=x;
   }
   return Object.values(by).sort((a,b)=>String(a.end).localeCompare(String(b.end)));
@@ -33,10 +37,10 @@ function candidates(facts,tags,unit){
   const maps=tags.map(tag=>annualRows(units(facts,tag,unit)));
   const dates=[...new Set(maps.flat().map(x=>x.end).filter(Boolean))].sort(),out=[];
   for(const date of dates){
-    for(const rows of maps){
-      const x=rows.find(r=>String(r.end)===String(date));
-      if(x){out.push(x);break;}
-    }
+    const choices=maps.flatMap(rows=>rows.filter(r=>String(r.end)===String(date)));
+    if(!choices.length)continue;
+    choices.sort((a,b)=>String(a.filed).localeCompare(String(b.filed)));
+    out.push(choices[0]);
   }
   return out;
 }
@@ -66,7 +70,7 @@ module.exports=async function handler(req,res){
       const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null,deltaNwc=(nwc!=null&&priorNwc!=null)?nwc-priorNwc:null; if(nwc!=null)priorNwc=nwc;
       const filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||R?.filed||O?.filed||N?.filed||null;
       const periodDate=R?.end||O?.end||N?.end||date;
-      const fy=Number(R?.fy??O?.fy??N?.fy??String(periodDate).slice(0,4));
+      const fy=Number(String(periodDate).slice(0,4));
       return {fy,date:periodDate,filed,revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo:cfoVal,capex:capexVal,fcf,cash:cashVal,debt,netCash:cashVal!=null?cashVal-debt:null,shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,nwc,deltaNwc};
     }).filter(x=>x.date);
     for(let i=0;i<annual.length;i++){const x=annual[i];x.operatingMargin=(x.revenue&&x.operatingIncome!=null)?x.operatingIncome/x.revenue:null;x.fcfMargin=(x.revenue&&x.fcf!=null)?x.fcf/x.revenue:null;const p=i>=3?annual[i-3]:null;x.revenueCagr3y=(p?.revenue>0&&x.revenue>0)?Math.pow(x.revenue/p.revenue,1/(i-(i-3)))-1:null;}
