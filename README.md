@@ -64,3 +64,10 @@ The deployed UI no longer waits for the enormous full `/api/analysis` payload.
 It loads the compact `/api/analysis?...&summary=1` result and real Twelve Data history in parallel.
 The chart uses real daily prices. Bear/Base/Bull are current valuation reference lines only.
 Production no longer falls back to synthetic/demo charts if a live request fails.
+
+## 3.3.8 Summary First
+The visible dashboard no longer waits for chart history.
+It first calls the exact compact `/api/analysis?...&summary=1` endpoint that was manually validated live and renders price,
+fair value, quality, multiples, current fundamentals, model readiness and risk immediately.
+Only after those numbers are visible does it request the real Twelve Data chart. A chart failure cannot hide the analysis.
+Both frontend requests now have explicit browser-side timeouts, so the UI cannot remain in an endless loading state.

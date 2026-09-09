@@ -40,7 +40,7 @@ details[id]{scroll-margin-top:56px}
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Product 3.3.7 · Fast Live UI</span></div>
+  <div class="topbar"><div class="brand">JuKa <span>Stocks</span></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">Product 3.3.8 · Summary First</span></div>
 
   <div class="productBar"><div><strong>Meine Aktien</strong><div class="watchStrip" id="watchStrip"></div></div><div class="productActions"><button class="productBtn" id="watchBtn">☆ Watchlist</button><button class="productBtn" id="saveAnalysisBtn">Analyse speichern</button><button class="productBtn" id="savedToggleBtn">Gespeichert</button></div></div>
   <div class="savedPanel" id="savedPanel"><details open><summary>Gespeicherte Analysen</summary><div class="savedGrid" id="savedGrid"></div></details></div>
@@ -124,7 +124,7 @@ details[id]{scroll-margin-top:56px}
 
     <div class="analysisHeading">Unternehmen</div><div class="card business sectionCard" id="businessSection"><h3>Geschäftsmodell in 30 Sekunden</h3><p id="businessText"><strong>Meta Platforms</strong> betreibt mit Facebook, Instagram, Messenger, WhatsApp und Threads ein globales Ökosystem sozialer Apps. Der überwiegende Teil des Umsatzes entsteht durch digitale Werbung: Unternehmen bezahlen dafür, Nutzer innerhalb dieser Apps zielgerichtet zu erreichen. Daneben investiert Meta stark in KI, Recheninfrastruktur, Wearables sowie Virtual- und Augmented-Reality-Produkte.</p><span class="pill" id="businessSource">Kurzprofil · JuKa Stocks</span></div>
   </section>
-  <div class="footer">JuKa Stocks Product 3.3.7 Fast Live UI · Private Research Prototype · keine Anlageberatung</div>
+  <div class="footer">JuKa Stocks Product 3.3.8 Summary First · Private Research Prototype · keine Anlageberatung</div>
 </div>
 <script>
 (function(root,factory){
@@ -607,37 +607,27 @@ function clearLiveChart(){
   chartData=[];
   try{draw();}catch{}
 }
-function applyFastLiveSummary(symbol,summary,marketData){
+
+function applySummaryNumbers(symbol,summary){
   const z=stocks.find(x=>x.s===symbol)||{s:symbol,n:symbol,currency:summary.currency||'USD'};
-  activeCurrency=summary.currency||marketData?.meta?.currency||z.currency||'USD';
+  activeCurrency=summary.currency||z.currency||'USD';
 
-  const raw=(marketData?.values||[]).map(x=>({
-    date:new Date(String(x.datetime||x.date).slice(0,10)),
-    price:Number(x.close)
-  })).filter(x=>Number.isFinite(x.price)&&!Number.isNaN(x.date.getTime()))
-    .sort((a,b)=>a.date-b.date);
-
-  if(!raw.length)throw new Error('Keine echten Kursdaten erhalten.');
-
+  const fact=summary.latest||{};
+  const price=Number(summary.price);
   const fair=Number(summary.valuation?.base),bear=Number(summary.valuation?.bear),bull=Number(summary.valuation?.bull);
-  // Current valuation references only. We deliberately do NOT invent historical fair values.
-  chartData=raw.map(x=>({...x,base:Number.isFinite(fair)?fair:null,bear:Number.isFinite(bear)?bear:null,bull:Number.isFinite(bull)?bull:null}));
+  const vp=JuKaCore.valuationPct(price,Number.isFinite(fair)?fair:null);
 
-  const last=chartData.at(-1), fact=summary.latest||{}, price=Number(summary.price);
-  const shownPrice=Number.isFinite(price)?price:last.price;
-  const vp=JuKaCore.valuationPct(shownPrice,Number.isFinite(fair)?fair:null);
-
-  document.getElementById('price').textContent=money(shownPrice);
-  document.getElementById('priceDate').textContent='Aktienkurs · Stand '+fmtLiveDate(summary.marketAsOf||last.date);
+  document.getElementById('price').textContent=Number.isFinite(price)?money(price):'—';
+  document.getElementById('priceDate').textContent='Aktienkurs · Stand '+fmtLiveDate(summary.marketAsOf);
   document.getElementById('name').textContent=z.n||symbol;
   document.getElementById('symbol').textContent=symbol;
   updateBusiness(z);
-  document.getElementById('market').textContent=[marketData?.meta?.exchange,activeCurrency,'LIVE'].filter(Boolean).join(' · ');
+  document.getElementById('market').textContent=['NASDAQ',activeCurrency,'LIVE'].filter(Boolean).join(' · ');
 
   document.getElementById('fvMetric').textContent=Number.isFinite(fair)?money(fair):'—';
   document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
 
-  const revenue=Number(fact.revenue), op=Number(fact.operatingIncome);
+  const revenue=Number(fact.revenue),op=Number(fact.operatingIncome);
   document.getElementById('revenueMetric').textContent=fmtBig(revenue);
   document.getElementById('ebitMetric').textContent=fmtBig(op);
   document.getElementById('marginMetric').textContent=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(op)?fmtPctMaybe(op/revenue):'—';
@@ -655,16 +645,15 @@ function applyFastLiveSummary(symbol,summary,marketData){
     document.getElementById('scoreBreakdown').innerHTML=(qs.parts||[]).map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${p.value==null?'n/v':p.rawScore+'/10 · '+p.reason}</strong></div>`).join('');
   }
 
-  // Fill current DCF scenario cards.
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('bearModel',Number.isFinite(bear)?money(bear):'—');
   set('baseModel',Number.isFinite(fair)?money(fair):'—');
   set('bullModel',Number.isFinite(bull)?money(bull):'—');
 
-  // Compact motor audit from summary response.
   set('motorModel',summary.model||'—');
   set('motorReady',summary.modelReady?'vollständig':'unvollständig');
   set('motorRisk',summary.riskAudit?.severity||'—');
+
   const audit=document.getElementById('motorAuditTable');
   if(audit) audit.innerHTML='<thead><tr><th>Audit</th><th>Ergebnis</th></tr></thead><tbody>'+
     `<tr><td>Pipeline</td><td>${summary.analysisStatus||'—'}</td></tr>`+
@@ -672,44 +661,95 @@ function applyFastLiveSummary(symbol,summary,marketData){
     `<tr><td>Datenqualität</td><td>${summary.dataQuality?.score??'—'}/100 · ${summary.dataQuality?.label||''}</td></tr>`+
     `<tr><td>Risiko</td><td>${summary.riskAudit?.severity||'—'}</td></tr></tbody>`;
 
-  // Historical fundamentals need the full payload, so state that clearly instead of showing fake/demo data.
   document.getElementById('fundamentalHistory').innerHTML=`<tr><td>${fact.fy??'—'}</td><td>${fmtBig(revenue)}</td><td>${Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(op)?fmtPctMaybe(op/revenue):'—'}</td><td>${fmtBig(Number(fact.fcf))}</td><td>${Number.isFinite(Number(fact.eps))?money(Number(fact.eps)):'—'}</td><td>—</td><td>—</td><td>${fmtLiveDate(fact.filed)}</td></tr>`;
   document.getElementById('historySource').textContent='Quelle: '+(summary.provenance?.fundamentals?.source||'SEC/Alpha Vantage');
   document.getElementById('historyAvailability').textContent='Schnellmodus: aktuelles Geschäftsjahr';
   document.getElementById('historyCoverage').textContent='Datenqualität: '+(summary.dataQuality?.score??'—')+'/100';
 
-  document.getElementById('fundNote').textContent='Live-Fundamentaldaten und JuKa-Bewertung aus der kompakten Analyse-Pipeline.';
-  document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse von Twelve Data. Bear/Base/Bull sind die aktuell berechneten Bewertungsniveaus und werden als horizontale Referenzlinien gezeigt; es werden keine historischen Fair Values erfunden.';
-  setStatus('LIVE · Fast UI',true);
+  document.getElementById('fundNote').textContent='Live-Fundamentaldaten und JuKa-Bewertung geladen.';
   renderLiveBeta(summary,true);
-  draw();
+  setStatus('LIVE');
   syncInvestmentSummary();
+
+  return {fair,bear,bull};
 }
 
-async function fetchJson(url,label){
-  const r=await fetch(url,{cache:'no-store'});
-  const text=await r.text();
-  let data;
-  try{data=JSON.parse(text)}catch{throw new Error(label+' lieferte kein gültiges JSON (HTTP '+r.status+').')}
-  if(!r.ok)throw new Error(data?.error||label+' fehlgeschlagen (HTTP '+r.status+').');
-  return data;
+function applyRealMarketChart(marketData,levels){
+  const raw=(marketData?.values||[]).map(x=>({
+    date:new Date(String(x.datetime||x.date).slice(0,10)),
+    price:Number(x.close)
+  })).filter(x=>Number.isFinite(x.price)&&!Number.isNaN(x.date.getTime()))
+    .sort((a,b)=>a.date-b.date);
+
+  if(!raw.length)throw new Error('Keine echten Kursdaten erhalten.');
+
+  const {fair,bear,bull}=levels;
+  chartData=raw.map(x=>({
+    ...x,
+    base:Number.isFinite(fair)?fair:null,
+    bear:Number.isFinite(bear)?bear:null,
+    bull:Number.isFinite(bull)?bull:null
+  }));
+
+  document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse von Twelve Data. Bear/Base/Bull = aktuell berechnete Bewertungsniveaus als horizontale Referenzlinien.';
+  draw();
+}
+
+async function fetchJson(url,label,timeoutMs=15000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    const r=await fetch(url,{cache:'no-store',signal:controller.signal});
+    const text=await r.text();
+    let data;
+    try{data=JSON.parse(text)}catch{throw new Error(label+' lieferte kein gültiges JSON (HTTP '+r.status+').')}
+    if(!r.ok)throw new Error(data?.error||label+' fehlgeschlagen (HTTP '+r.status+').');
+    return data;
+  }catch(err){
+    if(err?.name==='AbortError')throw new Error(label+' Timeout nach '+Math.round(timeoutMs/1000)+' Sekunden.');
+    throw err;
+  }finally{
+    clearTimeout(timer);
+  }
 }
 
 async function loadLiveStock(symbol){
   if(!LIVE_CAPABLE)throw new Error('Live-APIs sind erst nach Deployment verfügbar.');
-  setStatus('Live-Daten werden geladen…');
+  setStatus('Analyse wird geladen…');
+
   const z=stocks.find(x=>x.s===symbol)||{s:symbol,region:'US',marketSymbol:symbol,currency:'USD'};
   const params=new URLSearchParams({
-    symbol:z.s,region:z.region||'US',currency:z.currency||'USD',
-    market_symbol:z.marketSymbol||z.s,name:z.n||z.s,
-    model:z.valuationModel||'',sector:z.sector||'',summary:'1'
+    symbol:z.s,
+    region:z.region||'US',
+    currency:z.currency||'USD',
+    market_symbol:z.marketSymbol||z.s,
+    name:z.n||z.s,
+    model:z.valuationModel||'',
+    sector:z.sector||'',
+    summary:'1'
   });
-  const marketParams=new URLSearchParams({symbol:z.marketSymbol||z.s,region:z.region||'US'});
-  const [summary,marketData]=await Promise.all([
-    fetchJson('/api/analysis?'+params.toString(),'Analyse'),
-    fetchJson('/api/market?'+marketParams.toString(),'Kursdaten')
-  ]);
-  applyFastLiveSummary(symbol,summary,marketData);
+
+  // CRITICAL: show numbers FIRST. This is the exact compact endpoint already validated manually.
+  const summary=await fetchJson('/api/analysis?'+params.toString(),'Analyse',20000);
+  const levels=applySummaryNumbers(symbol,summary);
+
+  // Chart is secondary and must never block the visible analysis.
+  setStatus('LIVE · Chart wird geladen…');
+  const marketParams=new URLSearchParams({
+    symbol:z.marketSymbol||z.s,
+    region:z.region||'US',
+    start_date:'2021-09-01'
+  });
+
+  try{
+    const marketData=await fetchJson('/api/market?'+marketParams.toString(),'Kurschart',15000);
+    applyRealMarketChart(marketData,levels);
+    setStatus('LIVE');
+  }catch(chartErr){
+    clearLiveChart();
+    document.getElementById('chartNote').textContent='Analyse ist live. Der Kurschart konnte separat nicht geladen werden: '+String(chartErr?.message||chartErr);
+    setStatus('LIVE · Chart-Fehler');
+  }
 }
 
 
@@ -903,9 +943,11 @@ async function select(s){activeSymbol=s;const z=stocks.find(x=>x.s===s)||{s,n:s,
     clearLiveChart();
     document.getElementById('price').textContent='—';
     document.getElementById('priceDate').textContent='Live-Fehler';
-    document.getElementById('fundNote').textContent='Live-Daten konnten nicht geladen werden: '+msg;
-    document.getElementById('chartNote').textContent='Kein Demo-Fallback: Bei Live-Fehlern zeigt JuKa Stocks bewusst keine erfundenen Kurs- oder Fair-Value-Daten.';
-    setStatus('LIVE-FEHLER');
+    document.getElementById('fvMetric').textContent='—';
+    document.getElementById('valuationMetric').textContent='—';
+    document.getElementById('fundNote').textContent='Analyse konnte nicht geladen werden: '+msg;
+    document.getElementById('chartNote').textContent='Kein Demo-Fallback. Fehler: '+msg;
+    setStatus('LIVE-FEHLER · '+msg);
   }
 }
 q.addEventListener('input',()=>render(q.value));q.addEventListener('focus',()=>render(q.value));q.addEventListener('keydown',e=>{if(e.key==='Enter'){const x=q.value.trim().toLowerCase();const hit=stocks.find(z=>z.s.toLowerCase()===x)||stocks.find(z=>[z.n,z.s,...(z.aliases||[])].join(' ').toLowerCase().includes(x));if(hit){e.preventDefault();select(hit.s);}}});
