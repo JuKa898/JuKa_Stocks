@@ -21,16 +21,37 @@ async function secTickerMap(){
 }
 function units(facts,tag,unit){return facts?.['us-gaap']?.[tag]?.units?.[unit]||[]}
 function annualRows(items){
-  const p={'10-K':4,'10-K/A':3,'20-F':2,'20-F/A':1},by={};
-  for(const x of items||[]){if(x.fy==null||!p[x.form])continue;const k=String(x.fy),c=by[k];if(!c||p[x.form]>p[c.form]||(p[x.form]===p[c.form]&&String(x.filed)>String(c.filed)))by[k]=x;}
-  return Object.values(by).sort((a,b)=>Number(a.fy)-Number(b.fy));
+  const priority={'10-K':4,'10-K/A':3,'20-F':2,'20-F/A':1},by={};
+  for(const x of items||[]){
+    if(!x.end||!priority[x.form])continue;
+    if(x.start){
+      const days=(Date.parse(x.end)-Date.parse(x.start))/86400000;
+      if(!Number.isFinite(days)||days<300||days>430)continue;
+    }
+    const k=String(x.end),endYear=Number(k.slice(0,4)),fy=Number(x.fy);
+    const distance=Number.isFinite(fy)?Math.abs(fy-endYear):99;
+    const cur=by[k],curFy=cur?Number(cur.fy):NaN;
+    const curDistance=cur&&Number.isFinite(curFy)?Math.abs(curFy-endYear):99;
+    const better=!cur
+      || distance<curDistance
+      || (distance===curDistance&&String(x.filed)<String(cur.filed))
+      || (distance===curDistance&&String(x.filed)===String(cur.filed)&&priority[x.form]>priority[cur.form]);
+    if(better)by[k]=x;
+  }
+  return Object.values(by).sort((a,b)=>String(a.end).localeCompare(String(b.end)));
 }
 function candidates(facts,tags,unit){
-  const maps=tags.map(t=>annualRows(units(facts,t,unit))),fys=[...new Set(maps.flat().map(x=>x.fy))].sort((a,b)=>a-b),o=[];
-  for(const fy of fys){for(const rows of maps){const x=rows.find(r=>String(r.fy)===String(fy));if(x){o.push(x);break;}}}
-  return o;
+  const maps=tags.map(tag=>annualRows(units(facts,tag,unit)));
+  const dates=[...new Set(maps.flat().map(x=>x.end).filter(Boolean))].sort(),out=[];
+  for(const date of dates){
+    const choices=maps.flatMap(rows=>rows.filter(r=>String(r.end)===String(date)));
+    if(!choices.length)continue;
+    choices.sort((a,b)=>String(a.filed).localeCompare(String(b.filed)));
+    out.push(choices[0]);
+  }
+  return out;
 }
-function closest(rows,fy){return rows.find(x=>String(x.fy)===String(fy))||null}
+function closest(rows,date){return rows.find(x=>String(x.end)===String(date))||null}
 
 async function secAdapter(stock){
   const resolved=Symbols.resolveSymbol(stock);
@@ -61,14 +82,27 @@ async function secAdapter(stock){
     inv:candidates(f,['InventoryNet'],'USD'),
     ap:candidates(f,['AccountsPayableCurrent'],'USD')
   };
-  const fys=[...new Set(Object.values(sets).flat().map(x=>x.fy))].sort((a,b)=>a-b);let priorNwc=null;
-  const annual=fys.map(fy=>{
-    const g=k=>closest(sets[k],fy),R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
-    const revenue=R?.val??null,cfo=C?.val??null,capex=X?.val??null,cash=Ca?.val??null,debt=(Dc?.val??0)+(Dn?.val??0);
-    const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null,deltaNwc=nwc!=null&&priorNwc!=null?nwc-priorNwc:null;if(nwc!=null)priorNwc=nwc;
-    return {fy,date:R?.end||O?.end||N?.end,filed:[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null,revenue,operatingIncome:O?.val??null,netIncome:N?.val??null,eps:E?.val??null,cfo,capex,fcf:cfo!=null&&capex!=null?cfo-capex:null,cash,debt,shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,deltaNwc};
+  const periods=[...new Set([sets.rev,sets.op,sets.ni,sets.cfo].flat().map(x=>x.end).filter(Boolean))].sort();
+  let priorNwc=null;
+  const annual=periods.map(date=>{
+    const g=k=>closest(sets[k],date);
+    const R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
+    const revenue=R?.val??null,operatingIncome=O?.val??null,cfo=C?.val??null,capex=X?.val??null;
+    const cash=Ca?.val??null,debt=(Dc?.val??0)+(Dn?.val??0);
+    const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null;
+    const deltaNwc=nwc!=null&&priorNwc!=null?nwc-priorNwc:null;
+    if(nwc!=null)priorNwc=nwc;
+    const filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
+    const periodDate=R?.end||O?.end||N?.end||date;
+    return {
+      fy:Number(String(periodDate).slice(0,4)),date:periodDate,filed,
+      revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo,capex,
+      fcf:cfo!=null&&capex!=null?cfo-capex:null,cash,debt,netCash:cash!=null?cash-debt:null,
+      shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,interestExpense:I?.val??null,
+      pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,nwc,deltaNwc
+    };
   }).filter(x=>x.date);
-  return {symbol:stock.s,name:j.entityName||found.name,annual,source:'SEC companyfacts'};
+  return {symbol:stock.s,name:j.entityName||found.name,annual,source:'SEC companyfacts',status:'ok'};
 }
 
 async function fundamentalsAdapter(stock){
@@ -95,7 +129,33 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
+    out.engineVersion='3.3.5-live-integrity';
     res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400');
+    if(String(q.summary||'')==='1'){
+      const l=out.latest||{};
+      return res.status(200).json({
+        engineVersion:out.engineVersion,
+        symbol:out.stock?.s,
+        analysisStatus:out.analysisStatus,
+        valuationStatus:out.valuationStatus,
+        model:out.model,
+        modelReady:out.modelReadiness?.ready,
+        price:out.price,
+        currency:out.currency,
+        marketAsOf:out.market?.asOf,
+        fundamentalsAsOf:out.fundamentals?.asOf,
+        latest:{fy:l.fy,date:l.date,filed:l.filed,revenue:l.revenue,operatingIncome:l.operatingIncome,netIncome:l.netIncome,eps:l.eps,cfo:l.cfo,capex:l.capex,fcf:l.fcf,cash:l.cash,debt:l.debt,netCash:l.netCash,shares:l.shares},
+        quality:out.quality?{score:out.quality.score,grade:out.quality.grade,label:out.quality.label,parts:out.quality.parts}:null,
+        valuation:out.valuation?{bear:out.valuation.bear,base:out.valuation.base,bull:out.valuation.bull}:null,
+        relative:out.relative,
+        reality:out.reality,
+        riskAudit:out.riskAudit,
+        dataQuality:out.dataQuality,
+        autoAssumptions:out.autoAssumptions?.assumptions||null,
+        warnings:out.warnings,
+        provenance:out.provenance
+      });
+    }
     return res.status(200).json(out);
   }catch(e){
     const status=e.httpStatus||(e.code==='NO_MARKET_KEY'?503:e.code==='NO_MARKET_DATA'?404:502);
