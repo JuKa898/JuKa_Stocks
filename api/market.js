@@ -14,7 +14,8 @@ module.exports = async function handler(req,res){
     if(action==='search'){
       url=new URL(base+'/symbol_search'); url.searchParams.set('symbol',query||symbol); url.searchParams.set('outputsize','12');
     }else{
-      url=new URL(base+'/time_series'); url.searchParams.set('symbol',resolved.marketSymbol); url.searchParams.set('interval','1day'); url.searchParams.set('adjust','all'); url.searchParams.set('outputsize','5000');
+      url=new URL(base+'/time_series'); url.searchParams.set('symbol',resolved.marketSymbol); url.searchParams.set('interval','1day'); url.searchParams.set('adjust','all');
+      url.searchParams.set('outputsize',start_date?'1500':'5000');
       if(start_date)url.searchParams.set('start_date',start_date); if(end_date)url.searchParams.set('end_date',end_date);
     }
     const r=await fetchWithTimeout(url,{headers:{Authorization:`apikey ${key}`}}); const data=await r.json();
