@@ -1,6 +1,6 @@
 {
   "name": "juka-3-live",
-  "version": "3.0.3",
+  "version": "3.0.4-1",
   "private": true,
   "engines": {
     "node": ">=18"

@@ -108,6 +108,44 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
 .performanceEmpty{font-size:11px;fill:#77827c}
 @media(max-width:700px){.performanceHeader{flex-direction:column}.performanceTabs{justify-content:flex-start}.performanceChartWrap{height:160px}#performanceChart{height:152px}}
 
+
+/* JUKA 3.0 Paket 6.4 — institutional UX refinement */
+.watchlistBar{display:flex;justify-content:flex-end;padding:10px 0 8px;border-bottom:1px solid var(--line)}
+.watchlistControl{position:relative}.watchlistMainBtn{background:#fff;border:1px solid #cfd6d1;color:#26342d;border-radius:2px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer}
+.watchlistMainBtn:hover,.watchlistMainBtn[aria-expanded="true"]{border-color:#87958d;background:#f8f9f7}
+.watchlistMenu{position:absolute;right:0;top:calc(100% + 6px);width:280px;background:#fff;border:1px solid #cfd6d1;box-shadow:0 12px 28px rgba(24,40,31,.12);z-index:40;display:none;padding:7px}
+.watchlistMenu.open{display:block}.watchlistMenuAction{width:100%;text-align:left;background:transparent;border:0;padding:9px 10px;font-size:11px;color:#26342d;cursor:pointer}
+.watchlistMenuAction:hover,.watchlistMenuItem:hover{background:#f3f5f3}.watchlistMenuDivider{height:1px;background:#e3e7e4;margin:4px 0}
+.watchlistMenuTitle{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#7c8680;padding:7px 10px 5px}.watchlistMenuList{max-height:240px;overflow:auto}
+.watchlistMenuItem{display:flex;justify-content:space-between;gap:10px;width:100%;border:0;background:transparent;padding:8px 10px;text-align:left;cursor:pointer;color:#2a3730}
+.watchlistMenuItem b{font-size:11px}.watchlistMenuItem span{font-size:10px;color:#7a847e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.watchlistEmpty{padding:9px 10px;font-size:10px;color:#7a847e}
+.productBar,.savedPanel,.watchStrip,.perfCell{display:none!important}
+
+.sectionNav{gap:18px;padding:11px 0}.sectionNav a{padding:5px 0;border:0!important;background:transparent!important;font-size:11px;font-weight:700;color:#67736c}.sectionNav a:hover{color:#1e2c25}
+
+.methodologyCard{grid-column:span 12!important;padding:0!important}
+.methodologyDetails{border:0;padding-bottom:10px}
+.methodologySummary{display:flex!important;justify-content:space-between;align-items:center;padding:17px 20px!important;border:0!important}
+.methodologySummary span{font-family:Georgia,"Times New Roman",serif;font-size:20px;font-weight:600;color:#233029}
+.methodologySummary small{font-size:10px;font-weight:500;color:#7b8580}
+.methodologyDetails[open] .methodologySummary{border-bottom:1px solid #e2e6e3!important}
+.methodologyDetails>p,.methodologyDetails>.auditGrid,.methodologyDetails>.profileGrid,.methodologyDetails>.modelGrid,.methodologyDetails>.methodDivider{margin-left:20px;margin-right:20px}
+.methodologyDetails>p{margin-top:16px}
+
+.institutionalForecast{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 16px}
+.institutionalForecast .forecastChartCard{background:#fff;border:1px solid #dfe4e0;padding:12px 12px 8px;min-height:166px}
+.forecastChartHead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.forecastChartHead span{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#707b75}
+.forecastChartHead b{font-family:Georgia,"Times New Roman",serif;font-size:14px;font-weight:600;color:#26342d}
+.forecastMiniSvg{width:100%;height:126px;display:block;overflow:visible}
+.forecastGridLine{stroke:#e4e8e5;stroke-width:1}.forecastZeroLine{stroke:#aeb8b2;stroke-width:1}
+.forecastSvgBar{fill:#3d6854}.forecastSvgBar.negative{fill:#9b514b}
+.forecastSvgLabel{font-size:9px;fill:#7a847e}.forecastSvgValue{font-size:8px;fill:#59655f}
+
+#valuationSection .chartWrap{height:330px}#valuationChart{height:330px}
+@media(max-width:1000px){.institutionalForecast{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.institutionalForecast{grid-template-columns:1fr}.methodologySummary{align-items:flex-start;flex-direction:column;gap:4px}}
+
 </style>
 <!-- Legacy regression marker: MVP 1.4 -->
 </head>
@@ -124,8 +162,17 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
     </div>
   </header>
 
-  <div class="productBar"><div><strong>Meine Aktien</strong><div class="watchStrip" id="watchStrip"></div></div><div class="productActions"><button class="productBtn" id="watchBtn">☆ Watchlist</button><button class="productBtn" id="saveAnalysisBtn">Analyse speichern</button><button class="productBtn" id="savedToggleBtn">Gespeichert</button></div></div>
-  <div class="savedPanel" id="savedPanel"><details open><summary>Gespeicherte Analysen</summary><div class="savedGrid" id="savedGrid"></div></details></div>
+  <div class="watchlistBar">
+    <div class="watchlistControl">
+      <button class="watchlistMainBtn" id="watchMenuBtn" aria-expanded="false">☆ Watchlist</button>
+      <div class="watchlistMenu" id="watchMenu">
+        <button class="watchlistMenuAction" id="watchToggleCurrent">+ In Watchlist speichern</button>
+        <div class="watchlistMenuDivider"></div>
+        <div class="watchlistMenuTitle">Zur Watchlist</div>
+        <div class="watchlistMenuList" id="watchMenuList"></div>
+      </div>
+    </div>
+  </div>
 
   <section class="hero">
     <div class="companyIdentity">
@@ -167,14 +214,6 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
       <div class="performanceTooltip" id="performanceTooltip"></div>
     </div>
   </section>
-
-    <div class="perfCell"><span>1W</span><b id="obsolete-perf1w">—</b></div>
-    <div class="perfCell"><span>1M</span><b id="obsolete-perf1m">—</b></div>
-    <div class="perfCell"><span>3M</span><b id="obsolete-perf3m">—</b></div>
-    <div class="perfCell"><span>1J</span><b id="obsolete-perf1y">—</b></div>
-    <div class="perfCell"><span>3J</span><b id="obsolete-perf3y">—</b></div>
-    <div class="perfCell"><span>Max</span><b id="obsolete-perfMax">—</b></div>
-  </div>
   <div class="investmentSummary" id="investmentSummary">
     <div class="summarySignal"><span>JUKA Fair Value</span><b id="summaryFair">—</b><small id="summaryFairNote">Base-Szenario</small></div>
     <div class="summarySignal"><span>Bewertung</span><b id="summaryValuation">—</b><small>Kurs vs. Fair Value</small></div>
@@ -183,60 +222,19 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
     <div class="summarySignal"><span>Modell</span><b id="summaryModel">—</b><small id="summaryReadiness">Readiness —</small></div>
   </div>
   <nav class="sectionNav" aria-label="Analyseabschnitte">
-    <a href="#valuationSection">Valuation</a>
-    <a href="#qualitySection">Quality</a>
-    <a href="#fundamentalsSection">Fundamentals</a>
     <a href="#businessSection">Business</a>
-    <a href="#methodologySection">Methodik & Daten</a>
-    <a href="#historyDetails">Historie</a>
+    <a href="#qualitySection">Quality</a>
+    <a href="#valuationSection">Valuation</a>
+    <a href="#fundamentalsSection">Fundamentals</a>
+    <a href="#methodologySection">Methodology & Data</a>
   </nav>
 
   <section class="grid" id="dashboard">
-    <div class="analysisHeading">Valuation</div><div class="card chartCard sectionCard" id="valuationSection"><div class="chartToolbar"><div><h3 style="margin-bottom:3px">Aktienkurs & JUKA Fair Value</h3><div class="note" id="periodLabel">Historische Ansicht · 5 Jahre</div></div><div class="periods" aria-label="Zeitraum auswählen"><button class="periodBtn" data-period="1Y">1J</button><button class="periodBtn" data-period="3Y">3J</button><button class="periodBtn active" data-period="5Y">5J</button><button class="periodBtn" data-period="MAX">Max</button></div></div>
-      <div class="chartWrap"><svg id="valuationChart" viewBox="0 0 760 350" role="img" aria-label="Aktienkurs mit Fair Value, Bear-Fair-Value und Bull-Fair-Value"></svg><div id="chartTooltip" class="chartTooltip"></div></div>
-      <div class="legend"><span><i class="dot" style="background:#76b7ff"></i>Aktienkurs</span><span><i class="dot" style="background:#111"></i>JUKA Fair Value</span><span><i class="dot" style="background:#ff8a8a"></i>Bear-Fair-Value</span><span><i class="dot" style="background:#ffd36a"></i>Bull-Fair-Value</span></div>
-      <div class="note" id="chartNote">Demo-Modus. Nach kostenlosem Vercel-Deployment mit Twelve-Data-Key werden echte Tageskurse geladen; US-Fundamentaldaten kommen serverseitig aus der SEC und speisen den historischen DCF.</div>
-      <div class="valuationDetails">
-        <div class="modelBox" id="modelBox"><details><summary>Bewertungsmodell & Annahmen</summary>
-        <div class="modelGrid">
-          <div class="modelField"><label>Umsatzwachstum Jahr 1</label><input id="dcfG1" type="number" step="0.5" value="18"><span class="note">%</span></div>
-          <div class="modelField"><label>Umsatzwachstum Jahr 5</label><input id="dcfG5" type="number" step="0.5" value="10"><span class="note">%</span></div>
-          <div class="modelField"><label>Ziel-EBIT-Marge Jahr 5</label><input id="dcfMargin5" type="number" step="0.5" value="40"><span class="note">%</span></div>
-          <div class="modelField"><label>WACC</label><input id="dcfWacc" type="number" step="0.1" value="9.5"><span class="note">%</span></div>
-          <div class="modelField"><label>Terminalwachstum</label><input id="dcfTg" type="number" step="0.1" value="3"><span class="note">%</span></div>
-        </div>
-        <div class="scenarioStrip"><div class="scenario"><span>Bear-Fair-Value</span><strong class="red" id="bearModel">$400.16</strong></div><div class="scenario"><span>Fair Value</span><strong class="green" id="baseModel">$654.43</strong></div><div class="scenario"><span>Bull-Fair-Value</span><strong class="gold" id="bullModel">$1,011.57</strong></div></div>
-        <div class="modelAudit"><div class="auditItem">Terminalanteil EV<b id="terminalShare">61.9%</b></div><div class="auditItem">KGV beim Fair Value<b id="fairPe">24.7×</b></div><div class="auditItem">EPS-Wachstum bis J5<b id="epsGrowth5">11.1% p.a.</b></div></div>
-        <p class="note">Diese fünf Felder sind editierbar. Berechnung: dein 10-Jahres-FCFF-DCF mit automatischem Fade, Bear/Base/Bull-Szenarien und Terminal-Reinvestment g/ROIC.</p>
-      </details></div>
-        <details id="scenarioForecastDetails" open><summary>Bear / Base / Bull</summary>
-<div class="modelAudit">
-  <div class="auditItem">Bear Rendite p.a.<b id="scenarioBearReturn">—</b></div>
-  <div class="auditItem">Base Rendite p.a.<b id="scenarioBaseReturn">—</b></div>
-  <div class="auditItem">Bull Rendite p.a.<b id="scenarioBullReturn">—</b></div>
-</div>
-<div class="historyWrap"><table class="historyTable" id="scenarioTable"></table></div>
-<div class="historyWrap"><table class="historyTable" id="returnMatrixTable"></table></div>
-<p class="note" id="scenarioNote">Bear/Base/Bull verändern Wachstum, Margen, Verwässerung und Exit-Multiple. Die Matrix zeigt bewusst mehrere Pfade statt eines einzelnen Punktwerts.</p>
-</details>
-        <details id="forecastDetails" open><summary>5-Jahres-Ausblick</summary>
-<div class="forecastCharts" id="forecastCharts">
-  <div class="forecastChartCard"><div class="forecastChartTitle">Umsatz</div><div class="forecastBars" id="forecastRevenueBars"></div></div>
-  <div class="forecastChartCard"><div class="forecastChartTitle">EPS</div><div class="forecastBars" id="forecastEpsBars"></div></div>
-  <div class="forecastChartCard"><div class="forecastChartTitle">Free Cashflow</div><div class="forecastBars" id="forecastFcfBars"></div></div>
-  <div class="forecastChartCard"><div class="forecastChartTitle">EBIT-Marge</div><div class="forecastBars" id="forecastMarginBars"></div></div>
-</div><div class="modelAudit"><div class="auditItem">Umsatzwachstum 5J<b id="forecastRevenueGrowth">—</b></div><div class="auditItem">EPS-Wachstum 5J<b id="forecastEpsGrowth">—</b></div><div class="auditItem">FCF-Wachstum 5J<b id="forecastFcfGrowth">—</b></div><div class="auditItem">EBIT-Marge J5<b id="forecastMargin5">—</b></div><div class="auditItem">PEG<b id="forecastPeg">—</b></div><div class="auditItem">Rendite p.a. bis J5<b id="forecastReturn">—</b></div></div><div class="historyWrap"><table class="historyTable" id="forecastTable"></table></div><p class="note" id="forecastNote">Forecasts sind transparente Szenarien aus historischen Daten und begrenzten Annahmen – keine Prognosegarantie.</p></details>
-        <details id="reverseDetails"><summary>Reverse DCF & Sensitivität</summary><div class="modelAudit"><div class="auditItem">Markt-impliziertes Wachstum<b id="reverseGrowth">—</b></div><div class="auditItem">Markt-implizierte EBIT-Marge J5<b id="reverseMargin">—</b></div><div class="auditItem">Markt-impliziter WACC<b id="reverseWacc">—</b></div></div><div class="historyWrap"><table class="historyTable" id="sensitivityTable"></table></div><p class="note">Reverse DCF verändert jeweils nur eine Annahme und hält die übrigen Base-Annahmen konstant. Die Matrix zeigt Fair Values bei unterschiedlichen WACC- und Terminalwachstums-Annahmen.</p></details>
-      </div>
-    </div>
-
-    
     <div class="analysisHeading">Business</div>
 <div class="card business sectionCard" id="businessSection">
 <h3>Business & Investment-Logik</h3><p class="businessIntro" id="businessText">Business wird geladen …</p>
 <div class="businessGrid"><div class="businessBox"><b>Wie verdient die Firma Geld?</b><span id="businessRevenue">—</span></div><div class="businessBox"><b>Wichtigste Werttreiber</b><span id="businessDrivers">—</span></div><div class="businessBox"><b>Wettbewerb & Marktposition</b><span id="businessCompetition">—</span></div><div class="businessBox"><b>Wettbewerbsvorteile / Moat</b><span id="businessMoat">—</span></div><div class="businessBox"><b>Zentrale Risiken</b><span id="businessRisks">—</span></div></div>
 <p class="note" id="businessCapital">Kapitalallokation: —</p><span class="pill" id="businessSource">Unternehmensprofil · JUKA</span></div>
-
     <div class="analysisHeading">Quality</div>
     <div class="card quality sectionCard" id="qualitySection">
       <div class="sectionTitleRow"><h3>JUKA Quality Score</h3><span>Fundamentale Qualität · transparent bewertet</span></div>
@@ -268,7 +266,43 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
         </div>
       </div>
     </div>
-
+    <div class="analysisHeading">Valuation</div><div class="card chartCard sectionCard" id="valuationSection"><div class="chartToolbar"><div><h3 style="margin-bottom:3px">JUKA Fair Value</h3><div class="note" id="periodLabel">Historische Ansicht · 1 Jahr</div></div><div class="periods" aria-label="Zeitraum auswählen"><button class="periodBtn" data-period="1D">1T</button><button class="periodBtn" data-period="1W">1W</button><button class="periodBtn" data-period="1M">1M</button><button class="periodBtn" data-period="3M">3M</button><button class="periodBtn active" data-period="1Y">1J</button><button class="periodBtn" data-period="3Y">3J</button><button class="periodBtn" data-period="MAX">Max</button></div></div>
+      <div class="chartWrap"><svg id="valuationChart" viewBox="0 0 760 350" role="img" aria-label="Aktienkurs mit Fair Value, Bear-Fair-Value und Bull-Fair-Value"></svg><div id="chartTooltip" class="chartTooltip"></div></div>
+      <div class="legend"><span><i class="dot" style="background:#76b7ff"></i>Aktienkurs</span><span><i class="dot" style="background:#111"></i>JUKA Fair Value</span><span><i class="dot" style="background:#b85d59"></i>Bear</span><span><i class="dot" style="background:#ad812a"></i>Bull</span></div>
+      <div class="note" id="chartNote" hidden></div>
+      <div class="valuationDetails">
+        <div class="modelBox" id="modelBox"><details><summary>Bewertungsmodell & Annahmen</summary>
+        <div class="modelGrid">
+          <div class="modelField"><label>Umsatzwachstum Jahr 1</label><input id="dcfG1" type="number" step="0.5" value="18"><span class="note">%</span></div>
+          <div class="modelField"><label>Umsatzwachstum Jahr 5</label><input id="dcfG5" type="number" step="0.5" value="10"><span class="note">%</span></div>
+          <div class="modelField"><label>Ziel-EBIT-Marge Jahr 5</label><input id="dcfMargin5" type="number" step="0.5" value="40"><span class="note">%</span></div>
+          <div class="modelField"><label>WACC</label><input id="dcfWacc" type="number" step="0.1" value="9.5"><span class="note">%</span></div>
+          <div class="modelField"><label>Terminalwachstum</label><input id="dcfTg" type="number" step="0.1" value="3"><span class="note">%</span></div>
+        </div>
+        <div class="scenarioStrip"><div class="scenario"><span>Bear-Fair-Value</span><strong class="red" id="bearModel">$400.16</strong></div><div class="scenario"><span>Fair Value</span><strong class="green" id="baseModel">$654.43</strong></div><div class="scenario"><span>Bull-Fair-Value</span><strong class="gold" id="bullModel">$1,011.57</strong></div></div>
+        <div class="modelAudit"><div class="auditItem">Terminalanteil EV<b id="terminalShare">61.9%</b></div><div class="auditItem">KGV beim Fair Value<b id="fairPe">24.7×</b></div><div class="auditItem">EPS-Wachstum bis J5<b id="epsGrowth5">11.1% p.a.</b></div></div>
+        <p class="note">Diese fünf Felder sind editierbar. Berechnung: dein 10-Jahres-FCFF-DCF mit automatischem Fade, Bear/Base/Bull-Szenarien und Terminal-Reinvestment g/ROIC.</p>
+      </details></div>
+        <details id="scenarioForecastDetails" open><summary>Bear / Base / Bull</summary>
+<div class="modelAudit">
+  <div class="auditItem">Bear Rendite p.a.<b id="scenarioBearReturn">—</b></div>
+  <div class="auditItem">Base Rendite p.a.<b id="scenarioBaseReturn">—</b></div>
+  <div class="auditItem">Bull Rendite p.a.<b id="scenarioBullReturn">—</b></div>
+</div>
+<div class="historyWrap"><table class="historyTable" id="scenarioTable"></table></div>
+<div class="historyWrap"><table class="historyTable" id="returnMatrixTable"></table></div>
+<p class="note" id="scenarioNote">Bear/Base/Bull verändern Wachstum, Margen, Verwässerung und Exit-Multiple. Die Matrix zeigt bewusst mehrere Pfade statt eines einzelnen Punktwerts.</p>
+</details>
+        <details id="forecastDetails" open><summary>5-Jahres-Ausblick</summary>
+<div class="forecastCharts institutionalForecast" id="forecastCharts">
+  <div class="forecastChartCard"><div class="forecastChartHead"><span>Revenue</span><b id="forecastRevenueHeadline">—</b></div><svg class="forecastMiniSvg" id="forecastRevenueBars" viewBox="0 0 260 126"></svg></div>
+  <div class="forecastChartCard"><div class="forecastChartHead"><span>EPS</span><b id="forecastEpsHeadline">—</b></div><svg class="forecastMiniSvg" id="forecastEpsBars" viewBox="0 0 260 126"></svg></div>
+  <div class="forecastChartCard"><div class="forecastChartHead"><span>Free Cash Flow</span><b id="forecastFcfHeadline">—</b></div><svg class="forecastMiniSvg" id="forecastFcfBars" viewBox="0 0 260 126"></svg></div>
+  <div class="forecastChartCard"><div class="forecastChartHead"><span>EBIT Margin</span><b id="forecastMarginHeadline">—</b></div><svg class="forecastMiniSvg" id="forecastMarginBars" viewBox="0 0 260 126"></svg></div>
+</div><div class="modelAudit"><div class="auditItem">Umsatzwachstum 5J<b id="forecastRevenueGrowth">—</b></div><div class="auditItem">EPS-Wachstum 5J<b id="forecastEpsGrowth">—</b></div><div class="auditItem">FCF-Wachstum 5J<b id="forecastFcfGrowth">—</b></div><div class="auditItem">EBIT-Marge J5<b id="forecastMargin5">—</b></div><div class="auditItem">PEG<b id="forecastPeg">—</b></div><div class="auditItem">Rendite p.a. bis J5<b id="forecastReturn">—</b></div></div><table id="forecastTable" hidden></table><p class="note" id="forecastNote">Forecasts sind transparente Szenarien aus historischen Daten und begrenzten Annahmen – keine Prognosegarantie.</p></details>
+        <details id="reverseDetails"><summary>Reverse DCF & Sensitivität</summary><div class="modelAudit"><div class="auditItem">Markt-impliziertes Wachstum<b id="reverseGrowth">—</b></div><div class="auditItem">Markt-implizierte EBIT-Marge J5<b id="reverseMargin">—</b></div><div class="auditItem">Markt-impliziter WACC<b id="reverseWacc">—</b></div></div><div class="historyWrap"><table class="historyTable" id="sensitivityTable"></table></div><p class="note">Reverse DCF verändert jeweils nur eine Annahme und hält die übrigen Base-Annahmen konstant. Die Matrix zeigt Fair Values bei unterschiedlichen WACC- und Terminalwachstums-Annahmen.</p></details>
+      </div>
+    </div>
     <div class="analysisHeading">Fundamentals</div><div class="card funds sectionCard" id="fundamentalsSection"><h3>Umsatz, EPS, FCF, Margen, ROIC & Verschuldung</h3><div class="kv"><span>Fair Value</span><strong class="green" id="fvMetric">$654.43</strong></div><div class="kv"><span>Kurs vs. Fair Value</span><strong class="gold" id="valuationMetric">−5.8% · unterbewertet</strong></div><div class="kv"><span>KGV</span><strong id="peMetric">23.25×</strong></div><div class="kv"><span>Modell-KGV Jahr 5</span><strong id="forwardPeMetric">13.71×</strong></div><div class="kv"><span>Umsatz</span><strong id="revenueMetric">$228.25 Mrd.</strong></div><div class="kv"><span>EBIT</span><strong id="ebitMetric">$86.93 Mrd.</strong></div><div class="kv"><span>EBIT-Marge</span><strong id="marginMetric">38.1%</strong></div><div class="kv"><span>EPS</span><strong id="epsMetric">$26.53</strong></div><div class="kv"><span>Free Cashflow</span><strong id="fcfMetric">—</strong></div><div class="kv"><span>Nettofinanzposition</span><strong id="netCashMetric">−$6.60 Mrd.</strong></div>
       
       
@@ -276,10 +310,11 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
       <details id="historyDetails"><summary>Fundamentaldaten-Historie</summary><div class="engineLine"><span class="engineTag" id="historySource">Quelle: Excel-Referenz</span><span class="engineTag" id="historyAvailability">Historischer DCF: ohne Look-ahead</span><span class="engineTag" id="historyCoverage">Datenabdeckung: Referenz</span></div><div class="historyWrap"><table class="historyTable"><thead><tr><th>Jahr</th><th>Umsatz</th><th>Wachstum</th><th>EBIT</th><th>EBIT-Marge</th><th>Net Income</th><th>EPS</th><th>CFO</th><th>CapEx</th><th>FCF</th><th>FCF-Marge</th><th>Cash</th><th>Debt</th><th>Net Cash</th><th>Shares</th><th>SBC/Umsatz</th><th>ROIC</th><th>Net Debt/EBITDA</th><th>Verfügbar ab</th></tr></thead><tbody id="fundamentalHistory"><tr><td colspan="19">Daten werden geladen …</td></tr></tbody></table></div><p class="note">Bei Live-US-Daten verwendet die historische Bewertung nur Geschäftsjahre, deren SEC-Filing am jeweiligen Kurstag bereits veröffentlicht war. Dadurch entsteht kein Zukunftswissen im historischen Fair Value.</p></details>
       <div class="note" id="fundNote">Fundamentaldaten und Historie werden aus den verfügbaren Quellen geladen.</div>
     </div>
-    <div class="analysisHeading">Methodik & Daten</div>
+    <div class="analysisHeading">Methodology & Data</div>
     <div class="card sectionCard methodologyCard" id="methodologySection">
-      <details id="motorAuditDetails"><summary>Methodik & Daten</summary>
-        <p class="note methodologyIntro">Hier zeigt JUKA transparent, welches Bewertungsmodell verwendet wird, wie vollständig die Datengrundlage ist und welche automatischen Annahmen in die Analyse einfließen. Für die normale Analyse ist dieser Bereich nicht nötig; er dient der Nachvollziehbarkeit.</p>
+      <details id="motorAuditDetails" class="methodologyDetails">
+        <summary class="methodologySummary"><span>Methodology & Data</span><small>Model, data quality & assumptions</small></summary>
+        <p class="note methodologyIntro">Transparent view of the valuation model, data quality and automated assumptions behind the analysis. This section is optional and serves traceability.</p>
         
 <div class="modelAudit">
   <div class="auditItem">Bewertungsmodell<b id="motorModel">—</b></div>
@@ -302,13 +337,14 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
       </details>
     </div>
   </section>
+
   <div hidden id="legacyCompatibility">
   <span id="peerGroup"></span><span id="peerLabel"></span><span id="peerCoverage"></span><div id="peerRows"></div>
   <span id="realityLabel"></span><span id="realityScore"></span><span id="realityConfidence"></span><div id="realityDrivers"></div><span id="realityBreaker"></span>
 </div>
   <div class="footer">JUKA · Private Equity Research · keine Anlageberatung</div>
 </div>
-<script src="./core.js?v=3.0.3"></script>
+<script src="./core.js?v=3.0.4.1"></script>
 <script>
 const stocks=[
  {s:'META',n:'Meta Platforms',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'META'},
@@ -878,29 +914,10 @@ function renderScenarioForecast(scenarios,matrix,currency=activeCurrency){
 
 
 function renderForecastBars(forecast,currency=activeCurrency){
-  const rows=Array.isArray(forecast?.rows)?forecast.rows:[];
-  const configs=[
-    ['forecastRevenueBars','revenue',v=>fmtBig(v)],
-    ['forecastEpsBars','eps',v=>money(v,currency)],
-    ['forecastFcfBars','fcf',v=>fmtBig(v)],
-    ['forecastMarginBars','margin',v=>Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—']
-  ];
-  for(const [id,key,fmt] of configs){
-    const el=document.getElementById(id);if(!el)continue;
-    const vals=rows.map(r=>Number(r[key])).filter(Number.isFinite);
-    if(!vals.length){el.innerHTML='<span class="note">Keine Daten</span>';continue}
-    const min=Math.min(0,...vals),max=Math.max(0,...vals),range=Math.max(max-min,1e-9);
-    const zeroPct=(max/range)*100;
-    el.innerHTML=`<div class="forecastZero" style="top:${zeroPct.toFixed(2)}%"></div>`+rows.map((r,i)=>{
-      const v=Number(r[key]),label=`J${r.year??i+1}`;
-      if(!Number.isFinite(v))return `<div class="forecastBarCol"><div class="forecastBarLabel">${label}</div></div>`;
-      const topValPct=((max-v)/range)*100;
-      const zeroTopPct=(max/range)*100;
-      const top=Math.min(topValPct,zeroTopPct),height=Math.max(2,Math.abs(v)/range*100);
-      const valTop=v>=0?Math.max(0,top-13):Math.min(92,top+height+2);
-      return `<div class="forecastBarCol"><div class="forecastBarVal" style="top:${valTop.toFixed(2)}%">${escapeHtml(fmt(v))}</div><div class="forecastBar ${v<0?'negative':''}" style="top:${top.toFixed(2)}%;height:${height.toFixed(2)}%"></div><div class="forecastBarLabel">${label}</div></div>`;
-    }).join('');
-  }
+  const rows=Array.isArray(forecast?.rows)?forecast.rows:[],configs=[{id:'forecastRevenueBars',headline:'forecastRevenueHeadline',key:'revenue',fmt:v=>fmtBig(v)},{id:'forecastEpsBars',headline:'forecastEpsHeadline',key:'eps',fmt:v=>money(v,currency)},{id:'forecastFcfBars',headline:'forecastFcfHeadline',key:'fcf',fmt:v=>fmtBig(v)},{id:'forecastMarginBars',headline:'forecastMarginHeadline',key:'margin',fmt:v=>Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—'}],NS='http://www.w3.org/2000/svg',node=(tag,a={})=>{const n=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(a))n.setAttribute(k,v);return n};
+  for(const cfg of configs){const svg=document.getElementById(cfg.id),head=document.getElementById(cfg.headline);if(!svg)continue;svg.innerHTML='';const vals=rows.map(r=>Number(r[cfg.key])).filter(Number.isFinite);if(head)head.textContent=vals.length?`J5 ${cfg.fmt(vals.at(-1))}`:'—';if(!vals.length){const t=node('text',{x:130,y:65,'text-anchor':'middle',class:'forecastSvgLabel'});t.textContent='Keine Daten';svg.append(t);continue}
+    const W=260,H=126,L=18,R=8,T=12,B=22,pw=W-L-R,ph=H-T-B,min=Math.min(0,...vals),max=Math.max(0,...vals),range=Math.max(max-min,1e-9),zeroY=T+(max/range)*ph;svg.append(node('line',{x1:L,y1:zeroY,x2:W-R,y2:zeroY,class:'forecastZeroLine'}));svg.append(node('line',{x1:L,y1:T+ph*.5,x2:W-R,y2:T+ph*.5,class:'forecastGridLine'}));
+    const slot=pw/rows.length,bw=Math.min(24,slot*.42);rows.forEach((r,i)=>{const v=Number(r[cfg.key]);if(!Number.isFinite(v))return;const yv=T+((max-v)/range)*ph,top=Math.min(zeroY,yv),height=Math.max(1.5,Math.abs(zeroY-yv)),cx=L+slot*(i+.5);svg.append(node('rect',{x:cx-bw/2,y:top,width:bw,height,class:'forecastSvgBar'+(v<0?' negative':'')}));const lab=node('text',{x:cx,y:H-6,'text-anchor':'middle',class:'forecastSvgLabel'});lab.textContent='J'+(r.year??i+1);svg.append(lab);if(i===0||i===rows.length-1){const val=node('text',{x:cx,y:v>=0?Math.max(9,top-4):Math.min(H-B+12,top+height+11),'text-anchor':'middle',class:'forecastSvgValue'});val.textContent=cfg.fmt(v);svg.append(val)}});}
 }
 
 function renderForecast(forecast,bridge,currency=activeCurrency){
@@ -1055,7 +1072,7 @@ for(let i=0;i<=months;i++){
 const last=chartData[chartData.length-1]; last.price=616.77; last.base=654.43; last.bear=400.16; last.bull=1011.57;
 
 const svg=document.getElementById('valuationChart'), tooltip=document.getElementById('chartTooltip');
-let currentPeriod='5Y'; let activeCurrency='USD';
+let currentPeriod='1Y'; let activeCurrency='USD';
 const NS='http://www.w3.org/2000/svg';
 const periods={"1Y":1,"3Y":3,"5Y":5,"MAX":null};
 function money(v,currency=activeCurrency){if(!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:currency||'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v));}
@@ -1076,20 +1093,19 @@ function node(tag,attrs={},text=''){const n=document.createElementNS(NS,tag);Obj
 function getSlice(){
   if(!chartData.length)return [];
   if(currentPeriod==='MAX')return chartData;
-  const years=periods[currentPeriod];
-  const last=chartData.at(-1)?.date;
-  if(!(last instanceof Date)||Number.isNaN(last.getTime())||!Number.isFinite(years))return chartData;
-  const from=new Date(last);
-  from.setFullYear(from.getFullYear()-years);
-  return chartData.filter(row=>row?.date instanceof Date&&!Number.isNaN(row.date.getTime())&&row.date>=from);
+  const last=chartData.at(-1).date,target=new Date(last),meta={'1D':{days:1},'1W':{days:7},'1M':{months:1},'3M':{months:3},'1Y':{years:1},'3Y':{years:3}}[currentPeriod]||{years:1};
+  if(meta.days)target.setDate(target.getDate()-meta.days);if(meta.months)target.setMonth(target.getMonth()-meta.months);if(meta.years)target.setFullYear(target.getFullYear()-meta.years);
+  let start=0;for(let i=0;i<chartData.length;i++){if(chartData[i].date<=target)start=i;else break}return chartData.slice(start);
 }
 
-function smoothSvgPath(points,tension=.16){
-  if(!points.length)return '';if(points.length===1)return `M${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
-  let d=`M${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
-  for(let i=0;i<points.length-1;i++){const p0=points[i-1]||points[i],p1=points[i],p2=points[i+1],p3=points[i+2]||p2;
-    const c1x=p1[0]+(p2[0]-p0[0])*tension,c1y=p1[1]+(p2[1]-p0[1])*tension,c2x=p2[0]-(p3[0]-p1[0])*tension,c2y=p2[1]-(p3[1]-p1[1])*tension;
-    d+=` C${c1x.toFixed(1)} ${c1y.toFixed(1)},${c2x.toFixed(1)} ${c2y.toFixed(1)},${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;}return d;
+function smoothSvgPath(points,tension=.23){
+  if(!points.length)return '';if(points.length===1)return `M${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;let d=`M${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
+  for(let i=0;i<points.length-1;i++){const p0=points[i-1]||points[i],p1=points[i],p2=points[i+1],p3=points[i+2]||p2,c1x=p1[0]+(p2[0]-p0[0])*tension,c1y=p1[1]+(p2[1]-p0[1])*tension,c2x=p2[0]-(p3[0]-p1[0])*tension,c2y=p2[1]-(p3[1]-p1[1])*tension;d+=` C${c1x.toFixed(1)} ${c1y.toFixed(1)},${c2x.toFixed(1)} ${c2y.toFixed(1)},${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;}return d;
+}
+function fairVisualPoints(data,key,x,y){
+  const raw=data.map((row,i)=>Number.isFinite(row[key])?[x(i),y(row[key]),i]:null).filter(Boolean);if(raw.length<=10)return raw.map(p=>[p[0],p[1]]);
+  const targetPoints=Math.min(40,Math.max(14,Math.round(raw.length/16))),step=Math.max(1,Math.floor(raw.length/(targetPoints-1))),out=[raw[0]];
+  for(let i=step;i<raw.length-1;i+=step){const from=Math.max(0,i-step),to=Math.min(raw.length-1,i+step);let sx=0,sy=0,n=0;for(let j=from;j<=to;j++){sx+=raw[j][0];sy+=raw[j][1];n++}out.push([sx/n,sy/n,i])}out.push(raw.at(-1));return out.map(p=>[p[0],p[1]]);
 }
 
 function svgPointer(svg,ev){
@@ -1102,30 +1118,23 @@ function svgPointer(svg,ev){
 }
 
 function draw(){
-  svg.innerHTML=''; const data=getSlice(); const W=760,H=350,L=55,R=18,T=18,B=44; const pw=W-L-R,ph=H-T-B;
-  const vals=data.flatMap(d=>[d.price,d.base,d.bear,d.bull]).filter(Number.isFinite); if(!vals.length)return; let min=Math.min(...vals),max=Math.max(...vals); const pad=(max-min)*.08; min=Math.max(0,min-pad); max+=pad;
-  const x=i=>L+((data.length<=1?0:i/(data.length-1)))*pw, y=v=>T+(max-v)/(max-min||1)*ph;
-  for(let k=0;k<5;k++){const yy=T+k*ph/4;const val=max-k*(max-min)/4;svg.append(node('line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:'#1f2c37'}));svg.append(node('text',{x:5,y:yy+4,fill:'#8093a4','font-size':'11'},'$'+Math.round(val)));}
-  const tickCount=5; for(let k=0;k<tickCount;k++){const idx=Math.round(k*(data.length-1)/(tickCount-1));svg.append(node('text',{x:x(idx),y:H-15,fill:'#8093a4','font-size':'11','text-anchor':k===0?'start':k===tickCount-1?'end':'middle'},data[idx].date.toLocaleDateString('de-DE',{year:'numeric',month:currentPeriod==='1Y'?'short':undefined})));}
-  const series=[['price','#76b7ff',2.6],['base','#111111',3.2],['bear','#d96666',1.8],['bull','#c89a2b',1.8]];
-  series.forEach(([key,color,width])=>{let d='';if(key==='price'){let started=false;data.forEach((row,i)=>{if(!Number.isFinite(row[key])){started=false;return;}d+=(started?'L':'M')+x(i).toFixed(1)+' '+y(row[key]).toFixed(1)+' ';started=true;});}
-    else{const pts=data.map((row,i)=>Number.isFinite(row[key])?[x(i),y(row[key])]:null).filter(Boolean);d=smoothSvgPath(pts,.16);}
-    if(d)svg.append(node('path',{d,fill:'none',stroke:color,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round','stroke-dasharray':key==='bear'||key==='bull'?'6 5':''}));});
-  const hover=node('line',{class:'hoverLine',x1:L,y1:T,x2:L,y2:H-B});svg.append(hover);
-  const hoverH=node('line',{class:'hoverLine',x1:L,y1:T,x2:W-R,y2:T});svg.append(hoverH);
-  const priceDot=node('circle',{class:'hoverDot',r:4.5,fill:'#76b7ff',stroke:'#111','stroke-width':1.8});svg.append(priceDot);
-  const cursorMark=node('g',{class:'hoverDot'});cursorMark.append(node('line',{x1:-7,y1:0,x2:7,y2:0,stroke:'#111','stroke-width':1.4}));cursorMark.append(node('line',{x1:0,y1:-7,x2:0,y2:7,stroke:'#111','stroke-width':1.4}));svg.append(cursorMark);
-  const hit=node('rect',{x:L,y:T,width:pw,height:ph,fill:'transparent',style:'cursor:none'});svg.append(hit);
-  hit.addEventListener('mousemove',ev=>{const rect=svg.getBoundingClientRect(),pt=svgPointer(svg,ev),mx=pt.x;let idx=Math.round((mx-L)/pw*(data.length-1));idx=Math.max(0,Math.min(data.length-1,idx));const row=data[idx],xx=x(idx),yy=Number.isFinite(row.price)?y(row.price):T;
-    hover.style.display='block';hover.setAttribute('x1',xx);hover.setAttribute('x2',xx);hoverH.style.display='block';hoverH.setAttribute('y1',yy);hoverH.setAttribute('y2',yy);
-    priceDot.style.display=Number.isFinite(row.price)?'block':'none';priceDot.setAttribute('cx',xx);priceDot.setAttribute('cy',yy);cursorMark.style.display='block';cursorMark.setAttribute('transform',`translate(${xx} ${yy})`);
-    const vp=JuKaCore.valuationPct(row.price,row.base),status=vp==null?'Bewertung':(vp<0?'Unterbewertung':'Überbewertung'),statusClass=vp!=null&&vp<0?'green':'red',mv=v=>Number.isFinite(v)?money(v):'—';
-    tooltip.innerHTML=`<strong>${fmtDate(row.date)}</strong><div class="tooltipRow"><span>Aktienkurs</span><span class="tooltipVal">${mv(row.price)}</span></div><div class="tooltipRow"><span>JUKA Fair Value</span><span class="tooltipVal">${mv(row.base)}</span></div><div class="tooltipRow"><span>Bear-Fair-Value</span><span class="tooltipVal">${mv(row.bear)}</span></div><div class="tooltipRow"><span>Bull-Fair-Value</span><span class="tooltipVal">${mv(row.bull)}</span></div><div class="tooltipRow"><span>${status}</span><span class="tooltipVal ${statusClass}">${vp==null?'—':pct(Math.abs(vp))}</span></div>`;
-    tooltip.style.display='block';const wrap=document.querySelector('.chartWrap').getBoundingClientRect();let left=(xx/W)*wrap.width+14,top=(yy/H)*wrap.height+12;if(left+220>wrap.width)left=(xx/W)*wrap.width-220;if(top+150>wrap.height)top=Math.max(8,(yy/H)*wrap.height-155);tooltip.style.left=left+'px';tooltip.style.top=top+'px';
+  svg.innerHTML='';const data=getSlice(),W=760,H=330,L=58,R=18,T=18,B=40,pw=W-L-R,ph=H-T-B,vals=data.flatMap(d=>[d.price,d.base,d.bear,d.bull]).filter(Number.isFinite);if(!vals.length)return;
+  let min=Math.min(...vals),max=Math.max(...vals),pad=Math.max((max-min)*.10,max*.015);min=Math.max(0,min-pad);max+=pad;
+  const x=i=>L+((data.length<=1?0:i/(data.length-1)))*pw,y=v=>T+(max-v)/(max-min||1)*ph;
+  for(let k=0;k<4;k++){const yy=T+k*ph/3,val=max-k*(max-min)/3;svg.append(node('line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:'#e1e5e2','stroke-width':1}));svg.append(node('text',{x:4,y:yy+4,fill:'#7a847e','font-size':'10'},money(val,activeCurrency)));}
+  const ticks=Math.min(5,data.length);for(let k=0;k<ticks;k++){const idx=Math.round(k*(data.length-1)/(Math.max(1,ticks-1)));svg.append(node('text',{x:x(idx),y:H-12,fill:'#7a847e','font-size':'10','text-anchor':k===0?'start':k===ticks-1?'end':'middle'},data[idx].date.toLocaleDateString('de-DE',{year:currentPeriod==='1D'||currentPeriod==='1W'?undefined:'numeric',month:'short',day:currentPeriod==='1D'||currentPeriod==='1W'?'2-digit':undefined})));}
+  const pricePts=data.map((row,i)=>Number.isFinite(row.price)?[x(i),y(row.price)]:null).filter(Boolean);
+  if(pricePts.length){const pricePath=pricePts.map((pt,i)=>(i?'L':'M')+pt[0].toFixed(1)+' '+pt[1].toFixed(1)).join(' ');svg.append(node('path',{d:pricePath,fill:'none',stroke:'#76b7ff','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));}
+  [['base','#111111',3],['bear','#b85d59',1.9],['bull','#ad812a',1.9]].forEach(([key,color,width])=>{const pts=fairVisualPoints(data,key,x,y),d=smoothSvgPath(pts,.23);if(d)svg.append(node('path',{d,fill:'none',stroke:color,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round'}));});
+  const hover=node('line',{class:'hoverLine',x1:L,y1:T,x2:L,y2:H-B}),hoverH=node('line',{class:'hoverLine',x1:L,y1:T,x2:W-R,y2:T}),dot=node('circle',{class:'hoverDot',r:4.5,fill:'#fff',stroke:'#111','stroke-width':2}),hit=node('rect',{x:L,y:T,width:pw,height:ph,fill:'transparent',style:'cursor:crosshair'});svg.append(hover);svg.append(hoverH);svg.append(dot);svg.append(hit);
+  hit.addEventListener('mousemove',ev=>{const pt=svgPointer(svg,ev),mx=pt.x;let idx=Math.round((mx-L)/pw*(data.length-1));idx=Math.max(0,Math.min(data.length-1,idx));const row=data[idx],xx=x(idx),yy=Number.isFinite(row.base)?y(row.base):T;hover.style.display='block';hover.setAttribute('x1',xx);hover.setAttribute('x2',xx);hoverH.style.display='block';hoverH.setAttribute('y1',yy);hoverH.setAttribute('y2',yy);dot.style.display=Number.isFinite(row.base)?'block':'none';dot.setAttribute('cx',xx);dot.setAttribute('cy',yy);
+    const vp=JuKaCore.valuationPct(row.price,row.base),status=vp==null?'Bewertung':(vp<0?'Unterbewertung':'Überbewertung'),statusClass=vp!=null&&vp<0?'green':'red',mv=v=>Number.isFinite(v)?money(v,activeCurrency):'—';
+    tooltip.innerHTML=`<strong>${fmtDate(row.date)}</strong><div class="tooltipRow"><span>JUKA Fair Value</span><span class="tooltipVal">${mv(row.base)}</span></div><div class="tooltipRow"><span>Bear</span><span class="tooltipVal">${mv(row.bear)}</span></div><div class="tooltipRow"><span>Bull</span><span class="tooltipVal">${mv(row.bull)}</span></div><div class="tooltipRow"><span>Aktienkurs</span><span class="tooltipVal">${mv(row.price)}</span></div><div class="tooltipRow"><span>${status}</span><span class="tooltipVal ${statusClass}">${vp==null?'—':pct(Math.abs(vp))}</span></div>`;tooltip.style.display='block';
+    const rect=document.querySelector('#valuationSection .chartWrap').getBoundingClientRect();let left=(xx/W)*rect.width+12,top=(yy/H)*rect.height+8;if(left+210>rect.width)left=(xx/W)*rect.width-215;if(top+145>rect.height)top=Math.max(5,(yy/H)*rect.height-150);tooltip.style.left=left+'px';tooltip.style.top=top+'px';
   });
-  hit.addEventListener('mouseleave',()=>{hover.style.display='none';hoverH.style.display='none';priceDot.style.display='none';cursorMark.style.display='none';tooltip.style.display='none';});
+  hit.addEventListener('mouseleave',()=>{hover.style.display='none';hoverH.style.display='none';dot.style.display='none';tooltip.style.display='none'});
 }
-document.querySelectorAll('.periodBtn').forEach(btn=>btn.addEventListener('click',()=>{currentPeriod=btn.dataset.period;document.querySelectorAll('.periodBtn').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('periodLabel').textContent='Historische Ansicht · '+btn.textContent;draw();renderPerformanceFromChart();}));
+document.querySelectorAll('.periodBtn').forEach(btn=>btn.addEventListener('click',()=>{currentPeriod=btn.dataset.period;document.querySelectorAll('.periodBtn').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('periodLabel').textContent='Historische Ansicht · '+btn.textContent;draw();}));
 draw();
 
 // Browser-Selbsttest, nur mit ?selftest=1 aktiv.
@@ -1167,17 +1176,22 @@ document.getElementById('performanceTabs')?.addEventListener('click',ev=>{
 window.addEventListener('error',ev=>showHardBootError('JS',ev.error||ev.message));
 window.addEventListener('unhandledrejection',ev=>showHardBootError('Promise',ev.reason));
 
-const JuKaStore={keyWatch:'juka.watchlist.v1',keySaved:'juka.saved.v1',read(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}},write(k,v){localStorage.setItem(k,JSON.stringify(v));return v},watch(){return this.read(this.keyWatch,[])},saved(){return this.read(this.keySaved,[])},toggleWatch(s){let a=this.watch(),i=a.indexOf(s);i>=0?a.splice(i,1):a.unshift(s);return this.write(this.keyWatch,[...new Set(a)].slice(0,30))},save(x){let a=this.saved().filter(v=>v.symbol!==x.symbol);a.unshift(x);return this.write(this.keySaved,a.slice(0,50))},removeSaved(s){return this.write(this.keySaved,this.saved().filter(x=>x.symbol!==s))}};
-function productToast(t){const e=document.getElementById('productToast');e.textContent=t;e.classList.add('show');clearTimeout(productToast.t);productToast.t=setTimeout(()=>e.classList.remove('show'),1400)}
+const JuKaStore={keyWatch:'juka.watchlist.v1',read(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}},write(k,v){localStorage.setItem(k,JSON.stringify(v));return v},watch(){return this.read(this.keyWatch,[])},toggleWatch(s){let a=this.watch(),i=a.indexOf(s);i>=0?a.splice(i,1):a.unshift(s);return this.write(this.keyWatch,[...new Set(a)].slice(0,30))}};
+function productToast(t){const e=document.getElementById('productToast');if(!e)return;e.textContent=t;e.classList.add('show');clearTimeout(productToast.t);productToast.t=setTimeout(()=>e.classList.remove('show'),1400)}
 function currentStock(){return stocks.find(x=>x.s===activeSymbol)||stocks[0]}
-function renderWatchlist(){const b=document.getElementById('watchStrip'),btn=document.getElementById('watchBtn'),a=JuKaStore.watch(),s=currentStock();btn.classList.toggle('active',a.includes(s.s));btn.textContent=a.includes(s.s)?'★ Watchlist':'☆ Watchlist';b.innerHTML=a.length?a.map(sym=>{const x=stocks.find(z=>z.s===sym);return x?`<button class="watchChip" data-w="${x.s}"><b>${x.s}</b> <small>${x.n}</small></button>`:''}).join(''):'<span class="emptyWatch">Noch keine Titel gespeichert.</span>';b.querySelectorAll('[data-w]').forEach(x=>x.onclick=()=>select(x.dataset.w))}
-function snapshotForSave(){const s=currentStock(),t=id=>document.getElementById(id)?.textContent||'—';return {symbol:s.s,name:s.n,price:t('price'),fair:t('fairValue')==='—'?t('fair'):t('fairValue'),quality:t('qualityScore'),model:t('motorModel'),risk:t('motorRisk'),savedAt:new Date().toISOString()}}
-function renderSaved(){const b=document.getElementById('savedGrid'),a=JuKaStore.saved();b.innerHTML=a.length?a.map(x=>`<div class="savedCard"><h4>${x.symbol} · ${x.name}</h4><p>Kurs: <b>${x.price}</b> · Fair Value: <b>${x.fair}</b></p><p>Modell: ${x.model} · Risiko: ${x.risk}</p><p>Stand: ${new Date(x.savedAt).toLocaleString('de-DE')}</p><div class="rowActions"><button class="productBtn" data-o="${x.symbol}">Öffnen</button><button class="productBtn" data-d="${x.symbol}">Löschen</button></div></div>`).join(''):'<p class="emptyWatch">Noch keine Analyse gespeichert.</p>';b.querySelectorAll('[data-o]').forEach(x=>x.onclick=()=>select(x.dataset.o));b.querySelectorAll('[data-d]').forEach(x=>x.onclick=()=>{JuKaStore.removeSaved(x.dataset.d);renderSaved();productToast('Analyse gelöscht')})}
+function renderWatchlist(){
+  const btn=document.getElementById('watchMenuBtn'),action=document.getElementById('watchToggleCurrent'),list=document.getElementById('watchMenuList');if(!btn||!action||!list)return;
+  const a=JuKaStore.watch(),s=currentStock(),saved=a.includes(s.s);btn.textContent=saved?'★ Watchlist':'☆ Watchlist';action.textContent=saved?'Aus Watchlist entfernen':'+ In Watchlist speichern';
+  list.innerHTML=a.length?a.map(sym=>{const x=stocks.find(z=>z.s===sym);return x?`<button class="watchlistMenuItem" data-watch-open="${escapeHtml(x.s)}"><b>${escapeHtml(x.s)}</b><span>${escapeHtml(x.n)}</span></button>`:''}).join(''):'<div class="watchlistEmpty">Noch keine Aktien in der Watchlist.</div>';
+  list.querySelectorAll('[data-watch-open]').forEach(el=>el.onclick=()=>{closeWatchMenu();select(el.dataset.watchOpen)});
+}
+function openWatchMenu(){const menu=document.getElementById('watchMenu'),btn=document.getElementById('watchMenuBtn');if(!menu||!btn)return;menu.classList.add('open');btn.setAttribute('aria-expanded','true');renderWatchlist()}
+function closeWatchMenu(){const menu=document.getElementById('watchMenu'),btn=document.getElementById('watchMenuBtn');if(!menu||!btn)return;menu.classList.remove('open');btn.setAttribute('aria-expanded','false')}
 function productAfterStockChange(){renderWatchlist()}
-if(document.getElementById('watchBtn'))document.getElementById('watchBtn').onclick=()=>{JuKaStore.toggleWatch(currentStock().s);renderWatchlist();productToast('Watchlist aktualisiert')};
-if(document.getElementById('saveAnalysisBtn'))document.getElementById('saveAnalysisBtn').onclick=()=>{JuKaStore.save(snapshotForSave());renderSaved();productToast('Analyse gespeichert')};
-if(document.getElementById('savedToggleBtn'))document.getElementById('savedToggleBtn').onclick=()=>{document.getElementById('savedPanel').classList.toggle('open');renderSaved()};
-try{renderWatchlist();renderSaved();}catch(err){console.warn('JuKa localStorage UI skipped:',err);}
+document.getElementById('watchMenuBtn')?.addEventListener('click',ev=>{ev.stopPropagation();document.getElementById('watchMenu')?.classList.contains('open')?closeWatchMenu():openWatchMenu()});
+document.getElementById('watchToggleCurrent')?.addEventListener('click',()=>{JuKaStore.toggleWatch(currentStock().s);renderWatchlist();productToast('Watchlist aktualisiert')});
+document.addEventListener('click',ev=>{if(!ev.target.closest('.watchlistControl'))closeWatchMenu()});
+try{renderWatchlist()}catch(err){console.warn('JUKA watchlist skipped:',err);}
 
 function syncInvestmentSummary(){
   const get=id=>document.getElementById(id)?.textContent?.trim()||'—';
