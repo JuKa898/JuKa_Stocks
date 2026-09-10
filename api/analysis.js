@@ -130,7 +130,7 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-3.0-live-paket6.4';
+    out.engineVersion='JUKA-3.0-live-paket6.7';
     res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.summary||'')==='1'){
       const l=out.latest||{};
@@ -145,6 +145,7 @@ module.exports=async function handler(req,res){
         modelLabel:out.model==='operating-company'?'Operatives Unternehmen':out.model==='bank-insurance'?'Bank / Versicherung':'REIT',
         price:out.price,
         currency:out.currency,
+        exchange:out.exchange||out.market?.exchange||out.market?.meta?.exchange||null,
         marketAsOf:out.market?.asOf,
         fundamentalsAsOf:out.fundamentals?.asOf,
         latest:{fy:l.fy,date:l.date,filed:l.filed,revenue:l.revenue,operatingIncome:l.operatingIncome,netIncome:l.netIncome,eps:l.eps,cfo:l.cfo,capex:l.capex,fcf:l.fcf,cash:l.cash,debt:l.debt,netCash:l.netCash,shares:l.shares},
