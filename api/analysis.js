@@ -130,7 +130,7 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-3.0-live-paket6';
+    out.engineVersion='JUKA-3.0-live-paket6.3';
     res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.summary||'')==='1'){
       const l=out.latest||{};
