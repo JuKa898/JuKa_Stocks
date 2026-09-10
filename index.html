@@ -68,36 +68,113 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
 @media(max-width:950px){.brandBlock{min-width:0}.brandLine{white-space:normal}.businessGrid{grid-template-columns:1fr 1fr}.performanceStrip{grid-template-columns:repeat(4,1fr)}.investmentSummary{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.wrap{padding:0 12px 20px}.topbar{align-items:flex-start;flex-direction:column}.searchWrap{width:100%}.businessGrid,.qualityInterpretation{grid-template-columns:1fr}.performanceStrip{grid-template-columns:repeat(2,1fr)}}
 
+
+/* JUKA 3.0 Paket 6.1 */
+.jukaHeader{padding:26px 0 14px;border-bottom:1px solid var(--line)}
+.jukaHeader .brandBlock{margin-bottom:17px}.jukaHeader .brand{font-size:30px;letter-spacing:.18em;line-height:1;color:#14221b}
+.jukaHeader .brandLine{font-size:14px;margin-top:7px;color:#5c6861}.headerSearchRow{display:flex;gap:12px;align-items:center}
+.headerSearchRow .searchWrap{max-width:760px}.headerSearchRow .badge{margin-left:auto}
+.companyIdentity{display:flex;align-items:center;gap:15px}.companyLogoWrap{width:48px;height:48px;border:1px solid #d7ddd9;background:#fff;display:grid;place-items:center;overflow:hidden;flex:0 0 48px}
+.companyLogo{width:36px;height:36px;object-fit:contain;display:none}.companyLogoFallback{font-family:Georgia,"Times New Roman",serif;font-size:23px;font-weight:700;color:#324039}
+.liveBetaBar,.liveDebug{display:none!important}.valuationDetails{margin-top:18px;border-top:1px solid #e0e4e1}.valuationDetails details{padding:0 12px}
+.methodologyCard{padding-top:8px;padding-bottom:8px}.methodologyIntro{max-width:900px}.methodDivider{height:1px;background:#e1e5e2;margin:14px 0}
+.forecastCharts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0 18px}.forecastChartCard{border:1px solid #dfe4e0;background:#fafbf9;padding:12px 12px 10px}
+.forecastChartTitle{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#68736d;margin-bottom:8px}.forecastBars{height:150px;display:flex;align-items:stretch;gap:8px;padding:6px 2px 18px;position:relative;border-bottom:1px solid #d8ddd9}
+.forecastZero{position:absolute;left:0;right:0;height:1px;background:#cfd6d1;pointer-events:none}.forecastBarCol{height:100%;flex:1;position:relative;min-width:0}.forecastBarVal{position:absolute;left:50%;transform:translateX(-50%);font-size:9px;color:#56635c;white-space:nowrap}.forecastBarLabel{position:absolute;left:50%;transform:translateX(-50%);bottom:-16px;font-size:9px;color:#7a847e}
+.forecastBar{position:absolute;left:50%;transform:translateX(-50%);width:min(30px,72%);min-height:2px;background:#3b6653}.forecastBar.negative{background:#9b514b}.forecastBarLabel{font-size:9px;color:#7a847e;margin-top:5px}
+#valuationChart{cursor:none}.chartTooltip{border-radius:2px}.qualityInterpretation .miniText{font-size:12px;line-height:1.6}
+.qualityExplain{padding:9px 0;border-bottom:1px solid #e5e8e6}.qualityExplain:last-child{border-bottom:0}.qualityExplain strong{display:block;font-size:12px;color:#26342d;margin-bottom:3px}.qualityExplain span{display:block;font-size:11px;line-height:1.5;color:#67736c}
+@media(max-width:760px){.headerSearchRow{align-items:stretch;flex-direction:column}.headerSearchRow .searchWrap{max-width:none}.headerSearchRow .badge{margin-left:0;align-self:flex-start}.forecastCharts{grid-template-columns:1fr}}
+
+
+/* Paket 6.2 — interactive performance chart */
+.performanceCard{background:#fff;border:1px solid var(--line);margin:0 0 14px;padding:16px 18px 14px}
+.performanceHeader{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:10px}
+.performanceKicker{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#78827c;margin-bottom:4px}
+.performanceChangeRow{display:flex;align-items:baseline;gap:10px}
+.performanceChangeRow strong{font-family:Georgia,"Times New Roman",serif;font-size:26px;font-weight:600;color:#243129}
+.performanceChangeRow strong.up{color:#2f6d50}.performanceChangeRow strong.down{color:#9b514b}
+.performanceChangeRow span{font-size:12px;color:#6c7771;font-variant-numeric:tabular-nums}
+.performancePeriodLabel{font-size:10px;color:#7b8580;margin-top:3px}
+.performanceTabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.performanceTab{background:#fff;border:1px solid #d4dad6;color:#5f6b64;padding:7px 10px;border-radius:2px;font-size:11px;font-weight:650;cursor:pointer}
+.performanceTab:hover{border-color:#9ca8a1;color:#26342d}
+.performanceTab.active{background:#26372f;border-color:#26372f;color:#fff}
+.performanceChartWrap{position:relative;height:180px;border-top:1px solid #e3e7e4;padding-top:8px}
+#performanceChart{width:100%;height:172px;display:block;overflow:visible}
+.performanceTooltip{position:absolute;display:none;background:#fff;border:1px solid #cfd6d1;box-shadow:0 7px 20px rgba(28,42,34,.12);padding:8px 10px;font-size:10px;color:#27332d;pointer-events:none;z-index:5;min-width:120px}
+.performanceTooltip strong{display:block;font-size:11px;margin-bottom:3px}
+.performanceTooltip .perfTipRow{display:flex;justify-content:space-between;gap:14px}
+.performanceEmpty{font-size:11px;fill:#77827c}
+@media(max-width:700px){.performanceHeader{flex-direction:column}.performanceTabs{justify-content:flex-start}.performanceChartWrap{height:160px}#performanceChart{height:152px}}
+
 </style>
 <!-- Legacy regression marker: MVP 1.4 -->
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar"><div class="brandBlock"><div class="brand">JUKA</div><div class="brandLine">Invest with clarity. — Understand companies. Analyze fundamentals. Estimate fair value.</div></div><div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen — z. B. META, Apple, SAP, ASML …" autocomplete="off"><div id="results" class="results"></div></div><span class="badge" id="dataStatus">JUKA · LIVE Research</span></div>
+  <header class="jukaHeader">
+    <div class="brandBlock">
+      <div class="brand">JUKA</div>
+      <div class="brandLine">Invest with clarity. — Understand companies. Analyze fundamentals. Estimate fair value.</div>
+    </div>
+    <div class="headerSearchRow">
+      <div class="searchWrap"><input id="search" class="search" placeholder="Aktie suchen" autocomplete="off"><div id="results" class="results"></div></div>
+      <span class="badge" id="dataStatus">JUKA · LIVE Research</span>
+    </div>
+  </header>
 
   <div class="productBar"><div><strong>Meine Aktien</strong><div class="watchStrip" id="watchStrip"></div></div><div class="productActions"><button class="productBtn" id="watchBtn">☆ Watchlist</button><button class="productBtn" id="saveAnalysisBtn">Analyse speichern</button><button class="productBtn" id="savedToggleBtn">Gespeichert</button></div></div>
   <div class="savedPanel" id="savedPanel"><details open><summary>Gespeicherte Analysen</summary><div class="savedGrid" id="savedGrid"></div></details></div>
 
-  <section class="hero"><div><div class="eyebrow" id="market">NASDAQ · USD · Operating Company</div><div class="name" id="name">Meta Platforms</div><div class="eyebrow" id="symbol">META</div></div><div><div class="price" id="price">$616.77</div><div class="eyebrow" id="priceDate">Aktienkurs · Stand 08.09.2026</div></div></section>
+  <section class="hero">
+    <div class="companyIdentity">
+      <div class="companyLogoWrap">
+        <img id="companyLogo" class="companyLogo" alt="" referrerpolicy="no-referrer">
+        <span id="companyLogoFallback" class="companyLogoFallback">M</span>
+      </div>
+      <div>
+        <div class="eyebrow" id="market">NASDAQ · USD · Operating Company</div>
+        <div class="name" id="name">Meta Platforms</div>
+        <div class="eyebrow" id="symbol">META</div>
+      </div>
+    </div>
+    <div><div class="price" id="price">$616.77</div><div class="eyebrow" id="priceDate">Aktienkurs · Stand 08.09.2026</div></div>
+  </section>
 
-  <div class="performanceStrip" id="performanceStrip">
-    <div class="perfCell"><span>1T</span><b id="perf1d">—</b></div>
-    <div class="perfCell"><span>1W</span><b id="perf1w">—</b></div>
-    <div class="perfCell"><span>1M</span><b id="perf1m">—</b></div>
-    <div class="perfCell"><span>3M</span><b id="perf3m">—</b></div>
-    <div class="perfCell"><span>1J</span><b id="perf1y">—</b></div>
-    <div class="perfCell"><span>3J</span><b id="perf3y">—</b></div>
-    <div class="perfCell"><span>Max</span><b id="perfMax">—</b></div>
-  </div>
+  <section class="performanceCard" id="performanceSection">
+    <div class="performanceHeader">
+      <div>
+        <div class="performanceKicker">Kursentwicklung</div>
+        <div class="performanceChangeRow">
+          <strong id="performanceChange">—</strong>
+          <span id="performanceChangeAbs">—</span>
+        </div>
+        <div class="performancePeriodLabel" id="performancePeriodLabel">1 Jahr</div>
+      </div>
+      <div class="performanceTabs" id="performanceTabs">
+        <button class="performanceTab" data-performance-period="1D">1T</button>
+        <button class="performanceTab" data-performance-period="1W">1W</button>
+        <button class="performanceTab" data-performance-period="1M">1M</button>
+        <button class="performanceTab" data-performance-period="3M">3M</button>
+        <button class="performanceTab active" data-performance-period="1Y">1J</button>
+        <button class="performanceTab" data-performance-period="3Y">3J</button>
+        <button class="performanceTab" data-performance-period="MAX">Max</button>
+      </div>
+    </div>
+    <div class="performanceChartWrap">
+      <svg id="performanceChart" viewBox="0 0 1120 180" preserveAspectRatio="none"></svg>
+      <div class="performanceTooltip" id="performanceTooltip"></div>
+    </div>
+  </section>
 
-  <div class="liveBetaBar" id="liveBetaBar">
-    <div class="liveBetaCell" id="liveModeCell"><span>Modus</span><b id="liveMode">Start</b><small id="liveStatusText">Warte auf Analyse</small></div>
-    <div class="liveBetaCell" id="marketSourceCell"><span>Kursquelle</span><b id="marketSource">—</b><small id="marketDate">—</small></div>
-    <div class="liveBetaCell" id="fundSourceCell"><span>Fundamentals</span><b id="fundSource">—</b><small id="fundDate">—</small></div>
-    <div class="liveBetaCell" id="coverageCell"><span>Datenabdeckung</span><b id="liveCoverage">—</b><small id="liveValuationStatus">—</small></div>
-    <div class="liveBetaCell" id="warningCell"><span>Pipeline</span><b id="liveWarnings">—</b><small id="liveEngine">—</small></div>
+    <div class="perfCell"><span>1W</span><b id="obsolete-perf1w">—</b></div>
+    <div class="perfCell"><span>1M</span><b id="obsolete-perf1m">—</b></div>
+    <div class="perfCell"><span>3M</span><b id="obsolete-perf3m">—</b></div>
+    <div class="perfCell"><span>1J</span><b id="obsolete-perf1y">—</b></div>
+    <div class="perfCell"><span>3J</span><b id="obsolete-perf3y">—</b></div>
+    <div class="perfCell"><span>Max</span><b id="obsolete-perfMax">—</b></div>
   </div>
-  <details class="liveDebug" id="liveDebugDetails"><summary>Live-Beta Diagnose</summary><pre id="liveDebugOutput">Noch keine Live-Antwort empfangen.</pre></details>
   <div class="investmentSummary" id="investmentSummary">
     <div class="summarySignal"><span>JUKA Fair Value</span><b id="summaryFair">—</b><small id="summaryFairNote">Base-Szenario</small></div>
     <div class="summarySignal"><span>Bewertung</span><b id="summaryValuation">—</b><small>Kurs vs. Fair Value</small></div>
@@ -106,19 +183,52 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
     <div class="summarySignal"><span>Modell</span><b id="summaryModel">—</b><small id="summaryReadiness">Readiness —</small></div>
   </div>
   <nav class="sectionNav" aria-label="Analyseabschnitte">
-    <a href="#valuationSection">Bewertung & Chart</a>
-    <a href="#qualitySection">Qualität</a>
+    <a href="#valuationSection">Valuation</a>
+    <a href="#qualitySection">Quality</a>
     <a href="#fundamentalsSection">Fundamentals</a>
     <a href="#businessSection">Business</a>
-    <a href="#motorAuditDetails">Motor-Audit</a>
-    <a href="#historyDetails">Datenhistorie</a>
+    <a href="#methodologySection">Methodik & Daten</a>
+    <a href="#historyDetails">Historie</a>
   </nav>
 
   <section class="grid" id="dashboard">
     <div class="analysisHeading">Valuation</div><div class="card chartCard sectionCard" id="valuationSection"><div class="chartToolbar"><div><h3 style="margin-bottom:3px">Aktienkurs & JUKA Fair Value</h3><div class="note" id="periodLabel">Historische Ansicht · 5 Jahre</div></div><div class="periods" aria-label="Zeitraum auswählen"><button class="periodBtn" data-period="1Y">1J</button><button class="periodBtn" data-period="3Y">3J</button><button class="periodBtn active" data-period="5Y">5J</button><button class="periodBtn" data-period="MAX">Max</button></div></div>
       <div class="chartWrap"><svg id="valuationChart" viewBox="0 0 760 350" role="img" aria-label="Aktienkurs mit Fair Value, Bear-Fair-Value und Bull-Fair-Value"></svg><div id="chartTooltip" class="chartTooltip"></div></div>
-      <div class="legend"><span><i class="dot" style="background:#76b7ff"></i>Aktienkurs</span><span><i class="dot" style="background:#8be0b0"></i>Fair Value</span><span><i class="dot" style="background:#ff8a8a"></i>Bear-Fair-Value</span><span><i class="dot" style="background:#ffd36a"></i>Bull-Fair-Value</span></div>
-      <div class="note" id="chartNote">Demo-Modus. Nach kostenlosem Vercel-Deployment mit Twelve-Data-Key werden echte Tageskurse geladen; US-Fundamentaldaten kommen serverseitig aus der SEC und speisen den historischen DCF.</div></div>
+      <div class="legend"><span><i class="dot" style="background:#76b7ff"></i>Aktienkurs</span><span><i class="dot" style="background:#111"></i>JUKA Fair Value</span><span><i class="dot" style="background:#ff8a8a"></i>Bear-Fair-Value</span><span><i class="dot" style="background:#ffd36a"></i>Bull-Fair-Value</span></div>
+      <div class="note" id="chartNote">Demo-Modus. Nach kostenlosem Vercel-Deployment mit Twelve-Data-Key werden echte Tageskurse geladen; US-Fundamentaldaten kommen serverseitig aus der SEC und speisen den historischen DCF.</div>
+      <div class="valuationDetails">
+        <div class="modelBox" id="modelBox"><details><summary>Bewertungsmodell & Annahmen</summary>
+        <div class="modelGrid">
+          <div class="modelField"><label>Umsatzwachstum Jahr 1</label><input id="dcfG1" type="number" step="0.5" value="18"><span class="note">%</span></div>
+          <div class="modelField"><label>Umsatzwachstum Jahr 5</label><input id="dcfG5" type="number" step="0.5" value="10"><span class="note">%</span></div>
+          <div class="modelField"><label>Ziel-EBIT-Marge Jahr 5</label><input id="dcfMargin5" type="number" step="0.5" value="40"><span class="note">%</span></div>
+          <div class="modelField"><label>WACC</label><input id="dcfWacc" type="number" step="0.1" value="9.5"><span class="note">%</span></div>
+          <div class="modelField"><label>Terminalwachstum</label><input id="dcfTg" type="number" step="0.1" value="3"><span class="note">%</span></div>
+        </div>
+        <div class="scenarioStrip"><div class="scenario"><span>Bear-Fair-Value</span><strong class="red" id="bearModel">$400.16</strong></div><div class="scenario"><span>Fair Value</span><strong class="green" id="baseModel">$654.43</strong></div><div class="scenario"><span>Bull-Fair-Value</span><strong class="gold" id="bullModel">$1,011.57</strong></div></div>
+        <div class="modelAudit"><div class="auditItem">Terminalanteil EV<b id="terminalShare">61.9%</b></div><div class="auditItem">KGV beim Fair Value<b id="fairPe">24.7×</b></div><div class="auditItem">EPS-Wachstum bis J5<b id="epsGrowth5">11.1% p.a.</b></div></div>
+        <p class="note">Diese fünf Felder sind editierbar. Berechnung: dein 10-Jahres-FCFF-DCF mit automatischem Fade, Bear/Base/Bull-Szenarien und Terminal-Reinvestment g/ROIC.</p>
+      </details></div>
+        <details id="scenarioForecastDetails" open><summary>Bear / Base / Bull</summary>
+<div class="modelAudit">
+  <div class="auditItem">Bear Rendite p.a.<b id="scenarioBearReturn">—</b></div>
+  <div class="auditItem">Base Rendite p.a.<b id="scenarioBaseReturn">—</b></div>
+  <div class="auditItem">Bull Rendite p.a.<b id="scenarioBullReturn">—</b></div>
+</div>
+<div class="historyWrap"><table class="historyTable" id="scenarioTable"></table></div>
+<div class="historyWrap"><table class="historyTable" id="returnMatrixTable"></table></div>
+<p class="note" id="scenarioNote">Bear/Base/Bull verändern Wachstum, Margen, Verwässerung und Exit-Multiple. Die Matrix zeigt bewusst mehrere Pfade statt eines einzelnen Punktwerts.</p>
+</details>
+        <details id="forecastDetails" open><summary>5-Jahres-Ausblick</summary>
+<div class="forecastCharts" id="forecastCharts">
+  <div class="forecastChartCard"><div class="forecastChartTitle">Umsatz</div><div class="forecastBars" id="forecastRevenueBars"></div></div>
+  <div class="forecastChartCard"><div class="forecastChartTitle">EPS</div><div class="forecastBars" id="forecastEpsBars"></div></div>
+  <div class="forecastChartCard"><div class="forecastChartTitle">Free Cashflow</div><div class="forecastBars" id="forecastFcfBars"></div></div>
+  <div class="forecastChartCard"><div class="forecastChartTitle">EBIT-Marge</div><div class="forecastBars" id="forecastMarginBars"></div></div>
+</div><div class="modelAudit"><div class="auditItem">Umsatzwachstum 5J<b id="forecastRevenueGrowth">—</b></div><div class="auditItem">EPS-Wachstum 5J<b id="forecastEpsGrowth">—</b></div><div class="auditItem">FCF-Wachstum 5J<b id="forecastFcfGrowth">—</b></div><div class="auditItem">EBIT-Marge J5<b id="forecastMargin5">—</b></div><div class="auditItem">PEG<b id="forecastPeg">—</b></div><div class="auditItem">Rendite p.a. bis J5<b id="forecastReturn">—</b></div></div><div class="historyWrap"><table class="historyTable" id="forecastTable"></table></div><p class="note" id="forecastNote">Forecasts sind transparente Szenarien aus historischen Daten und begrenzten Annahmen – keine Prognosegarantie.</p></details>
+        <details id="reverseDetails"><summary>Reverse DCF & Sensitivität</summary><div class="modelAudit"><div class="auditItem">Markt-impliziertes Wachstum<b id="reverseGrowth">—</b></div><div class="auditItem">Markt-implizierte EBIT-Marge J5<b id="reverseMargin">—</b></div><div class="auditItem">Markt-impliziter WACC<b id="reverseWacc">—</b></div></div><div class="historyWrap"><table class="historyTable" id="sensitivityTable"></table></div><p class="note">Reverse DCF verändert jeweils nur eine Annahme und hält die übrigen Base-Annahmen konstant. Die Matrix zeigt Fair Values bei unterschiedlichen WACC- und Terminalwachstums-Annahmen.</p></details>
+      </div>
+    </div>
 
     
     <div class="analysisHeading">Business</div>
@@ -160,19 +270,17 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
     </div>
 
     <div class="analysisHeading">Fundamentals</div><div class="card funds sectionCard" id="fundamentalsSection"><h3>Umsatz, EPS, FCF, Margen, ROIC & Verschuldung</h3><div class="kv"><span>Fair Value</span><strong class="green" id="fvMetric">$654.43</strong></div><div class="kv"><span>Kurs vs. Fair Value</span><strong class="gold" id="valuationMetric">−5.8% · unterbewertet</strong></div><div class="kv"><span>KGV</span><strong id="peMetric">23.25×</strong></div><div class="kv"><span>Modell-KGV Jahr 5</span><strong id="forwardPeMetric">13.71×</strong></div><div class="kv"><span>Umsatz</span><strong id="revenueMetric">$228.25 Mrd.</strong></div><div class="kv"><span>EBIT</span><strong id="ebitMetric">$86.93 Mrd.</strong></div><div class="kv"><span>EBIT-Marge</span><strong id="marginMetric">38.1%</strong></div><div class="kv"><span>EPS</span><strong id="epsMetric">$26.53</strong></div><div class="kv"><span>Free Cashflow</span><strong id="fcfMetric">—</strong></div><div class="kv"><span>Nettofinanzposition</span><strong id="netCashMetric">−$6.60 Mrd.</strong></div>
-      <div class="modelBox" id="modelBox"><details><summary>Bewertungsmodell & Szenarien anzeigen</summary>
-        <div class="modelGrid">
-          <div class="modelField"><label>Umsatzwachstum Jahr 1</label><input id="dcfG1" type="number" step="0.5" value="18"><span class="note">%</span></div>
-          <div class="modelField"><label>Umsatzwachstum Jahr 5</label><input id="dcfG5" type="number" step="0.5" value="10"><span class="note">%</span></div>
-          <div class="modelField"><label>Ziel-EBIT-Marge Jahr 5</label><input id="dcfMargin5" type="number" step="0.5" value="40"><span class="note">%</span></div>
-          <div class="modelField"><label>WACC</label><input id="dcfWacc" type="number" step="0.1" value="9.5"><span class="note">%</span></div>
-          <div class="modelField"><label>Terminalwachstum</label><input id="dcfTg" type="number" step="0.1" value="3"><span class="note">%</span></div>
-        </div>
-        <div class="scenarioStrip"><div class="scenario"><span>Bear-Fair-Value</span><strong class="red" id="bearModel">$400.16</strong></div><div class="scenario"><span>Fair Value</span><strong class="green" id="baseModel">$654.43</strong></div><div class="scenario"><span>Bull-Fair-Value</span><strong class="gold" id="bullModel">$1,011.57</strong></div></div>
-        <div class="modelAudit"><div class="auditItem">Terminalanteil EV<b id="terminalShare">61.9%</b></div><div class="auditItem">KGV beim Fair Value<b id="fairPe">24.7×</b></div><div class="auditItem">EPS-Wachstum bis J5<b id="epsGrowth5">11.1% p.a.</b></div></div>
-        <p class="note">Diese fünf Felder sind editierbar. Berechnung: dein 10-Jahres-FCFF-DCF mit automatischem Fade, Bear/Base/Bull-Szenarien und Terminal-Reinvestment g/ROIC.</p>
-      </details></div>
+      
+      
+      
+      <details id="historyDetails"><summary>Fundamentaldaten-Historie</summary><div class="engineLine"><span class="engineTag" id="historySource">Quelle: Excel-Referenz</span><span class="engineTag" id="historyAvailability">Historischer DCF: ohne Look-ahead</span><span class="engineTag" id="historyCoverage">Datenabdeckung: Referenz</span></div><div class="historyWrap"><table class="historyTable"><thead><tr><th>Jahr</th><th>Umsatz</th><th>Wachstum</th><th>EBIT</th><th>EBIT-Marge</th><th>Net Income</th><th>EPS</th><th>CFO</th><th>CapEx</th><th>FCF</th><th>FCF-Marge</th><th>Cash</th><th>Debt</th><th>Net Cash</th><th>Shares</th><th>SBC/Umsatz</th><th>ROIC</th><th>Net Debt/EBITDA</th><th>Verfügbar ab</th></tr></thead><tbody id="fundamentalHistory"><tr><td colspan="19">Daten werden geladen …</td></tr></tbody></table></div><p class="note">Bei Live-US-Daten verwendet die historische Bewertung nur Geschäftsjahre, deren SEC-Filing am jeweiligen Kurstag bereits veröffentlicht war. Dadurch entsteht kein Zukunftswissen im historischen Fair Value.</p></details>
+      <div class="note" id="fundNote">Fundamentaldaten und Historie werden aus den verfügbaren Quellen geladen.</div>
+    </div>
+    <div class="analysisHeading">Methodik & Daten</div>
+    <div class="card sectionCard methodologyCard" id="methodologySection">
       <details id="motorAuditDetails"><summary>Methodik & Daten</summary>
+        <p class="note methodologyIntro">Hier zeigt JUKA transparent, welches Bewertungsmodell verwendet wird, wie vollständig die Datengrundlage ist und welche automatischen Annahmen in die Analyse einfließen. Für die normale Analyse ist dieser Bereich nicht nötig; er dient der Nachvollziehbarkeit.</p>
+        
 <div class="modelAudit">
   <div class="auditItem">Bewertungsmodell<b id="motorModel">—</b></div>
   <div class="auditItem">Readiness<b id="motorReady">—</b></div>
@@ -180,7 +288,9 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
 </div>
 <div class="historyWrap"><table class="historyTable" id="motorAuditTable"></table></div>
 <p class="note" id="motorAuditNote">Der Motor zeigt explizit Pflichtdaten, Bewertungsbereitschaft und zentrale Modellrisiken.</p>
-</details><details id="profileDetails"><summary>Datenqualität & Annahmen</summary>
+
+        <div class="methodDivider"></div>
+        
 <div class="modelAudit">
   <div class="auditItem">Datenqualität<b id="dqScore">—</b></div>
   <div class="auditItem">Forecast-Vertrauen<b id="dqConfidence">—</b></div>
@@ -188,311 +298,17 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
 </div>
 <div class="historyWrap"><table class="historyTable" id="autoAssumptionTable"></table></div>
 <p class="note" id="dqNote">JUKA passt Forecast-Annahmen an Datenabdeckung, Wachstum, Margenstabilität, Kapitalintensität und Verwässerung an.</p>
-</details><details id="scenarioForecastDetails" open><summary>Bear / Base / Bull & Renditematrix</summary>
-<div class="modelAudit">
-  <div class="auditItem">Bear Rendite p.a.<b id="scenarioBearReturn">—</b></div>
-  <div class="auditItem">Base Rendite p.a.<b id="scenarioBaseReturn">—</b></div>
-  <div class="auditItem">Bull Rendite p.a.<b id="scenarioBullReturn">—</b></div>
+
+      </details>
+    </div>
+  </section>
+  <div hidden id="legacyCompatibility">
+  <span id="peerGroup"></span><span id="peerLabel"></span><span id="peerCoverage"></span><div id="peerRows"></div>
+  <span id="realityLabel"></span><span id="realityScore"></span><span id="realityConfidence"></span><div id="realityDrivers"></div><span id="realityBreaker"></span>
 </div>
-<div class="historyWrap"><table class="historyTable" id="scenarioTable"></table></div>
-<div class="historyWrap"><table class="historyTable" id="returnMatrixTable"></table></div>
-<p class="note" id="scenarioNote">Bear/Base/Bull verändern Wachstum, Margen, Verwässerung und Exit-Multiple. Die Matrix zeigt bewusst mehrere Pfade statt eines einzelnen Punktwerts.</p>
-</details><details id="forecastDetails" open><summary>5J-Forecast & Renditebrücke</summary><div class="modelAudit"><div class="auditItem">Umsatzwachstum 5J<b id="forecastRevenueGrowth">—</b></div><div class="auditItem">EPS-Wachstum 5J<b id="forecastEpsGrowth">—</b></div><div class="auditItem">FCF-Wachstum 5J<b id="forecastFcfGrowth">—</b></div><div class="auditItem">EBIT-Marge J5<b id="forecastMargin5">—</b></div><div class="auditItem">PEG<b id="forecastPeg">—</b></div><div class="auditItem">Rendite p.a. bis J5<b id="forecastReturn">—</b></div></div><div class="historyWrap"><table class="historyTable" id="forecastTable"></table></div><p class="note" id="forecastNote">Forecasts sind transparente Szenarien aus historischen Daten und begrenzten Annahmen – keine Prognosegarantie.</p></details><details id="peerDetails"><summary>Peer-/Relative-Valuation</summary><div class="modelAudit"><div class="auditItem">Peer-Gruppe<b id="peerGroup">—</b></div><div class="auditItem">Relative Bewertung<b id="peerLabel">—</b></div><div class="auditItem">Vergleichbare Multiples<b id="peerCoverage">—</b></div></div><div id="peerRows" class="scoreBreakdown"></div><p class="note">Peer-Multiples werden nur aus tatsächlich verfügbaren Vergleichsdaten berechnet. In der lokalen Demo werden keine Peer-Werte erfunden.</p></details><details id="realityDetails"><summary>Analyse-Realitätscheck</summary><div class="modelAudit"><div class="auditItem">Gesamtbild<b id="realityLabel">—</b></div><div class="auditItem">Engine-Score<b id="realityScore">—</b></div><div class="auditItem">Datenbasis<b id="realityConfidence">—</b></div></div><div id="realityDrivers" class="scoreBreakdown"></div><p class="note"><b>Was kippt die These?</b> <span id="realityBreaker">—</span></p><p class="note">Der Realitätscheck kombiniert Bewertung, Qualität und relative Kennzahlen. Er ist eine Modell-Zusammenfassung, keine Kauf-/Verkaufsempfehlung.</p></details><details id="reverseDetails"><summary>Reverse DCF & Sensitivität</summary><div class="modelAudit"><div class="auditItem">Markt-impliziertes Wachstum<b id="reverseGrowth">—</b></div><div class="auditItem">Markt-implizierte EBIT-Marge J5<b id="reverseMargin">—</b></div><div class="auditItem">Markt-impliziter WACC<b id="reverseWacc">—</b></div></div><div class="historyWrap"><table class="historyTable" id="sensitivityTable"></table></div><p class="note">Reverse DCF verändert jeweils nur eine Annahme und hält die übrigen Base-Annahmen konstant. Die Matrix zeigt Fair Values bei unterschiedlichen WACC- und Terminalwachstums-Annahmen.</p></details>
-      <details id="historyDetails"><summary>Fundamentaldaten-Historie & Engine-Audit</summary><div class="engineLine"><span class="engineTag" id="historySource">Quelle: Excel-Referenz</span><span class="engineTag" id="historyAvailability">Historischer DCF: ohne Look-ahead</span><span class="engineTag" id="historyCoverage">Datenabdeckung: Referenz</span></div><div class="historyWrap"><table class="historyTable"><thead><tr><th>Jahr</th><th>Umsatz</th><th>Wachstum</th><th>EBIT</th><th>EBIT-Marge</th><th>Net Income</th><th>EPS</th><th>CFO</th><th>CapEx</th><th>FCF</th><th>FCF-Marge</th><th>Cash</th><th>Debt</th><th>Net Cash</th><th>Shares</th><th>SBC/Umsatz</th><th>ROIC</th><th>Net Debt/EBITDA</th><th>Verfügbar ab</th></tr></thead><tbody id="fundamentalHistory"><tr><td colspan="19">Daten werden geladen …</td></tr></tbody></table></div><p class="note">Bei Live-US-Daten verwendet die historische Bewertung nur Geschäftsjahre, deren SEC-Filing am jeweiligen Kurstag bereits veröffentlicht war. Dadurch entsteht kein Zukunftswissen im historischen Fair Value.</p></details>
-      <div class="note" id="fundNote">META-Referenzwerte aus deiner Excel-Datei; DCF/Quality-Logik in MVP 1.0 Excel-paritätisch getestet.</div></div></section>
   <div class="footer">JUKA · Private Equity Research · keine Anlageberatung</div>
 </div>
-<script>
-(function(root,factory){
-  if(typeof module==='object'&&module.exports){module.exports=factory();}
-  else{root.JuKaCore=factory();}
-})(typeof self!=='undefined'?self:this,function(){
-  function n(v,fallback=0){const x=Number(v);return Number.isFinite(x)?x:fallback;}
-  function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
-  function median(values){const a=values.filter(Number.isFinite).slice().sort((a,b)=>a-b);if(!a.length)return null;const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
-  function cagr(start,end,years){start=n(start);end=n(end);years=n(years);if(start<=0||end<=0||years<=0)return null;return Math.pow(end/start,1/years)-1;}
-  function valuationPct(price,fair){price=n(price,NaN);fair=n(fair,NaN);if(!Number.isFinite(price)||!Number.isFinite(fair)||fair===0)return null;return (price/fair-1)*100;}
-
-  // Generic score retained as a fallback for live datasets that do not yet expose all Excel inputs.
-  function qualityScore(m={}){
-    const parts=[]; let score=0;
-    function add(label,points,max,reason){points=clamp(n(points),0,max);score+=points;parts.push({label,points,max,reason});}
-    const roic=n(m.roic,NaN), opm=n(m.operatingMargin,NaN), rg=n(m.revenueCagr3y,NaN), eg=n(m.epsCagr3y,NaN), fcfm=n(m.fcfMargin,NaN), nde=n(m.netDebtToEbit,NaN), dilution=n(m.shareCagr3y,NaN);
-    add('ROIC / Kapitalrendite',Number.isFinite(roic)?(roic>=.20?20:roic>=.12?16:roic>=.08?11:roic>=.04?6:2):8,20,Number.isFinite(roic)?`${(roic*100).toFixed(1)}%`:'nicht verfügbar');
-    add('EBIT-Marge',Number.isFinite(opm)?(opm>=.30?15:opm>=.20?13:opm>=.12?10:opm>=.06?6:3):7,15,Number.isFinite(opm)?`${(opm*100).toFixed(1)}%`:'nicht verfügbar');
-    add('Umsatzwachstum',Number.isFinite(rg)?(rg>=.15?15:rg>=.08?12:rg>=.03?9:rg>=0?6:2):7,15,Number.isFinite(rg)?`${(rg*100).toFixed(1)}% CAGR`:'nicht verfügbar');
-    add('Gewinnwachstum',Number.isFinite(eg)?(eg>=.15?15:eg>=.08?12:eg>=.03?9:eg>=0?6:2):7,15,Number.isFinite(eg)?`${(eg*100).toFixed(1)}% CAGR`:'nicht verfügbar');
-    add('Cashflow-Qualität',Number.isFinite(fcfm)?(fcfm>=.20?15:fcfm>=.12?12:fcfm>=.06?9:fcfm>0?6:1):7,15,Number.isFinite(fcfm)?`${(fcfm*100).toFixed(1)}% FCF-Marge`:'nicht verfügbar');
-    add('Bilanzqualität',Number.isFinite(nde)?(nde<=0?10:nde<=1?9:nde<=2?7:nde<=3?5:2):5,10,Number.isFinite(nde)?`${nde.toFixed(1)}× Net Debt / EBIT`:'nicht verfügbar');
-    add('Verwässerung',Number.isFinite(dilution)?(dilution<=0?10:dilution<=.01?8:dilution<=.03?5:2):5,10,Number.isFinite(dilution)?`${(dilution*100).toFixed(1)}% Aktien-CAGR`:'nicht verfügbar');
-    const grade=score>=85?'A':score>=70?'B':score>=55?'C':score>=40?'D':'E';
-    const label=score>=85?'Exzellent':score>=70?'Stark':score>=55?'Solide':score>=40?'Durchschnittlich':'Schwach';
-    return {score:Math.round(score),grade,label,parts};
-  }
-
-  // Exact score thresholds/weights from Aktienanalyse_1.0_JuKa_Meta.xlsx / Quality_Score.
-  function jukaQualityScore(m={}){
-    const defs=[
-      {key:'roic',label:'ROIC TTM',weight:.15,fmt:'pct',score:v=>v>=.20?10:v>=.15?8:v>=.10?6:v>=.05?3:0},
-      {key:'ebitMargin',label:'EBIT-Marge TTM',weight:.10,fmt:'pct',score:v=>v>=.20?10:v>=.15?8:v>=.10?6:v>=.05?3:0},
-      {key:'revenueCagr5y',label:'Umsatz-CAGR 5J',weight:.10,fmt:'pct',score:v=>v>=.15?10:v>=.10?8:v>=.05?6:v>=0?3:0},
-      {key:'fcfCagr5y',label:'FCF-CAGR 5J',weight:.10,fmt:'pct',score:v=>v>=.15?10:v>=.10?8:v>=.05?6:v>=0?3:0},
-      {key:'fcfConversion',label:'FCF Conversion',weight:.10,fmt:'pct',score:v=>v>=1?10:v>=.8?8:v>=.6?6:v>=.4?3:0},
-      {key:'sbcToRevenue',label:'SBC / Umsatz',weight:.08,fmt:'pct',lower:true,score:v=>v<=.01?10:v<=.02?8:v<=.04?6:v<=.07?3:0},
-      {key:'netDebtToEbitda',label:'Net Debt / EBITDA',weight:.12,fmt:'x',lower:true,score:v=>v<=0?10:v<=1?8:v<=2?6:v<=3?3:0},
-      {key:'interestCoverage',label:'Interest Coverage',weight:.08,fmt:'x',score:v=>v>=15?10:v>=8?8:v>=4?6:v>=2?3:0},
-      {key:'dilutionPa',label:'Aktienverwässerung p.a.',weight:.10,fmt:'pct',lower:true,score:v=>v<=0?10:v<=.01?8:v<=.02?6:v<=.04?3:0},
-      {key:'roicTrend',label:'ROIC-Trend',weight:.07,fmt:'pp',score:v=>v>=.05?10:v>=.02?8:v>=0?6:v>=-.02?3:0}
-    ];
-    let total=0; const parts=[];
-    for(const d of defs){
-      const v=Number(m[d.key]); const available=Number.isFinite(v); const raw=available?d.score(v):0; const weighted=raw*d.weight*10; total+=weighted;
-      let reason='nicht verfügbar'; if(available){reason=d.fmt==='x'?`${v.toFixed(1)}×`:d.fmt==='pp'?`${(v*100).toFixed(1)} pp`:`${(v*100).toFixed(1)}%`;}
-      parts.push({key:d.key,label:d.label,value:available?v:null,weight:d.weight,rawScore:raw,weightedScore:weighted,max:d.weight*100,reason});
-    }
-    const score=Math.round(total*10)/10;
-    const grade=score>=85?'A':score>=70?'B':score>=55?'C':score>=40?'D':'E';
-    const label=score>=85?'Exzellent':score>=70?'Stark':score>=55?'Solide':score>=40?'Schwach':'Problematisch';
-    const interpretation=score>=70?'Starkes Unternehmen – historische Profitabilität, Wachstum, Cashflow und Bilanz sind insgesamt überzeugend.':score>=55?'Solides Unternehmen – Qualität ist ordentlich, aber einzelne Bereiche sollten geprüft werden.':'Qualität ist schwach oder uneinheitlich – Ursachen genauer prüfen.';
-    return {score,grade,label,interpretation,parts};
-  }
-
-  // Legacy simplified FCFF DCF kept for partial live datasets.
-  function dcfFairValue(input={}){
-    const fcf0=n(input.fcf0), growth=n(input.growth,.08), fadeGrowth=n(input.fadeGrowth,.04), wacc=n(input.wacc,.09), terminalGrowth=n(input.terminalGrowth,.025), years=Math.max(1,Math.round(n(input.years,10))), netCash=n(input.netCash), shares=n(input.shares);
-    if(fcf0<=0||shares<=0||wacc<=terminalGrowth)return null;
-    let pv=0, fcf=fcf0;
-    for(let y=1;y<=years;y++){const t=(y-1)/Math.max(1,years-1); const g=growth+(fadeGrowth-growth)*t; fcf*=1+g; pv+=fcf/Math.pow(1+wacc,y);}
-    const terminal=fcf*(1+terminalGrowth)/(wacc-terminalGrowth); pv+=terminal/Math.pow(1+wacc,years);
-    return (pv+netCash)/shares;
-  }
-  function scenarioValues(baseInput={}){
-    const base=dcfFairValue(baseInput); if(base==null)return null;
-    const bear=dcfFairValue({...baseInput,growth:n(baseInput.growth,.08)-.03,fadeGrowth:n(baseInput.fadeGrowth,.04)-.015,wacc:n(baseInput.wacc,.09)+.015,terminalGrowth:Math.max(.01,n(baseInput.terminalGrowth,.025)-.005)});
-    const bull=dcfFairValue({...baseInput,growth:n(baseInput.growth,.08)+.03,fadeGrowth:n(baseInput.fadeGrowth,.04)+.015,wacc:Math.max(.055,n(baseInput.wacc,.09)-.01),terminalGrowth:Math.min(.04,n(baseInput.terminalGrowth,.025)+.005)});
-    return {bear,base,bull};
-  }
-
-  // 10Y FCFF model ported 1:1 from the user's Excel DCF_10Y logic.
-  function jukaDcf10Y(input={}, scenario={growthAdj:0,marginAdj:0,waccAdj:0}){
-    const revenue0=n(input.revenue), ebit0=n(input.ebit), tax=n(input.taxRate), da0=n(input.da), capex0=n(input.capex), nwc0=n(input.deltaNwc), shares=n(input.shares), netFinancialPosition=n(input.netFinancialPosition);
-    const g1=n(input.growthY1), g5=n(input.growthY5), targetMargin5=n(input.targetEbitMarginY5), wacc=n(input.wacc)+n(scenario.waccAdj), terminalGrowth=n(input.terminalGrowth), terminalRoic=n(input.terminalRoic);
-    const capexPct0=revenue0?capex0/revenue0:NaN, daPct0=revenue0?da0/revenue0:NaN, nwcPct0=revenue0?nwc0/revenue0:NaN;
-    const capexPct5=n(input.capexPctY5), daPct5=n(input.daPctY5), nwcPct5=n(input.nwcPctY5);
-    if(!(revenue0>0&&shares>0&&terminalRoic>terminalGrowth&&wacc>terminalGrowth&&Number.isFinite(capexPct0)&&Number.isFinite(daPct0)&&Number.isFinite(nwcPct0)))return null;
-    const margin0=ebit0/revenue0; const rows=[]; let revenue=revenue0; let pvForecast=0;
-    for(let y=1;y<=10;y++){
-      let growth,margin,daPct,capexPct,nwcPct;
-      if(y<=5){
-        growth=(g1+n(scenario.growthAdj))+(g5-g1)*(y-1)/4;
-        margin=margin0+((targetMargin5+n(scenario.marginAdj))-margin0)*y/5;
-        daPct=daPct0+(daPct5-daPct0)*y/5;
-        capexPct=capexPct0+(capexPct5-capexPct0)*y/5;
-        nwcPct=nwcPct0+(nwcPct5-nwcPct0)*y/5;
-      }else{
-        growth=(g5+n(scenario.growthAdj))+(terminalGrowth-(g5+n(scenario.growthAdj)))*(y-5)/5;
-        margin=targetMargin5+n(scenario.marginAdj);
-        daPct=daPct5+(capexPct5-daPct5)*(y-5)/5;
-        capexPct=capexPct5+(daPct5-capexPct5)*(y-5)/5;
-        nwcPct=nwcPct5*(1-(y-5)/5);
-      }
-      revenue*=1+growth;
-      const ebit=revenue*margin, nopat=ebit*(1-tax), da=revenue*daPct, capex=revenue*capexPct, deltaNwc=revenue*nwcPct, fcff=nopat+da-capex-deltaNwc;
-      const discountFactor=1/Math.pow(1+wacc,y), pvFcff=fcff*discountFactor; pvForecast+=pvFcff;
-      rows.push({year:y,revenue,growth,margin,ebit,nopat,daPct,capexPct,nwcPct,da,capex,deltaNwc,fcff,discountFactor,pvFcff});
-    }
-    const y10=rows[9], nopat11=y10.nopat*(1+terminalGrowth), terminalReinvestmentRate=terminalGrowth/terminalRoic, terminalFcff=nopat11*(1-terminalReinvestmentRate), terminalValue=terminalFcff/(wacc-terminalGrowth), pvTerminal=terminalValue/Math.pow(1+wacc,10), enterpriseValue=pvForecast+pvTerminal, equityValue=enterpriseValue-netFinancialPosition, fairValue=equityValue/shares, terminalShare=pvTerminal/enterpriseValue;
-    return {fairValue,enterpriseValue,equityValue,pvForecast,pvTerminal,terminalValue,nopat11,terminalReinvestmentRate,terminalFcff,terminalShare,wacc,rows};
-  }
-  function jukaDcfScenarios(input={}){
-    const bear=jukaDcf10Y(input,{growthAdj:n(input.bearGrowthAdj,-.03),marginAdj:n(input.bearMarginAdj,-.03),waccAdj:n(input.bearWaccAdj,.015)});
-    const base=jukaDcf10Y(input,{growthAdj:0,marginAdj:0,waccAdj:0});
-    const bull=jukaDcf10Y(input,{growthAdj:n(input.bullGrowthAdj,.03),marginAdj:n(input.bullMarginAdj,.03),waccAdj:n(input.bullWaccAdj,-.01)});
-    return base&&bear&&bull?{bear:bear.fairValue,base:base.fairValue,bull:bull.fairValue,detail:{bear,base,bull}}:null;
-  }
-  // Reverse DCF for operating companies: solve one market-implied assumption at a time.
-  function solveBisection(fn,target,lo,hi,iterations=80){
-    let flo=fn(lo)-target,fhi=fn(hi)-target;if(!Number.isFinite(flo)||!Number.isFinite(fhi)||flo*fhi>0)return null;
-    for(let i=0;i<iterations;i++){const mid=(lo+hi)/2,fm=fn(mid)-target;if(!Number.isFinite(fm))return null;if(Math.abs(fm)<1e-9)return mid;if(flo*fm<=0){hi=mid;fhi=fm;}else{lo=mid;flo=fm;}}
-    return (lo+hi)/2;
-  }
-  function jukaReverseDcf(input={},marketPrice){
-    const price=n(marketPrice,NaN);if(!(price>0))return null;
-    const fvGrowth=g=>jukaDcf10Y({...input,growthY1:g,growthY5:g})?.fairValue;
-    const fvMargin=m=>jukaDcf10Y({...input,targetEbitMarginY5:m})?.fairValue;
-    const fvWacc=w=>jukaDcf10Y({...input,wacc:w})?.fairValue;
-    const impliedGrowth=solveBisection(fvGrowth,price,-.10,.40);
-    const impliedMargin=solveBisection(fvMargin,price,.01,.75);
-    const impliedWacc=solveBisection(fvWacc,price,Math.max(n(input.terminalGrowth,.025)+.002,.03),.25);
-    return {price,impliedGrowth,impliedMargin,impliedWacc,
-      growthGap:impliedGrowth==null?null:impliedGrowth-n(input.growthY5),
-      marginGap:impliedMargin==null?null:impliedMargin-n(input.targetEbitMarginY5),
-      waccGap:impliedWacc==null?null:impliedWacc-n(input.wacc)};
-  }
-  function jukaSensitivity(input={},waccSteps=null,growthSteps=null){
-    const wc=waccSteps||[-.02,-.01,0,.01,.02].map(x=>n(input.wacc)+x);
-    const gc=growthSteps||[-.01,-.005,0,.005,.01].map(x=>n(input.terminalGrowth)+x);
-    return {wacc:wc,terminalGrowth:gc,values:wc.map(w=>gc.map(g=>{if(w<=g)return null;const r=jukaDcf10Y({...input,wacc:w,terminalGrowth:g});return r?.fairValue??null;}))};
-  }
-
-  function jukaRelativeValuation({price,epsTtm,epsY5,fairValue}={}){
-    price=n(price,NaN); epsTtm=n(epsTtm,NaN); epsY5=n(epsY5,NaN); fairValue=n(fairValue,NaN);
-    const pe=epsTtm>0?price/epsTtm:null, peY5=epsY5>0?price/epsY5:null, epsGrowth=epsTtm>0&&epsY5>0?Math.pow(epsY5/epsTtm,1/5)-1:null, fairPe=epsTtm>0&&Number.isFinite(fairValue)?fairValue/epsTtm:null;
-    return {pe,peY5,epsGrowth,fairPe};
-  }
-
-
-  function lastFinite(rows,key,endIndex){
-    for(let i=endIndex;i>=0;i--){const v=Number(rows[i]?.[key]);if(Number.isFinite(v))return {index:i,value:v,row:rows[i]};}
-    return null;
-  }
-  function fieldCagr(rows,key,endIndex,years=5){
-    const end=lastFinite(rows,key,endIndex); if(!end||end.value<=0)return null;
-    let start=null;
-    for(let i=end.index-1;i>=0;i--){const v=Number(rows[i]?.[key]); if(Number.isFinite(v)&&v>0&&end.index-i>=years){start={index:i,value:v};break;}}
-    if(!start){for(let i=0;i<end.index;i++){const v=Number(rows[i]?.[key]);if(Number.isFinite(v)&&v>0){start={index:i,value:v};break;}}}
-    if(!start)return null; return cagr(start.value,end.value,end.index-start.index);
-  }
-  function medianField(rows,key,start,end){return median(rows.slice(Math.max(0,start),end+1).map(r=>Number(r?.[key])).filter(Number.isFinite));}
-  function deriveFundamentals(annualFacts=[]){
-    const rows=(annualFacts||[]).map(x=>({...x})).filter(x=>x&&x.date).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-    for(let i=0;i<rows.length;i++){
-      const r=rows[i], prev=rows[i-1];
-      const revenue=Number(r.revenue), ebit=Number(r.operatingIncome), ni=Number(r.netIncome), fcf=Number(r.fcf), da=Number(r.da), debt=Number(r.debt), cash=Number(r.cash), equity=Number(r.equity), pretax=Number(r.pretaxIncome), tax=Number(r.incomeTax), interest=Number(r.interestExpense), sbc=Number(r.sbc);
-      r.operatingMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(ebit)?ebit/revenue:null;
-      r.netMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(ni)?ni/revenue:null;
-      r.fcfMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(fcf)?fcf/revenue:null;
-      r.taxRate=Number.isFinite(pretax)&&pretax>0&&Number.isFinite(tax)?clamp(tax/pretax,0,.45):null;
-      r.ebitda=Number.isFinite(ebit)&&Number.isFinite(da)?ebit+da:null;
-      r.netDebt=Number.isFinite(debt)&&Number.isFinite(cash)?debt-cash:null;
-      r.netCash=Number.isFinite(cash)&&Number.isFinite(debt)?cash-debt:(Number.isFinite(Number(r.netCash))?Number(r.netCash):null);
-      r.netDebtToEbitda=Number.isFinite(r.netDebt)&&Number.isFinite(r.ebitda)&&r.ebitda!==0?r.netDebt/r.ebitda:null;
-      r.interestCoverage=Number.isFinite(ebit)&&Number.isFinite(interest)&&interest>0?ebit/interest:null;
-      const invested=Number.isFinite(equity)&&Number.isFinite(debt)&&Number.isFinite(cash)?equity+debt-cash:null;
-      const nopat=Number.isFinite(ebit)?ebit*(1-(Number.isFinite(r.taxRate)?r.taxRate:.21)):null;
-      r.roic=Number.isFinite(nopat)&&Number.isFinite(invested)&&invested>0?nopat/invested:null;
-      r.fcfConversion=Number.isFinite(fcf)&&Number.isFinite(ni)&&ni!==0?fcf/ni:null;
-      r.sbcToRevenue=Number.isFinite(sbc)&&Number.isFinite(revenue)&&revenue!==0?sbc/revenue:null;
-      r.revenueGrowthYoY=prev&&Number(prev.revenue)>0&&Number.isFinite(revenue)?revenue/Number(prev.revenue)-1:null;
-      r.fcfGrowthYoY=prev&&Number(prev.fcf)>0&&Number.isFinite(fcf)?fcf/Number(prev.fcf)-1:null;
-      r.shareGrowthYoY=prev&&Number(prev.shares)>0&&Number(r.shares)>0?Number(r.shares)/Number(prev.shares)-1:null;
-      r.revenueCagr5y=fieldCagr(rows,'revenue',i,5); r.fcfCagr5y=fieldCagr(rows,'fcf',i,5); r.dilutionPa=fieldCagr(rows,'shares',i,5);
-      r.revenueCagr3y=fieldCagr(rows,'revenue',i,3); r.epsCagr3y=fieldCagr(rows,'eps',i,3);
-      const roic3=lastFinite(rows,'roic',Math.max(0,i-3)); r.roicTrend=Number.isFinite(r.roic)&&roic3&&roic3.index<i?r.roic-roic3.value:null;
-    }
-    return rows;
-  }
-  function qualityInputFromAnnual(annualFacts=[]){
-    const rows=deriveFundamentals(annualFacts); const r=rows.at(-1); if(!r)return null;
-    return {roic:r.roic,ebitMargin:r.operatingMargin,revenueCagr5y:r.revenueCagr5y,fcfCagr5y:r.fcfCagr5y,fcfConversion:r.fcfConversion,sbcToRevenue:r.sbcToRevenue,netDebtToEbitda:r.netDebtToEbitda,interestCoverage:r.interestCoverage,dilutionPa:r.dilutionPa,roicTrend:r.roicTrend};
-  }
-  function dcfInputFromAnnual(annualFacts=[],endIndex=null,assumptions={}){
-    const rows=deriveFundamentals(annualFacts); if(!rows.length)return null; const i=endIndex==null?rows.length-1:clamp(Math.round(endIndex),0,rows.length-1), r=rows[i];
-    const revenue=Number(r.revenue),ebit=Number(r.operatingIncome),da=Number(r.da),capex=Number(r.capex),shares=Number(r.shares);
-    if(!(revenue>0&&Number.isFinite(ebit)&&Number.isFinite(da)&&Number.isFinite(capex)&&shares>0))return null;
-    const gHist=fieldCagr(rows,'revenue',i,3)??fieldCagr(rows,'revenue',i,5)??.06;
-    const g1=clamp(n(assumptions.growthY1,gHist),-.05,.30), terminalGrowth=n(assumptions.terminalGrowth,.025), g5=clamp(n(assumptions.growthY5,Math.max(terminalGrowth+.01,g1*.60)),terminalGrowth,.20);
-    const marginMedian=medianField(rows,'operatingMargin',i-2,i)??r.operatingMargin??ebit/revenue;
-    const capexPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.capex)/Number(x.revenue)).filter(Number.isFinite));
-    const daPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.da)/Number(x.revenue)).filter(Number.isFinite));
-    const nwcPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.deltaNwc)/Number(x.revenue)).filter(Number.isFinite));
-    const taxRate=Number.isFinite(r.taxRate)?r.taxRate:n(assumptions.taxRate,.21); const terminalRoic=clamp(n(assumptions.terminalRoic,Number.isFinite(r.roic)?r.roic:.15),Math.max(terminalGrowth+.01,.06),.35);
-    const netFin=Number.isFinite(Number(r.netFinancialPosition))?Number(r.netFinancialPosition):(Number.isFinite(Number(r.debt))&&Number.isFinite(Number(r.cash))?Number(r.debt)-Number(r.cash):0);
-    return {revenue,ebit,taxRate,da,capex,deltaNwc:Number.isFinite(Number(r.deltaNwc))?Number(r.deltaNwc):0,shares,netFinancialPosition:netFin,growthY1:g1,growthY5:g5,targetEbitMarginY5:clamp(n(assumptions.targetEbitMarginY5,marginMedian),-.05,.60),wacc:n(assumptions.wacc,.09),terminalGrowth,terminalRoic,capexPctY5:n(assumptions.capexPctY5,Number.isFinite(capexPct)?capexPct:capex/revenue),daPctY5:n(assumptions.daPctY5,Number.isFinite(daPct)?daPct:da/revenue),nwcPctY5:n(assumptions.nwcPctY5,Number.isFinite(nwcPct)?nwcPct:0),bearGrowthAdj:n(assumptions.bearGrowthAdj,-.03),bearMarginAdj:n(assumptions.bearMarginAdj,-.03),bearWaccAdj:n(assumptions.bearWaccAdj,.015),bullGrowthAdj:n(assumptions.bullGrowthAdj,.03),bullMarginAdj:n(assumptions.bullMarginAdj,.03),bullWaccAdj:n(assumptions.bullWaccAdj,-.01),sourceFy:r.fy,sourceDate:r.date,availableFrom:r.filed||r.date};
-  }
-  function buildHistoricalJukaFairSeries(priceRows,annualFacts,assumptions={}){
-    if(!Array.isArray(priceRows)||!priceRows.length)return [];
-    const facts=deriveFundamentals(annualFacts);
-    const dated=facts.map((x,i)=>({x,i,available:String(x.filed||x.date)})).filter(x=>x.available).sort((a,b)=>a.available.localeCompare(b.available));
-    const cache=new Map();
-    function roll(v,rate,days){
-      if(!Number.isFinite(Number(v)))return null;
-      const r=Number.isFinite(Number(rate))?Number(rate):n(assumptions.wacc,.09);
-      return Number(v)*Math.pow(1+r,Math.max(0,days)/365.25);
-    }
-    return priceRows.map(row=>{
-      const d=String(row.date).slice(0,10);let chosen=null;
-      for(const f of dated){if(f.available<=d)chosen=f;else break;}
-      if(!chosen)return {...row,base:null,bear:null,bull:null,model:'none'};
-      if(!cache.has(chosen.i)){
-        const inp=dcfInputFromAnnual(facts,chosen.i,assumptions),sc=inp?jukaDcfScenarios(inp):null;
-        cache.set(chosen.i,{inp,sc});
-      }
-      const {inp,sc}=cache.get(chosen.i),available=inp?.availableFrom||chosen.available;
-      const days=Math.max(0,(Date.parse(d)-Date.parse(available))/86400000);
-      if(sc)return {...row,
-        base:roll(sc.base,sc.detail?.base?.wacc??inp.wacc,days),
-        bear:roll(sc.bear,sc.detail?.bear?.wacc??(inp.wacc+inp.bearWaccAdj),days),
-        bull:roll(sc.bull,sc.detail?.bull?.wacc??(inp.wacc+inp.bullWaccAdj),days),
-        model:'juka-10y',rollForward:true,sourceFy:inp.sourceFy,availableFrom:available};
-      const f=chosen.x,growth=Number.isFinite(f.revenueCagr3y)?clamp(f.revenueCagr3y,-.02,.22):n(assumptions.growth,.08);
-      const legacy=scenarioValues({fcf0:n(f.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:10,netCash:n(f.netCash),shares:n(f.shares)});
-      return {...row,
-        base:legacy?roll(legacy.base,n(assumptions.wacc,.09),days):null,
-        bear:legacy?roll(legacy.bear,n(assumptions.wacc,.09)+.015,days):null,
-        bull:legacy?roll(legacy.bull,Math.max(.001,n(assumptions.wacc,.09)-.01),days):null,
-        model:legacy?'fcf-fallback':'none',rollForward:!!legacy,sourceFy:f.fy,availableFrom:f.filed||f.date};
-    });
-  }
-
-  // Bank / Insurance model ported from Excel Bank_Insurance.
-  function jukaBankInsurance(input={}){
-    const bookValuePerShare=n(input.bookValuePerShare,NaN), roe=n(input.roe,NaN), costOfEquity=n(input.costOfEquity,NaN), growth=n(input.growth,NaN), mos=n(input.marginOfSafety,.20), price=n(input.price,NaN);
-    function calc(r,k,g){if(!(bookValuePerShare>0&&r>=0&&k>g))return null;const justifiedPb=(r-g)/(k-g);return {justifiedPb,fairValue:bookValuePerShare*justifiedPb};}
-    const bear=calc(Math.max(roe-.02,0),costOfEquity+.01,Math.max(growth-.005,0));
-    const base=calc(roe,costOfEquity,growth);
-    const bull=calc(roe+.02,Math.max(costOfEquity-.01,.001),growth+.005);
-    if(!base)return null;
-    const impliedRoe=Number.isFinite(price)&&price>0?growth+(price/bookValuePerShare)*(costOfEquity-growth):null;
-    const impliedCostOfEquity=Number.isFinite(price)&&price>0?growth+(roe-growth)/(price/bookValuePerShare):null;
-    return {bear:bear?.fairValue??null,base:base.fairValue,bull:bull?.fairValue??null,detail:{bear,base,bull},buyZone:base.fairValue*(1-mos),impliedRoe,impliedCostOfEquity,marketVsBase:Number.isFinite(price)?price/base.fairValue-1:null};
-  }
-
-  // REIT model ported from Excel REIT: AFFO growth + exit P/AFFO.
-  function jukaReit(input={}){
-    const affo=n(input.affoPerShare,NaN), growth=n(input.affoGrowth5y,NaN), exit=n(input.exitPAffo,NaN), cost=n(input.costOfEquity,NaN), mos=n(input.marginOfSafety,.20), price=n(input.price,NaN);
-    function calc(g,m,k){if(!(affo>0&&m>0&&k>0))return null;const affoY5=affo*Math.pow(1+g,5),valueY5=affoY5*m,fairValue=valueY5/Math.pow(1+k,5);return {affoY5,valueY5,fairValue};}
-    const bear=calc(Math.max(growth-.02,0),Math.max(exit-2,1),cost+.01),base=calc(growth,exit,cost),bull=calc(growth+.02,exit+2,Math.max(cost-.01,.001));
-    if(!base)return null;
-    const impliedGrowth=Number.isFinite(price)&&price>0?Math.pow(price*Math.pow(1+cost,5)/(affo*exit),1/5)-1:null;
-    const impliedExit=Number.isFinite(price)&&price>0?price*Math.pow(1+cost,5)/(affo*Math.pow(1+growth,5)):null;
-    return {bear:bear?.fairValue??null,base:base.fairValue,bull:bull?.fairValue??null,detail:{bear,base,bull},buyZone:base.fairValue*(1-mos),impliedGrowth,impliedExit,marketVsBase:Number.isFinite(price)?price/base.fairValue-1:null};
-  }
-
-  function classifyValuationModel(stock={}){
-    const explicit=String(stock.valuationModel||stock.model||'').toLowerCase();
-    if(explicit.includes('bank')||explicit.includes('insurance'))return 'bank-insurance';
-    if(explicit.includes('reit'))return 'reit';
-    const sector=String(stock.sector||'').toLowerCase();
-    if(/bank|insurance|versicher/.test(sector))return 'bank-insurance';
-    if(/reit|real estate investment trust/.test(sector))return 'reit';
-    return 'operating-company';
-  }
-
-  function jukaRelativeByModel(model,input={}){
-    model=String(model||'operating-company'); const price=n(input.price,NaN);
-    if(model==='reit'){
-      const affo=n(input.affoPerShare,NaN),affoY5=n(input.affoY5,NaN);
-      return {model,paFFO:Number.isFinite(price)&&affo>0?price/affo:null,paFFOY5:Number.isFinite(price)&&affoY5>0?price/affoY5:null,exitPAffo:n(input.exitPAffo,NaN)};
-    }
-    if(model==='bank-insurance'){
-      const eps=n(input.epsTtm,NaN),bvps=n(input.bookValuePerShare,NaN);
-      return {model,pe:Number.isFinite(price)&&eps>0?price/eps:null,pb:Number.isFinite(price)&&bvps>0?price/bvps:null,roe:n(input.roe,NaN)};
-    }
-    return {model,...jukaRelativeValuation(input)};
-  }
-
-  function filterPeriod(rows,period){const months={"1Y":12,"3Y":36,"5Y":60,"MAX":9999}[period]||60;return rows.slice(Math.max(0,rows.length-months-1));}
-  function dataRoute(stock={}){const region=String(stock.region||'').toUpperCase();if(region==='US')return {market:'twelve-data',fundamentals:'sec',filings:'sec',currency:stock.currency||'USD'};if(region==='EU')return {market:'twelve-data-or-eod-adapter',fundamentals:'eu-adapter',filings:'issuer-reports',currency:stock.currency||'EUR'};return {market:'generic-adapter',fundamentals:'generic-adapter',filings:'issuer-reports',currency:stock.currency||'USD'};}
-  function buildFairSeries(priceRows, annualFacts, assumptions={}){
-    if(!Array.isArray(priceRows)||!priceRows.length)return [];
-    const facts=(annualFacts||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-    return priceRows.map(row=>{const d=String(row.date);let fact=null;for(const f of facts){if(String(f.date)<=d)fact=f;else break;}if(!fact)return {...row,base:null,bear:null,bull:null};const growth=Number.isFinite(fact.revenueCagr3y)?clamp(fact.revenueCagr3y,-.02,.22):n(assumptions.growth,.08);const inp={fcf0:n(fact.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:n(assumptions.years,10),netCash:n(fact.netCash),shares:n(fact.shares)};const s=scenarioValues(inp);return {...row,base:s?.base??null,bear:s?.bear??null,bull:s?.bull??null};});
-  }
-  return {n,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,jukaRelativeByModel,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,buildHistoricalJukaFairSeries,filterPeriod,dataRoute,buildFairSeries};
-});
-
-</script>
+<script src="./core.js?v=3.0.3"></script>
 <script>
 const stocks=[
  {s:'META',n:'Meta Platforms',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'META'},
@@ -608,8 +424,11 @@ function updateBusiness(z){
 }
 function prepareStock(z){
   activeCurrency=z?.currency||'USD';
+  chartData=[];
+  try{draw()}catch{}
+  try{renderPerformanceChart(activePerformancePeriod)}catch{}
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
-  set('name',z?.n||z?.s||'—');
+  set('name',z?.n||z?.s||'—');updateCompanyLogo(z);
   set('symbol',z?.s||'—');
   set('market',(z?.m||'')+' · Daten werden geladen');
   set('price','—');
@@ -632,7 +451,7 @@ function prepareStock(z){
 const q=document.getElementById('search'),r=document.getElementById('results');
 const LIVE_CAPABLE=(location.protocol==='http:'||location.protocol==='https:') && !['localhost','127.0.0.1'].includes(location.hostname);
 function fmtBig(v){if(v==null||!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:activeCurrency||'USD',notation:'compact',maximumFractionDigits:2}).format(Number(v));}
-function setStatus(text,live=false){const e=document.getElementById('dataStatus');e.textContent='Paket 2 · '+text;e.style.borderColor=live?'#3b7859':'#2b3e4d';}
+function setStatus(text,live=false){const e=document.getElementById('dataStatus');if(!e)return;e.textContent='JUKA · '+text;e.style.borderColor=live?'#3b7859':'#2b3e4d';}
 function latestFacts(annual){return (annual||[]).filter(x=>x&&x.date).sort((a,b)=>String(a.date).localeCompare(String(b.date))).at(-1)||null;}
 function annualEpsGrowth(annual){const a=(annual||[]).filter(x=>Number.isFinite(Number(x.eps))&&Number(x.eps)>0);if(a.length<4)return .08;return JuKaCore.clamp(JuKaCore.cagr(Number(a.at(-4).eps),Number(a.at(-1).eps),3)??.08,-.02,.20);}
 function fmtPctMaybe(v){return Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—';}
@@ -651,7 +470,7 @@ function updateFromLive(symbol,marketData,secData){
   const withFair=JuKaCore.buildHistoricalJukaFairSeries(prices,annual,{wacc:.09,terminalGrowth:.025}).map(x=>({...x,date:new Date(x.date)}));
   chartData=withFair; const last=chartData.at(-1),fact=annual.at(-1),fair=last?.base,vp=JuKaCore.valuationPct(last.price,fair);
   document.getElementById('price').textContent=money(last.price); document.getElementById('priceDate').textContent='Aktienkurs · Stand '+last.date.toLocaleDateString('de-DE');
-  document.getElementById('name').textContent=secData?.name||marketData.meta?.symbol||symbol; document.getElementById('symbol').textContent=symbol; updateBusiness(z||{s:symbol,n:secData?.name||symbol});
+  document.getElementById('name').textContent=secData?.name||marketData.meta?.symbol||symbol; document.getElementById('symbol').textContent=symbol; updateCompanyLogo(z||{s:symbol,n:secData?.name||symbol}); updateBusiness(z||{s:symbol,n:secData?.name||symbol});
   document.getElementById('market').textContent=[marketData.meta?.exchange,activeCurrency,'Live-Daten'].filter(Boolean).join(' · ');
   document.getElementById('fvMetric').textContent=fair?money(fair):'—'; document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
   if(fact){
@@ -673,7 +492,7 @@ function updateFromSnapshot(symbol,snap){
   if(!chartData.length)chartData=snap.market.prices.map(x=>({date:new Date(x.date),price:Number(x.close),base:null,bear:null,bull:null}));
   const last=chartData.at(-1),fact=snap.latest,fair=snap.valuation?.base??last?.base??null,vp=JuKaCore.valuationPct(snap.price,fair);
   document.getElementById('price').textContent=money(snap.price);document.getElementById('priceDate').textContent='Aktienkurs · Stand '+last.date.toLocaleDateString('de-DE');
-  document.getElementById('name').textContent=snap.fundamentals?.name||z.n||symbol;document.getElementById('symbol').textContent=symbol;updateBusiness(z);
+  document.getElementById('name').textContent=snap.fundamentals?.name||z.n||symbol;document.getElementById('symbol').textContent=symbol;updateCompanyLogo(z);updateBusiness(z);
   document.getElementById('market').textContent=[snap.exchange,activeCurrency,'Pipeline LIVE',snap.model].filter(Boolean).join(' · ');
   document.getElementById('fvMetric').textContent=Number.isFinite(fair)?money(fair):'—';document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
   if(fact){
@@ -687,8 +506,7 @@ function updateFromSnapshot(symbol,snap){
   renderAutoAssumptions(snap.autoAssumptions||null);
   renderScenarioForecast(snap.forecastScenarios||null,snap.returnMatrix||null,activeCurrency);
   renderForecast(snap.forecast||null,snap.returnBridge||null,activeCurrency);
-  renderRealityCheck({model:snap.model,price:snap.price,fairValue:fair,qualityScore:snap.quality?.score,relative:snap.relative,reverse:snap.reverse});
-  renderPeerComparison(symbol,snap.multiples||{},[],snap.model);
+  // Peer-/Reality-Checks sind in der vereinfachten Oberfläche bewusst deaktiviert.
   const warningText=(snap.warnings||[]).length?' · Hinweise: '+snap.warnings.join(' | '):'';
   const readyText=snap.modelReadiness?` · Modell-Readiness: ${snap.modelReadiness.label}`:'';
   document.getElementById('fundNote').textContent=`Datenpipeline: ${snap.market?.source||'Marktdaten'} + ${snap.fundamentals?.source||'Fundamentaldaten'} · Status: ${snap.analysisStatus||'—'} · Modell: ${snap.model}${readyText}.${warningText}`;
@@ -696,6 +514,7 @@ function updateFromSnapshot(symbol,snap){
   setStatus('LIVE · JUKA 3.0',true);draw();renderPerformanceFromChart();
 }
 
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function fmtLiveDate(v){if(!v)return '—';try{return new Date(v).toLocaleDateString('de-DE')}catch{return String(v)}}
 function setLiveCell(id,state){const e=document.getElementById(id);if(!e)return;e.classList.remove('ok','warn','bad');if(state)e.classList.add(state)}
 function renderLiveBeta(payload,httpOk=true){
@@ -729,6 +548,7 @@ function applySummaryNumbers(symbol,summary){
   document.getElementById('priceDate').textContent='Aktienkurs · Stand '+fmtLiveDate(summary.marketAsOf);
   document.getElementById('name').textContent=z.n||symbol;
   document.getElementById('symbol').textContent=symbol;
+  updateCompanyLogo(z);
   updateBusiness(z);
   document.getElementById('market').textContent=['NASDAQ',activeCurrency,'LIVE'].filter(Boolean).join(' · ');
 
@@ -835,28 +655,33 @@ function jukaCacheKey(symbol,kind){return 'juka-live-v3:'+kind+':'+String(symbol
 function jukaCacheSet(symbol,kind,data){try{localStorage.setItem(jukaCacheKey(symbol,kind),JSON.stringify({savedAt:Date.now(),data}))}catch{}}
 function jukaCacheGet(symbol,kind,maxAgeMs=86400000){try{const raw=localStorage.getItem(jukaCacheKey(symbol,kind));if(!raw)return null;const x=JSON.parse(raw);return Date.now()-x.savedAt<=maxAgeMs?x:null}catch{return null}}
 
-async function loadLiveStock(symbol){
+let activeLoadToken=0;
+function ensureActiveLoad(token){if(token!==activeLoadToken){const e=new Error('Veralteter Ladevorgang verworfen.');e.code='STALE_LOAD';throw e}}
+async function loadLiveStock(symbol,token){
  if(!LIVE_CAPABLE)throw new Error('Live-APIs sind erst nach Deployment verfügbar.');
+ ensureActiveLoad(token);
  setStatus('Analyse wird geladen…');
  const z=stocks.find(x=>x.s===symbol)||{s:symbol,region:'US',marketSymbol:symbol,currency:'USD'};
  const baseParams={symbol:z.s,region:z.region||'US',currency:z.currency||'USD',market_symbol:z.marketSymbol||z.s,name:z.n||z.s,model:z.valuationModel||'',sector:z.sector||''};
- let summary;
+ let summary;let summaryFromCache=false;
  try{
    summary=await fetchJson('/api/analysis?'+new URLSearchParams({...baseParams,summary:'1'}).toString(),'Schnellanalyse',20000);
+   ensureActiveLoad(token);
    jukaCacheSet(symbol,'summary',summary);
  }catch(e){
    const cached=jukaCacheGet(symbol,'summary');
    if(!cached)throw e;
-   summary=cached.data;
+   summary=cached.data;summaryFromCache=true;
    summary.warnings=[...(summary.warnings||[]),'Zwischengespeicherte Daten: Live-Abruf aktuell nicht verfügbar.'];
    setStatus('CACHE · Live-Abruf fehlgeschlagen');
  }
- applySummaryNumbers(symbol,summary);setStatus('LIVE · Basis geladen',true);
+ ensureActiveLoad(token);applySummaryNumbers(symbol,summary);setStatus(summaryFromCache?'CACHE · Basis geladen':'LIVE · Basis geladen',!summaryFromCache);
  try{
    setStatus('LIVE · Detailanalyse wird geladen…',true);
    let snap;
    try{
      snap=await fetchJson('/api/analysis?'+new URLSearchParams(baseParams).toString(),'Detailanalyse',35000);
+     ensureActiveLoad(token);
      jukaCacheSet(symbol,'detail',snap);
    }catch(e){
      const cached=jukaCacheGet(symbol,'detail');
@@ -864,8 +689,8 @@ async function loadLiveStock(symbol){
      snap=cached.data;
      snap.warnings=[...(snap.warnings||[]),'Zwischengespeicherte Detaildaten: Live-Abruf aktuell nicht verfügbar.'];
    }
-   updateFromSnapshot(symbol,snap);
-   document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse. Die Zeitraum-Schalter filtern nach echten Kalenderjahren (1J/3J/5J), nicht nach Datenpunkten. Bear/Base/Bull nutzen nur bereits veröffentlichte Fundamentaldaten; zwischen Filings wird der DCF zeitlich fortgeschrieben und beim nächsten Filing neu bewertet.';
+   ensureActiveLoad(token);updateFromSnapshot(symbol,snap);
+   document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse. Die Zeitraum-Schalter filtern nach echten Kalenderjahren (1J/3J/5J), nicht nach Datenpunkten. Bear/Base/Bull nutzen nur bereits veröffentlichte Fundamentaldaten; zwischen Filings wird der Fair Value zeitlich fortgeschrieben und beim nächsten Filing neu bewertet. Die Kurven werden nur visuell geglättet – nicht inhaltlich verändert.';
    setStatus('LIVE · Analyse 2.0',true);
  }catch(detailErr){
    const msg=String(detailErr?.message||detailErr);console.warn('JuKa detail enrichment failed:',detailErr);
@@ -877,6 +702,96 @@ async function loadLiveStock(symbol){
 
 const META_DCF_INPUT={revenue:228247,ebit:86926,taxRate:.18,da:22729,capex:89325,deltaNwc:-724,shares:2567,netFinancialPosition:-6596,growthY1:.18,growthY5:.10,targetEbitMarginY5:.40,wacc:.095,terminalGrowth:.03,terminalRoic:.20,capexPctY5:.22,daPctY5:.12,nwcPctY5:.005,bearGrowthAdj:-.03,bearMarginAdj:-.03,bearWaccAdj:.015,bullGrowthAdj:.03,bullMarginAdj:.03,bullWaccAdj:-.01};
 const META_QUALITY_INPUT={roic:.3263451104996406,ebitMargin:.3808418073402936,revenueCagr5y:.10,fcfCagr5y:.10,fcfConversion:.90,sbcToRevenue:.11012631053201137,netDebtToEbitda:1,interestCoverage:10,dilutionPa:.01,roicTrend:-.02207032486907895};
+
+const JUKA_LOGO_DOMAINS={
+ 'META':'meta.com','AAPL':'apple.com','MSFT':'microsoft.com','NVDA':'nvidia.com','AMZN':'amazon.com','GOOGL':'google.com',
+ 'JPM':'jpmorganchase.com','V':'visa.com','LLY':'lilly.com','COST':'costco.com','AVGO':'broadcom.com','MA':'mastercard.com',
+ 'NFLX':'netflix.com','ADBE':'adobe.com','O':'realtyincome.com','PLD':'prologis.com','SAP':'sap.com','SIE':'siemens.com',
+ 'ALV':'allianz.com','DTE':'telekom.com','MUV2':'munichre.com','MBG':'mercedes-benz.com','BMW':'bmwgroup.com','DB1':'deutsche-boerse.com',
+ 'AIR':'airbus.com','MC':'lvmh.com','OR':'loreal.com','TTE':'totalenergies.com','SAN':'sanofi.com','BNP':'group.bnpparibas',
+ 'ASML':'asml.com','ADYEN':'adyen.com','UNA':'unilever.com','NOVO-B':'novonordisk.com','NESN':'nestle.com','ROG':'roche.com',
+ 'NOVN':'novartis.com','ABBN':'abb.com','UBSG':'ubs.com','SHEL':'shell.com','AZN':'astrazeneca.com','ULVR':'unilever.com'
+};
+function updateCompanyLogo(z){
+  const img=document.getElementById('companyLogo'),fb=document.getElementById('companyLogoFallback');if(!img||!fb)return;
+  const symbol=String(z?.s||z?.symbol||'').toUpperCase();fb.textContent=(String(z?.n||symbol||'?').trim().charAt(0)||'?').toUpperCase();
+  img.style.display='none';fb.style.display='grid';const domain=JUKA_LOGO_DOMAINS[symbol];if(!domain){img.removeAttribute('src');return;}
+  img.onload=()=>{img.style.display='block';fb.style.display='none'};img.onerror=()=>{img.style.display='none';fb.style.display='grid'};
+  img.src='https://www.google.com/s2/favicons?domain='+encodeURIComponent(domain)+'&sz=128';img.alt=(z?.n||symbol)+' Logo';
+}
+const QUALITY_EXPLANATIONS={
+ 'revenuegrowth':{
+   pos:['Starkes Umsatzwachstum','Der Umsatz wächst über mehrere Jahre solide. Das spricht für anhaltende Nachfrage und eine gute Marktposition.'],
+   neg:['Schwächeres Umsatzwachstum','Das langfristige Umsatzwachstum fällt vergleichsweise niedrig aus. Entscheidend ist, ob das Geschäft bereits reif ist oder Marktanteile verliert.']},
+ 'fcfgrowth':{
+   pos:['Wachsender freier Cashflow','Der frei verfügbare Cashflow entwickelt sich positiv und stärkt die finanzielle Flexibilität.'],
+   neg:['Schwächere Cashflow-Entwicklung','Der freie Cashflow wächst nur langsam oder geht zurück. Das kann Investitionen, Ausschüttungen und Schuldentilgung begrenzen.']},
+ 'roic':{
+   pos:['Hohe Kapitalrendite','Das Unternehmen erzielt auf das eingesetzte Kapital eine attraktive Rendite. Das spricht für ein wirtschaftlich starkes Geschäftsmodell.'],
+   neg:['Niedrigere Kapitalrendite','Die Rendite auf das eingesetzte Kapital ist eher niedrig. Wachstum schafft dann weniger Wert und sollte genauer auf seine Rentabilität geprüft werden.']},
+ 'margin':{
+   pos:['Starke operative Marge','Vom Umsatz bleibt ein hoher operativer Gewinnanteil übrig. Das deutet auf Preissetzungsmacht oder eine effiziente Kostenstruktur hin.'],
+   neg:['Schwächere operative Marge','Vom Umsatz bleibt relativ wenig operativer Gewinn übrig. Kostenstruktur und Preissetzungsmacht sind deshalb wichtige Beobachtungspunkte.']},
+ 'conversion':{
+   pos:['Gute Cashflow-Umwandlung','Ein großer Teil des operativen Ergebnisses kommt tatsächlich als frei verfügbarer Cashflow an.'],
+   neg:['Schwächere Cashflow-Umwandlung','Der ausgewiesene operative Gewinn wird nur begrenzt in freien Cashflow umgewandelt. Hohe Investitionen oder Working-Capital-Bindung können die Ursache sein.']},
+ 'fcfstability':{
+   pos:['Stabiler freier Cashflow','Der freie Cashflow war über mehrere Jahre vergleichsweise verlässlich und nicht nur in einem einzelnen Jahr stark.'],
+   neg:['Schwankender freier Cashflow','Der freie Cashflow schwankt deutlich. Dadurch ist die nachhaltige Ertragskraft schwieriger einzuschätzen.']},
+ 'netdebt':{
+   pos:['Gesunde Verschuldung','Die Verschuldung ist im Verhältnis zur Ertragskraft gut tragbar und begrenzt das finanzielle Risiko.'],
+   neg:['Höhere Verschuldung','Die Verschuldung ist im Verhältnis zur Ertragskraft erhöht. Zinsen und Refinanzierung können dadurch stärker auf Gewinn und Fair Value wirken.']},
+ 'dilution':{
+   pos:['Aktionärsfreundliche Aktienzahl','Die Zahl der Aktien steigt nur wenig oder sinkt. Dadurch werden bestehende Aktionäre kaum verwässert.'],
+   neg:['Verwässerung der Aktionäre','Die Zahl der ausstehenden Aktien steigt. Dadurch verteilt sich der Unternehmenswert auf mehr Aktien und das Wachstum je Aktie kann schwächer ausfallen.']},
+ 'sbc':{
+   pos:['Disziplinierte Aktienvergütung','Aktienbasierte Vergütung ist im Verhältnis zum Geschäft überschaubar und führt nicht zu übermäßiger Verwässerung.'],
+   neg:['Hohe aktienbasierte Vergütung','Ein größerer Teil der Vergütung erfolgt über Aktien. Ohne ausreichende Rückkäufe kann das bestehende Aktionäre verwässern.']},
+ 'roictrend':{
+   pos:['Verbesserte Kapitalrendite','Die Kapitalrendite entwickelt sich positiv. Das deutet auf eine bessere Nutzung des eingesetzten Kapitals hin.'],
+   neg:['Sinkende Kapitalrendite','Die Kapitalrendite hat sich verschlechtert. Das kann auf höhere Investitionen mit geringerer Rendite oder nachlassende Wettbewerbsvorteile hindeuten.']},
+ 'roe':{
+   pos:['Hohe Eigenkapitalrendite','Die Bank oder Versicherung erwirtschaftet auf ihr Eigenkapital eine attraktive Rendite.'],
+   neg:['Niedrigere Eigenkapitalrendite','Die Rendite auf das Eigenkapital ist eher niedrig. Für Finanzunternehmen ist das ein zentraler Hinweis auf schwächere Profitabilität.']},
+ 'equitygrowth':{
+   pos:['Wachsende Eigenkapitalbasis','Buchwert beziehungsweise Eigenkapital entwickeln sich langfristig positiv und stärken die Substanz.'],
+   neg:['Schwächere Substanzentwicklung','Buchwert beziehungsweise Eigenkapital wachsen nur langsam oder gehen zurück. Die Entwicklung der bilanziellen Substanz sollte beobachtet werden.']},
+ 'epsgrowth':{
+   pos:['Wachsender Gewinn je Aktie','Der Gewinn je Aktie steigt langfristig. Das zeigt, dass das Wachstum auch beim einzelnen Aktionär ankommt.'],
+   neg:['Schwächerer Gewinn je Aktie','Der Gewinn je Aktie wächst nur langsam oder fällt. Das begrenzt langfristig die Wertsteigerung je Aktie.']},
+ 'roestability':{
+   pos:['Stabile Eigenkapitalrendite','Die Eigenkapitalrendite bleibt über mehrere Jahre vergleichsweise verlässlich.'],
+   neg:['Schwankende Eigenkapitalrendite','Die Eigenkapitalrendite schwankt stärker. Das macht die nachhaltige Profitabilität schwieriger planbar.']},
+ 'earningsstability':{
+   pos:['Stabile Gewinne','Die Gewinne waren über mehrere Jahre vergleichsweise verlässlich.'],
+   neg:['Schwankende Gewinne','Die Gewinne schwanken deutlich. Das erhöht die Unsicherheit bei der Einschätzung eines normalisierten Ertragsniveaus.']},
+ 'affogrowth':{
+   pos:['Wachsender Immobilien-Cashflow','AFFO beziehungsweise FFO entwickeln sich positiv und unterstützen Ausschüttungen sowie weiteres Wachstum.'],
+   neg:['Schwächere AFFO-/FFO-Entwicklung','Der operative Immobilien-Cashflow wächst nur langsam oder geht zurück. Das kann Ausschüttungen und Wachstum begrenzen.']},
+ 'persharegrowth':{
+   pos:['Wachstum je Aktie','Das operative Wachstum kommt auch beim einzelnen Aktionär an und wird nicht vollständig durch neue Aktien verwässert.'],
+   neg:['Schwächeres Wachstum je Aktie','Das Wachstum je Aktie bleibt hinter dem Gesamtwachstum zurück. Eine mögliche Ursache ist die Ausgabe neuer Aktien.']},
+ 'persharestability':{
+   pos:['Stabiler Cashflow je Aktie','AFFO beziehungsweise FFO je Aktie entwickeln sich über mehrere Jahre vergleichsweise stabil.'],
+   neg:['Schwankender Cashflow je Aktie','AFFO beziehungsweise FFO je Aktie schwanken stärker. Die Nachhaltigkeit der Ausschüttungsbasis ist dadurch schwieriger einzuschätzen.']},
+ 'sharegrowth':{
+   pos:['Kontrollierte Aktienausgabe','Neue Aktien werden in einem Umfang ausgegeben, der das Wachstum je Aktie nicht übermäßig belastet.'],
+   neg:['Stärkere Aktienausgabe','Die Zahl der Aktien wächst deutlich. Bei REITs kann das sinnvoll zur Finanzierung sein, muss aber durch genügend Wachstum je Aktie kompensiert werden.']}
+};
+function qualityPlainText(part,positive=true){
+  const key=String(part?.key||'').toLowerCase();
+  const entry=QUALITY_EXPLANATIONS[key];
+  if(entry){
+    const [title,body]=positive?entry.pos:entry.neg;
+    return `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(body)}</span>`;
+  }
+  const clean=String(part?.label||'Qualitätsfaktor')
+    .replace(/CAGR/gi,'langfristiges Wachstum').replace(/FCF/gi,'freier Cashflow')
+    .replace(/ROIC/gi,'Kapitalrendite').replace(/EBITDA/gi,'operative Ertragskraft');
+  const fallback=positive?'Dieser Faktor unterstützt die fundamentale Qualität des Unternehmens.':'Dieser Faktor gehört aktuell zu den schwächeren Bereichen und sollte genauer beobachtet werden.';
+  return `<strong>${escapeHtml(clean)}</strong><span>${escapeHtml(fallback)}</span>`;
+}
+
 const META_PRICE=616.77, META_EPS=26.53, META_EPS_Y5=45;
 let metaChartReference=null;
 function renderExactQuality(){
@@ -961,14 +876,41 @@ function renderScenarioForecast(scenarios,matrix,currency=activeCurrency){
     ['bear','base','bull'].map(f=>`<tr><td>${f.toUpperCase()}</td>`+['bear','base','bull'].map(m=>`<td>${pct(lookup[f+'-'+m]?.returnCagr)}</td>`).join('')+'</tr>').join('')+'</tbody>';
 }
 
+
+function renderForecastBars(forecast,currency=activeCurrency){
+  const rows=Array.isArray(forecast?.rows)?forecast.rows:[];
+  const configs=[
+    ['forecastRevenueBars','revenue',v=>fmtBig(v)],
+    ['forecastEpsBars','eps',v=>money(v,currency)],
+    ['forecastFcfBars','fcf',v=>fmtBig(v)],
+    ['forecastMarginBars','margin',v=>Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—']
+  ];
+  for(const [id,key,fmt] of configs){
+    const el=document.getElementById(id);if(!el)continue;
+    const vals=rows.map(r=>Number(r[key])).filter(Number.isFinite);
+    if(!vals.length){el.innerHTML='<span class="note">Keine Daten</span>';continue}
+    const min=Math.min(0,...vals),max=Math.max(0,...vals),range=Math.max(max-min,1e-9);
+    const zeroPct=(max/range)*100;
+    el.innerHTML=`<div class="forecastZero" style="top:${zeroPct.toFixed(2)}%"></div>`+rows.map((r,i)=>{
+      const v=Number(r[key]),label=`J${r.year??i+1}`;
+      if(!Number.isFinite(v))return `<div class="forecastBarCol"><div class="forecastBarLabel">${label}</div></div>`;
+      const topValPct=((max-v)/range)*100;
+      const zeroTopPct=(max/range)*100;
+      const top=Math.min(topValPct,zeroTopPct),height=Math.max(2,Math.abs(v)/range*100);
+      const valTop=v>=0?Math.max(0,top-13):Math.min(92,top+height+2);
+      return `<div class="forecastBarCol"><div class="forecastBarVal" style="top:${valTop.toFixed(2)}%">${escapeHtml(fmt(v))}</div><div class="forecastBar ${v<0?'negative':''}" style="top:${top.toFixed(2)}%;height:${height.toFixed(2)}%"></div><div class="forecastBarLabel">${label}</div></div>`;
+    }).join('');
+  }
+}
+
 function renderForecast(forecast,bridge,currency=activeCurrency){
   const e=id=>document.getElementById(id), p=v=>Number.isFinite(v)?(v*100).toFixed(1)+'%':'—';
-  if(!forecast){['forecastRevenueGrowth','forecastEpsGrowth','forecastFcfGrowth','forecastMargin5','forecastPeg','forecastReturn'].forEach(id=>e(id).textContent='—');e('forecastTable').innerHTML='<tr><td>Wartet auf echte Fundamentaldaten.</td></tr>';return;}
+  if(!forecast){['forecastRevenueGrowth','forecastEpsGrowth','forecastFcfGrowth','forecastMargin5','forecastPeg','forecastReturn'].forEach(id=>e(id).textContent='—');e('forecastTable').innerHTML='<tr><td>Wartet auf echte Fundamentaldaten.</td></tr>';renderForecastBars(null,currency);return;}
   const s=forecast.summary||{};
   e('forecastRevenueGrowth').textContent=p(s.revenueGrowth);e('forecastEpsGrowth').textContent=p(s.epsGrowth);e('forecastFcfGrowth').textContent=p(s.fcfGrowth);e('forecastMargin5').textContent=p(s.marginY5);
   e('forecastPeg').textContent=Number.isFinite(bridge?.peg)?bridge.peg.toFixed(2)+'×':'—';e('forecastReturn').textContent=Number.isFinite(bridge?.totalReturnCagr)?p(bridge.totalReturnCagr):'—';
   e('forecastTable').innerHTML='<thead><tr><th>Jahr</th><th>Umsatz</th><th>Wachstum</th><th>EBIT-Marge</th><th>EPS</th><th>FCF</th></tr></thead><tbody>'+forecast.rows.map(r=>`<tr><td>J${r.year}</td><td>${fmtBig(r.revenue)}</td><td>${p(r.growth)}</td><td>${p(r.margin)}</td><td>${money(r.eps,currency)}</td><td>${fmtBig(r.fcf)}</td></tr>`).join('')+'</tbody>';
-  e('forecastNote').textContent='Wachstum wird bis Jahr 5 normalisiert; Margen laufen auf ein Zielniveau. '+(Number.isFinite(bridge?.exitPe)?'Renditebrücke nutzt '+bridge.exitPe.toFixed(1)+'× Exit-KGV.':'');
+  renderForecastBars(forecast,currency);e('forecastNote').textContent='Die Balken zeigen die modellierte Entwicklung von Jahr 1 bis Jahr 5. Wachstum wird bis Jahr 5 normalisiert; Margen laufen auf ein Zielniveau. '+(Number.isFinite(bridge?.exitPe)?'Renditebrücke nutzt '+bridge.exitPe.toFixed(1)+'× Exit-KGV.':'');
 }
 
 function renderPeerComparison(symbol,subject,peers,model){
@@ -1056,7 +998,7 @@ function demoForStock(s){
   document.getElementById('chartNote').textContent='Interaktive Demo-Zeitreihe für '+z.s+'. Nach öffentlichem Deployment werden unterstützte Ticker durch echte Tageskurse und Fundamentaldaten ersetzt.';
   setStatus('Demo · '+z.s); draw();
 }
-async function select(s){activeSymbol=s;
+async function select(s){activeSymbol=s;const loadToken=++activeLoadToken;
   try{
     const z=stocks.find(x=>x.s===s)||{s,n:s,m:'Unbekannter Markt'};
     q.value='';
@@ -1071,8 +1013,9 @@ async function select(s){activeSymbol=s;
       return;
     }
 
-    await loadLiveStock(s);
+    await loadLiveStock(s,loadToken);
   }catch(err){
+    if(err?.code==='STALE_LOAD')return;
     const msg=String(err?.message||err);
     console.error('JuKa select/load error:',err);
     try{renderLiveBeta({analysisStatus:'error',warnings:[msg],symbol:s},false)}catch{}
@@ -1140,24 +1083,49 @@ function getSlice(){
   from.setFullYear(from.getFullYear()-years);
   return chartData.filter(row=>row?.date instanceof Date&&!Number.isNaN(row.date.getTime())&&row.date>=from);
 }
+
+function smoothSvgPath(points,tension=.16){
+  if(!points.length)return '';if(points.length===1)return `M${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
+  let d=`M${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
+  for(let i=0;i<points.length-1;i++){const p0=points[i-1]||points[i],p1=points[i],p2=points[i+1],p3=points[i+2]||p2;
+    const c1x=p1[0]+(p2[0]-p0[0])*tension,c1y=p1[1]+(p2[1]-p0[1])*tension,c2x=p2[0]-(p3[0]-p1[0])*tension,c2y=p2[1]-(p3[1]-p1[1])*tension;
+    d+=` C${c1x.toFixed(1)} ${c1y.toFixed(1)},${c2x.toFixed(1)} ${c2y.toFixed(1)},${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;}return d;
+}
+
+function svgPointer(svg,ev){
+  try{
+    const pt=svg.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;
+    const ctm=svg.getScreenCTM();if(ctm)return pt.matrixTransform(ctm.inverse());
+  }catch{}
+  const rect=svg.getBoundingClientRect();
+  return {x:(ev.clientX-rect.left)*(svg.viewBox.baseVal.width/rect.width),y:(ev.clientY-rect.top)*(svg.viewBox.baseVal.height/rect.height)};
+}
+
 function draw(){
   svg.innerHTML=''; const data=getSlice(); const W=760,H=350,L=55,R=18,T=18,B=44; const pw=W-L-R,ph=H-T-B;
   const vals=data.flatMap(d=>[d.price,d.base,d.bear,d.bull]).filter(Number.isFinite); if(!vals.length)return; let min=Math.min(...vals),max=Math.max(...vals); const pad=(max-min)*.08; min=Math.max(0,min-pad); max+=pad;
   const x=i=>L+((data.length<=1?0:i/(data.length-1)))*pw, y=v=>T+(max-v)/(max-min||1)*ph;
   for(let k=0;k<5;k++){const yy=T+k*ph/4;const val=max-k*(max-min)/4;svg.append(node('line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:'#1f2c37'}));svg.append(node('text',{x:5,y:yy+4,fill:'#8093a4','font-size':'11'},'$'+Math.round(val)));}
   const tickCount=5; for(let k=0;k<tickCount;k++){const idx=Math.round(k*(data.length-1)/(tickCount-1));svg.append(node('text',{x:x(idx),y:H-15,fill:'#8093a4','font-size':'11','text-anchor':k===0?'start':k===tickCount-1?'end':'middle'},data[idx].date.toLocaleDateString('de-DE',{year:'numeric',month:currentPeriod==='1Y'?'short':undefined})));}
-  const series=[['price','#76b7ff',3],['base','#8be0b0',3],['bear','#ff8a8a',2],['bull','#ffd36a',2]];
-  series.forEach(([key,color,width])=>{let d='',started=false;data.forEach((row,i)=>{if(!Number.isFinite(row[key])){started=false;return;}d+=(started?'L':'M')+x(i).toFixed(1)+' '+y(row[key]).toFixed(1)+' ';started=true;});if(d)svg.append(node('path',{d,fill:'none',stroke:color,'stroke-width':width,'stroke-dasharray':key==='price'?'':'7 6'}));});
-  const hover= node('line',{class:'hoverLine',x1:L,y1:T,x2:L,y2:H-B});svg.append(hover);
-  const dots={};series.forEach(([key,color])=>{const c=node('circle',{class:'hoverDot',r:4,fill:color,stroke:'#08121b','stroke-width':2});svg.append(c);dots[key]=c;});
-  const hit=node('rect',{x:L,y:T,width:pw,height:ph,fill:'transparent',style:'cursor:crosshair'});svg.append(hit);
-  hit.addEventListener('mousemove',ev=>{const rect=svg.getBoundingClientRect();const mx=(ev.clientX-rect.left)*(W/rect.width);let idx=Math.round((mx-L)/pw*(data.length-1));idx=Math.max(0,Math.min(data.length-1,idx));const row=data[idx],xx=x(idx);hover.style.display='block';hover.setAttribute('x1',xx);hover.setAttribute('x2',xx);Object.entries(dots).forEach(([key,c])=>{if(Number.isFinite(row[key])){c.style.display='block';c.setAttribute('cx',xx);c.setAttribute('cy',y(row[key]));}else c.style.display='none';});
-    const vp=JuKaCore.valuationPct(row.price,row.base); const status=vp==null?'Bewertung':(vp<0?'Unterbewertung':'Überbewertung'); const statusClass=vp!=null&&vp<0?'green':'red'; const mv=v=>Number.isFinite(v)?money(v):'—'; tooltip.innerHTML=`<strong>${fmtDate(row.date)}</strong><div class="tooltipRow"><span>Aktienkurs</span><span class="tooltipVal">${mv(row.price)}</span></div><div class="tooltipRow"><span>Fair Value</span><span class="tooltipVal">${mv(row.base)}</span></div><div class="tooltipRow"><span>Bear-Fair-Value</span><span class="tooltipVal">${mv(row.bear)}</span></div><div class="tooltipRow"><span>Bull-Fair-Value</span><span class="tooltipVal">${mv(row.bull)}</span></div><div class="tooltipRow"><span>${status}</span><span class="tooltipVal ${statusClass}">${vp==null?'—':pct(Math.abs(vp))}</span></div>`;
-    tooltip.style.display='block'; const wrap=document.querySelector('.chartWrap').getBoundingClientRect(); let left=ev.clientX-wrap.left+14, top=ev.clientY-wrap.top+12; if(left+200>wrap.width)left=ev.clientX-wrap.left-205; tooltip.style.left=left+'px';tooltip.style.top=top+'px';
+  const series=[['price','#76b7ff',2.6],['base','#111111',3.2],['bear','#d96666',1.8],['bull','#c89a2b',1.8]];
+  series.forEach(([key,color,width])=>{let d='';if(key==='price'){let started=false;data.forEach((row,i)=>{if(!Number.isFinite(row[key])){started=false;return;}d+=(started?'L':'M')+x(i).toFixed(1)+' '+y(row[key]).toFixed(1)+' ';started=true;});}
+    else{const pts=data.map((row,i)=>Number.isFinite(row[key])?[x(i),y(row[key])]:null).filter(Boolean);d=smoothSvgPath(pts,.16);}
+    if(d)svg.append(node('path',{d,fill:'none',stroke:color,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round','stroke-dasharray':key==='bear'||key==='bull'?'6 5':''}));});
+  const hover=node('line',{class:'hoverLine',x1:L,y1:T,x2:L,y2:H-B});svg.append(hover);
+  const hoverH=node('line',{class:'hoverLine',x1:L,y1:T,x2:W-R,y2:T});svg.append(hoverH);
+  const priceDot=node('circle',{class:'hoverDot',r:4.5,fill:'#76b7ff',stroke:'#111','stroke-width':1.8});svg.append(priceDot);
+  const cursorMark=node('g',{class:'hoverDot'});cursorMark.append(node('line',{x1:-7,y1:0,x2:7,y2:0,stroke:'#111','stroke-width':1.4}));cursorMark.append(node('line',{x1:0,y1:-7,x2:0,y2:7,stroke:'#111','stroke-width':1.4}));svg.append(cursorMark);
+  const hit=node('rect',{x:L,y:T,width:pw,height:ph,fill:'transparent',style:'cursor:none'});svg.append(hit);
+  hit.addEventListener('mousemove',ev=>{const rect=svg.getBoundingClientRect(),pt=svgPointer(svg,ev),mx=pt.x;let idx=Math.round((mx-L)/pw*(data.length-1));idx=Math.max(0,Math.min(data.length-1,idx));const row=data[idx],xx=x(idx),yy=Number.isFinite(row.price)?y(row.price):T;
+    hover.style.display='block';hover.setAttribute('x1',xx);hover.setAttribute('x2',xx);hoverH.style.display='block';hoverH.setAttribute('y1',yy);hoverH.setAttribute('y2',yy);
+    priceDot.style.display=Number.isFinite(row.price)?'block':'none';priceDot.setAttribute('cx',xx);priceDot.setAttribute('cy',yy);cursorMark.style.display='block';cursorMark.setAttribute('transform',`translate(${xx} ${yy})`);
+    const vp=JuKaCore.valuationPct(row.price,row.base),status=vp==null?'Bewertung':(vp<0?'Unterbewertung':'Überbewertung'),statusClass=vp!=null&&vp<0?'green':'red',mv=v=>Number.isFinite(v)?money(v):'—';
+    tooltip.innerHTML=`<strong>${fmtDate(row.date)}</strong><div class="tooltipRow"><span>Aktienkurs</span><span class="tooltipVal">${mv(row.price)}</span></div><div class="tooltipRow"><span>JUKA Fair Value</span><span class="tooltipVal">${mv(row.base)}</span></div><div class="tooltipRow"><span>Bear-Fair-Value</span><span class="tooltipVal">${mv(row.bear)}</span></div><div class="tooltipRow"><span>Bull-Fair-Value</span><span class="tooltipVal">${mv(row.bull)}</span></div><div class="tooltipRow"><span>${status}</span><span class="tooltipVal ${statusClass}">${vp==null?'—':pct(Math.abs(vp))}</span></div>`;
+    tooltip.style.display='block';const wrap=document.querySelector('.chartWrap').getBoundingClientRect();let left=(xx/W)*wrap.width+14,top=(yy/H)*wrap.height+12;if(left+220>wrap.width)left=(xx/W)*wrap.width-220;if(top+150>wrap.height)top=Math.max(8,(yy/H)*wrap.height-155);tooltip.style.left=left+'px';tooltip.style.top=top+'px';
   });
-  hit.addEventListener('mouseleave',()=>{hover.style.display='none';Object.values(dots).forEach(c=>c.style.display='none');tooltip.style.display='none';});
+  hit.addEventListener('mouseleave',()=>{hover.style.display='none';hoverH.style.display='none';priceDot.style.display='none';cursorMark.style.display='none';tooltip.style.display='none';});
 }
-document.querySelectorAll('.periodBtn').forEach(btn=>btn.addEventListener('click',()=>{currentPeriod=btn.dataset.period;document.querySelectorAll('.periodBtn').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('periodLabel').textContent='Historische Ansicht · '+btn.textContent;draw();}));
+document.querySelectorAll('.periodBtn').forEach(btn=>btn.addEventListener('click',()=>{currentPeriod=btn.dataset.period;document.querySelectorAll('.periodBtn').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('periodLabel').textContent='Historische Ansicht · '+btn.textContent;draw();renderPerformanceFromChart();}));
 draw();
 
 // Browser-Selbsttest, nur mit ?selftest=1 aktiv.
@@ -1190,6 +1158,12 @@ function showHardBootError(prefix,err){
   set('priceDate',msg);
   try{setLiveCell('liveModeCell','bad')}catch{}
 }
+
+document.getElementById('performanceTabs')?.addEventListener('click',ev=>{
+  const btn=ev.target.closest('[data-performance-period]');if(!btn)return;
+  renderPerformanceChart(btn.dataset.performancePeriod);
+});
+
 window.addEventListener('error',ev=>showHardBootError('JS',ev.error||ev.message));
 window.addEventListener('unhandledrejection',ev=>showHardBootError('Promise',ev.reason));
 
@@ -1233,38 +1207,139 @@ setTimeout(()=>{select('META');},0);
 
 
 function jukaFmtQualityValue(p){
-  const v=Number(p?.value);
-  if(!Number.isFinite(v))return 'n/v';
+  const v=Number(p?.value);if(!Number.isFinite(v))return 'n/v';
   const key=String(p?.key||'').toLowerCase();
-  const isMultiple=key.includes('debt')||key.includes('coverage');
-  if(isMultiple)return v.toFixed(1)+'×';
-  return (v*100).toFixed(1)+'%';
+  if(key==='netdebt')return v.toFixed(1)+'×';
+  if(['revenuegrowth','fcfgrowth','roic','margin','conversion','dilution','sbc','roictrend','roe','equitygrowth','epsgrowth','affogrowth','persharegrowth','sharegrowth'].includes(key))return (v*100).toFixed(1)+'%';
+  if(['fcfstability','roestability','earningsstability','persharestability'].includes(key))return 'Stabilitätswert';
+  return v.toFixed(2);
 }
 function renderJukaQualityDetail(qs){
   if(!qs)return;
   if((!qs.strengths||!qs.strengths.length)&&Array.isArray(qs.parts)){qs.strengths=qs.parts.slice().sort((a,b)=>Number(b.score||0)-Number(a.score||0)).slice(0,2).map(x=>x.label)}
   if((!qs.weaknesses||!qs.weaknesses.length)&&Array.isArray(qs.parts)){qs.weaknesses=qs.parts.slice().sort((a,b)=>Number(a.score||0)-Number(b.score||0)).slice(0,2).map(x=>x.label)}
   const s=document.getElementById('qualityStrengths'),w=document.getElementById('qualityWeaknesses'),rows=document.getElementById('qualityBasisRows');
-  if(s)s.textContent=(qs.strengths||[]).join(' · ')||'—';
-  if(w)w.textContent=(qs.weaknesses||[]).join(' · ')||'—';
+  const parts=Array.isArray(qs.parts)?qs.parts:[];
+  const strongest=parts.slice().sort((a,b)=>Number(b.score||0)-Number(a.score||0)).slice(0,2);
+  const weakest=parts.slice().sort((a,b)=>Number(a.score||0)-Number(b.score||0)).slice(0,2);
+  if(s)s.innerHTML=strongest.length?strongest.map(x=>`<div class="qualityExplain">${qualityPlainText(x,true)}</div>`).join(''):'<span class="note">Noch keine ausreichenden Einzelfaktoren verfügbar.</span>';
+  if(w)w.innerHTML=weakest.length?weakest.map(x=>`<div class="qualityExplain">${qualityPlainText(x,false)}</div>`).join(''):'<span class="note">Noch keine ausreichenden Einzelfaktoren verfügbar.</span>';
   if(rows){
     const parts=Array.isArray(qs.parts)?qs.parts:[];
-    rows.innerHTML=parts.length?parts.map(p=>`<tr><td>${p.label||'—'}</td><td>${jukaFmtQualityValue(p)}</td><td>${Number.isFinite(Number(p.score))?Number(p.score).toFixed(0)+'/100':'—'}</td><td>${Number.isFinite(Number(p.weight))?Number(p.weight).toFixed(0)+'%':'—'}</td><td>${p.reason||'—'}</td></tr>`).join(''):'<tr><td colspan="5">Keine ausreichenden Qualitätsdaten verfügbar.</td></tr>';
+    rows.innerHTML=parts.length?parts.map(p=>`<tr><td>${escapeHtml(p.label||'—')}</td><td>${escapeHtml(jukaFmtQualityValue(p))}</td><td>${Number.isFinite(Number(p.score))?Number(p.score).toFixed(0)+'/100':'—'}</td><td>${Number.isFinite(Number(p.weight))?Number(p.weight).toFixed(0)+'%':'—'}</td><td>${escapeHtml(p.reason||'—')}</td></tr>`).join(''):'<tr><td colspan="5">Keine ausreichenden Qualitätsdaten verfügbar.</td></tr>';
   }
 }
-function renderPerformanceFromChart(){
-  const ids={day:'perf1d',week:'perf1w',month:'perf1m',threeMonths:'perf3m',year:'perf1y',threeYears:'perf3y',max:'perfMax'};
-  try{
-    const p=JuKaCore.jukaPerformanceWindows(chartData||[]);
-    Object.entries(ids).forEach(([k,id])=>{
-      const el=document.getElementById(id),v=p?.[k]?.pct;
-      if(!el)return;
-      el.textContent=Number.isFinite(v)?((v>=0?'+':'')+v.toFixed(1)+'%'):'—';
-      el.classList.remove('up','down');
-      if(Number.isFinite(v))el.classList.add(v>=0?'up':'down');
-    });
-  }catch(e){console.warn('Performance rendering skipped',e)}
+
+let activePerformancePeriod='1Y';
+
+function performancePeriodMeta(period){
+  return {
+    '1D':{label:'1 Tag',days:1},
+    '1W':{label:'1 Woche',days:7},
+    '1M':{label:'1 Monat',months:1},
+    '3M':{label:'3 Monate',months:3},
+    '1Y':{label:'1 Jahr',years:1},
+    '3Y':{label:'3 Jahre',years:3},
+    'MAX':{label:'Max',max:true}
+  }[period]||{label:'1 Jahr',years:1};
 }
+
+function normalizePerformanceRows(){
+  return (chartData||[])
+    .map(x=>({date:new Date(x.date),price:Number(x.price??x.close)}))
+    .filter(x=>!Number.isNaN(x.date.getTime())&&Number.isFinite(x.price)&&x.price>0)
+    .sort((a,b)=>a.date-b.date);
+}
+
+function slicePerformanceRows(period){
+  const rows=normalizePerformanceRows();
+  if(rows.length<2)return rows;
+  const meta=performancePeriodMeta(period),latest=rows.at(-1);
+  if(meta.max)return rows;
+  const target=new Date(latest.date);
+  if(meta.years)target.setFullYear(target.getFullYear()-meta.years);
+  if(meta.months)target.setMonth(target.getMonth()-meta.months);
+  if(meta.days)target.setDate(target.getDate()-meta.days);
+  let startIndex=0;
+  for(let i=0;i<rows.length;i++){
+    if(rows[i].date<=target)startIndex=i;
+    else break;
+  }
+  // If the history starts after the target, use the first available row.
+  return rows.slice(startIndex);
+}
+
+function renderPerformanceChart(period=activePerformancePeriod){
+  activePerformancePeriod=period;
+  const rows=slicePerformanceRows(period);
+  const svg=document.getElementById('performanceChart');
+  const tooltip=document.getElementById('performanceTooltip');
+  const changeEl=document.getElementById('performanceChange');
+  const absEl=document.getElementById('performanceChangeAbs');
+  const labelEl=document.getElementById('performancePeriodLabel');
+  if(!svg||!changeEl||!absEl||!labelEl)return;
+
+  document.querySelectorAll('[data-performance-period]').forEach(btn=>btn.classList.toggle('active',btn.dataset.performancePeriod===period));
+  labelEl.textContent=performancePeriodMeta(period).label;
+  while(svg.firstChild)svg.removeChild(svg.firstChild);
+
+  if(rows.length<2){
+    changeEl.textContent='—';absEl.textContent='—';changeEl.className='';
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x','50%');t.setAttribute('y','52%');t.setAttribute('text-anchor','middle');t.setAttribute('class','performanceEmpty');t.textContent='Für diesen Zeitraum liegen nicht genügend Kursdaten vor.';
+    svg.appendChild(t);return;
+  }
+
+  const first=rows[0],last=rows.at(-1),abs=last.price-first.price,pct=(last.price/first.price-1)*100;
+  changeEl.textContent=(pct>=0?'+':'')+pct.toFixed(1)+'%';
+  absEl.textContent=(abs>=0?'+':'')+money(abs,activeCurrency);
+  changeEl.className=pct>=0?'up':'down';
+
+  const W=1120,H=180,L=10,R=10,T=12,B=20,pw=W-L-R,ph=H-T-B;
+  const vals=rows.map(r=>r.price),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max((max-min)*.08,max*.003),yMin=min-pad,yMax=max+pad;
+  const x=i=>L+(rows.length===1?0:i/(rows.length-1))*pw;
+  const y=v=>T+(1-(v-yMin)/(yMax-yMin||1))*ph;
+  const ns='http://www.w3.org/2000/svg';
+  const node=(tag,attrs={})=>{const n=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,v);return n};
+
+  // subtle baseline
+  svg.appendChild(node('line',{x1:L,y1:H-B,x2:W-R,y2:H-B,stroke:'#e1e5e2','stroke-width':1}));
+
+  // line path
+  let d='';
+  rows.forEach((r,i)=>{d+=(i?'L':'M')+x(i).toFixed(1)+' '+y(r.price).toFixed(1)+' '});
+  svg.appendChild(node('path',{d,fill:'none',stroke:pct>=0?'#376b54':'#9b514b','stroke-width':2.4,'stroke-linecap':'round','stroke-linejoin':'round'}));
+
+  // start/end labels
+  const startTxt=node('text',{x:L,y:H-4,'font-size':9,fill:'#7a847e'});startTxt.textContent=first.date.toLocaleDateString('de-DE',{month:'short',year:period==='1D'||period==='1W' ? undefined:'numeric',day:period==='1D'||period==='1W'?'2-digit':undefined});svg.appendChild(startTxt);
+  const endTxt=node('text',{x:W-R,y:H-4,'font-size':9,fill:'#7a847e','text-anchor':'end'});endTxt.textContent=last.date.toLocaleDateString('de-DE',{month:'short',year:period==='1D'||period==='1W' ? undefined:'numeric',day:period==='1D'||period==='1W'?'2-digit':undefined});svg.appendChild(endTxt);
+
+  // hover
+  const hover=node('line',{x1:L,y1:T,x2:L,y2:H-B,stroke:'#9aa49f','stroke-width':1,'stroke-dasharray':'3 4',style:'display:none'});svg.appendChild(hover);
+  const dot=node('circle',{r:4,fill:'#fff',stroke:'#26372f','stroke-width':2,style:'display:none'});svg.appendChild(dot);
+  const hit=node('rect',{x:L,y:T,width:pw,height:ph,fill:'transparent',style:'cursor:crosshair'});svg.appendChild(hit);
+  hit.addEventListener('mousemove',ev=>{
+    const rect=svg.getBoundingClientRect(),pt=svgPointer(svg,ev),mx=pt.x;
+    let idx=Math.round((mx-L)/pw*(rows.length-1));idx=Math.max(0,Math.min(rows.length-1,idx));
+    const row=rows[idx],xx=x(idx),yy=y(row.price);
+    hover.style.display='block';hover.setAttribute('x1',xx);hover.setAttribute('x2',xx);
+    dot.style.display='block';dot.setAttribute('cx',xx);dot.setAttribute('cy',yy);
+    if(tooltip){
+      const rel=(row.price/first.price-1)*100;
+      tooltip.innerHTML=`<strong>${row.date.toLocaleDateString('de-DE')}</strong><div class="perfTipRow"><span>Kurs</span><b>${money(row.price,activeCurrency)}</b></div><div class="perfTipRow"><span>Seit Start</span><b>${rel>=0?'+':''}${rel.toFixed(1)}%</b></div>`;
+      tooltip.style.display='block';
+      let left=(xx/W)*rect.width+10,top=(yy/H)*rect.height+6;
+      if(left+145>rect.width)left=(xx/W)*rect.width-150;
+      tooltip.style.left=left+'px';tooltip.style.top=Math.max(4,top)+'px';
+    }
+  });
+  hit.addEventListener('mouseleave',()=>{hover.style.display='none';dot.style.display='none';if(tooltip)tooltip.style.display='none'});
+}
+
+function renderPerformanceFromChart(){
+  renderPerformanceChart(activePerformancePeriod);
+}
+
 
 </script>
 <div class="toast" id="productToast"></div></body></html>
