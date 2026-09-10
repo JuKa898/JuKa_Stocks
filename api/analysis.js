@@ -78,6 +78,7 @@ async function secAdapter(stock){
     pretax:candidates(f,['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'],'USD'),
     tax:candidates(f,['IncomeTaxExpenseBenefit'],'USD'),
     equity:candidates(f,['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],'USD'),
+    ffo:candidates(f,['FundsFromOperations','FundsFromOperationsAvailableToCommonStockholders'],'USD'),
     ar:candidates(f,['AccountsReceivableNetCurrent','AccountsNotesAndLoansReceivableNetCurrent'],'USD'),
     inv:candidates(f,['InventoryNet'],'USD'),
     ap:candidates(f,['AccountsPayableCurrent'],'USD')
@@ -86,7 +87,7 @@ async function secAdapter(stock){
   let priorNwc=null;
   const annual=periods.map(date=>{
     const g=k=>closest(sets[k],date);
-    const R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
+    const R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ffo=g('ffo'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
     const revenue=R?.val??null,operatingIncome=O?.val??null,cfo=C?.val??null,capex=X?.val??null;
     const cash=Ca?.val??null,debt=(Dc?.val??0)+(Dn?.val??0);
     const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null;
@@ -99,10 +100,10 @@ async function secAdapter(stock){
       revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo,capex,
       fcf:cfo!=null&&capex!=null?cfo-capex:null,cash,debt,netCash:cash!=null?cash-debt:null,
       shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,interestExpense:I?.val??null,
-      pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,nwc,deltaNwc
+      pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,ffo:Ffo?.val??null,nwc,deltaNwc
     };
   }).filter(x=>x.date);
-  return {symbol:stock.s,name:j.entityName||found.name,annual,source:'SEC companyfacts',status:'ok'};
+  return {symbol:stock.s,name:found.name,annual,source:'SEC companyfacts',status:'ok'};
 }
 
 async function fundamentalsAdapter(stock){
@@ -129,7 +130,7 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='3.3.5-live-integrity';
+    out.engineVersion='JUKA-3.0-live-paket6';
     res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.summary||'')==='1'){
       const l=out.latest||{};
@@ -140,18 +141,21 @@ module.exports=async function handler(req,res){
         valuationStatus:out.valuationStatus,
         model:out.model,
         modelReady:out.modelReadiness?.ready,
+        modelReadiness:out.modelReadiness,
+        modelLabel:out.model==='operating-company'?'Operatives Unternehmen':out.model==='bank-insurance'?'Bank / Versicherung':'REIT',
         price:out.price,
         currency:out.currency,
         marketAsOf:out.market?.asOf,
         fundamentalsAsOf:out.fundamentals?.asOf,
         latest:{fy:l.fy,date:l.date,filed:l.filed,revenue:l.revenue,operatingIncome:l.operatingIncome,netIncome:l.netIncome,eps:l.eps,cfo:l.cfo,capex:l.capex,fcf:l.fcf,cash:l.cash,debt:l.debt,netCash:l.netCash,shares:l.shares},
-        quality:out.quality?{score:out.quality.score,grade:out.quality.grade,label:out.quality.label,parts:out.quality.parts}:null,
+        quality:out.quality?{score:out.quality.score,grade:out.quality.grade,label:out.quality.label,coverage:out.quality.coverage,confidence:out.quality.confidence,verdict:out.quality.verdict,recommendation:out.quality.recommendation,strengths:out.quality.strengths,weaknesses:out.quality.weaknesses,parts:out.quality.parts}:null,
         valuation:out.valuation?{bear:out.valuation.bear,base:out.valuation.base,bull:out.valuation.bull}:null,
         relative:out.relative,
         reality:out.reality,
         riskAudit:out.riskAudit,
         dataQuality:out.dataQuality,
         autoAssumptions:out.autoAssumptions?.assumptions||null,
+        engineAssumptions:out.engineAssumptions||null,
         warnings:out.warnings,
         provenance:out.provenance
       });
