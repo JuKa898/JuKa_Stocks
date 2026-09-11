@@ -1,11 +1,8 @@
 {
   "name": "juka-research",
-  "version": "10.6.3",
+  "version": "4.8.4",
   "private": true,
   "engines": {
     "node": ">=18"
-  },
-  "scripts": {
-    "test": "node scripts/regression-fair-value.mjs && node scripts/regression-system.mjs"
   }
 }

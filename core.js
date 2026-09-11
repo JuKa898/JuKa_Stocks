@@ -358,7 +358,7 @@
     }
     const margins=recent.map(x=>finiteNumber(x.operatingMargin)).filter(v=>v!==null);
     const fcfMargins=recent.map(x=>finiteNumber(x.fcfMargin)).filter(v=>v!==null);
-    const capexIntensity=recent.map(x=>Number(x.capex)>0&&Number(x.revenue)>0?Number(x.capex)/Number(x.revenue):null).filter(Number.isFinite);
+    const capexIntensity=recent.map(x=>{const capex=finiteNumber(x.capex),rev=finiteNumber(x.revenue);return capex!==null&&capex>0&&rev!==null&&rev>0?capex/rev:null;}).filter(Number.isFinite);
     const shareGrowth=fieldCagr(rows,'shares',rows.length-1,Math.min(5,rows.length-1));
     const revenueCagr=fieldCagr(rows,'revenue',rows.length-1,Math.min(5,rows.length-1));
     const marginMedian=medianField(rows,'operatingMargin',Math.max(0,rows.length-5),rows.length-1);
@@ -370,7 +370,8 @@
     const highMargin=Number.isFinite(marginMedian)&&marginMedian>.25;
     const dilution=Number.isFinite(shareGrowth)&&shareGrowth>.02;
     const buyback=Number.isFinite(shareGrowth)&&shareGrowth<-.02;
-    const cashRich=Number(r.cash)>Number(r.debt);
+    const cashValue=finiteNumber(r.cash),debtValue=finiteNumber(r.debt);
+    const cashRich=cashValue!==null&&debtValue!==null&&cashValue>debtValue;
     const profile=[];
     if(highGrowth)profile.push('High Growth');
     if(cyclical)profile.push('Zyklisch/volatil');
@@ -416,20 +417,23 @@
   // The market price is deliberately NOT used to calibrate the base assumptions.
   function weightedAverage(items=[]){
     let s=0,w=0;
-    for(const [v,weight] of items){if(Number.isFinite(Number(v))&&Number.isFinite(Number(weight))&&Number(weight)>0){s+=Number(v)*Number(weight);w+=Number(weight);}}
+    for(const [v,weight] of items){
+      const value=finiteNumber(v),wt=finiteNumber(weight);
+      if(value!==null&&wt!==null&&wt>0){s+=value*wt;w+=wt;}
+    }
     return w?s/w:null;
   }
   function robustRecentMedian(rows,key,years=5){
-    return median(rows.slice(-Math.max(1,years)).map(r=>Number(r?.[key])).filter(Number.isFinite));
+    return median(rows.slice(-Math.max(1,years)).map(r=>finiteNumber(r?.[key])).filter(v=>v!==null));
   }
   function jukaOperatingRawAssumptions(annualFacts=[],overrides={}){
     const rows=deriveFundamentals(annualFacts),r=rows.at(-1),annualRowsOnly=rows.filter(x=>!x.isTTM),historyRows=annualRowsOnly.length>=3?annualRowsOnly:rows,q=jukaDataQuality(rows),p=jukaCompanyProfile(historyRows);
     if(!r||!p)return null;
 
-    const g1=r.isTTM?null:Number(r.revenueGrowthYoY);
+    const g1=r.isTTM?null:finiteNumber(r.revenueGrowthYoY);
     const g3=fieldCagr(rows,'revenue',rows.length-1,3);
     const g5=fieldCagr(rows,'revenue',rows.length-1,5);
-    const growthVol=Number(p.growthVol);
+    const growthVol=finiteNumber(p.growthVol);
     let growthY1=weightedAverage([[g1,.45],[g3,.35],[g5,.20]]);
     if(!Number.isFinite(growthY1))growthY1=Number.isFinite(g3)?g3:Number.isFinite(g5)?g5:.06;
     // Volatile/cyclical histories get less extrapolation of the latest year, not a blanket haircut.
@@ -446,18 +450,21 @@
     let growthY5=clamp(weightedAverage([[maturityAnchor,.70],[growthY1,.30]]),.02,.14);
     if(growthY1<.04)growthY5=clamp(weightedAverage([[growthY1,.45],[.03,.55]]),.01,.06);
 
-    const latestMargin=Number(r.operatingMargin);
+    const latestMargin=finiteNumber(r.operatingMargin);
     const margin3=robustRecentMedian(historyRows,'operatingMargin',3);
     const margin5=robustRecentMedian(historyRows,'operatingMargin',5);
-    const oldMargin=historyRows.length>=4?Number(historyRows[historyRows.length-4].operatingMargin):null;
+    const oldMargin=historyRows.length>=4?finiteNumber(historyRows[historyRows.length-4].operatingMargin):null;
     const marginTrend=Number.isFinite(latestMargin)&&Number.isFinite(oldMargin)?(latestMargin-oldMargin)/3:0;
     let targetMargin=weightedAverage([[latestMargin,.45],[margin3,.35],[margin5,.20]]);
-    if(!Number.isFinite(targetMargin))targetMargin=Number(r.operatingIncome)/Number(r.revenue);
+    if(!Number.isFinite(targetMargin)){
+      const op=finiteNumber(r.operatingIncome),rev=finiteNumber(r.revenue);
+      targetMargin=op!==null&&rev!==null&&rev!==0?op/rev:null;
+    }
     targetMargin=clamp(targetMargin+clamp(marginTrend*2,-.025,.025),-.05,.65);
 
     const fcf3=robustRecentMedian(historyRows,'fcfMargin',3),fcf5=robustRecentMedian(historyRows,'fcfMargin',5);
-    let targetFcf=weightedAverage([[Number(r.fcfMargin),.40],[fcf3,.35],[fcf5,.25]]);
-    if(!Number.isFinite(targetFcf))targetFcf=Number(r.fcfMargin);
+    let targetFcf=weightedAverage([[finiteNumber(r.fcfMargin),.40],[fcf3,.35],[fcf5,.25]]);
+    if(!Number.isFinite(targetFcf))targetFcf=finiteNumber(r.fcfMargin);
 
     const roicRows=r.isTTM?[...historyRows.slice(-4),r]:historyRows.slice(-5);const roics=roicRows.map(x=>finiteNumber(x.roic)).filter(x=>x!==null&&x>0);
     const roicMedian=median(roics);
@@ -494,7 +501,8 @@
     const nwcPctY5=median(nwcRatio);
     // Do not extrapolate a single investment-spike year forever. The 5Y median remains company-specific,
     // while a very large latest CapEx jump is faded toward that median.
-    const latestCapexRatio=Number(r.capex)/Number(r.revenue);
+    const latestCapex=finiteNumber(r.capex),latestRevenue=finiteNumber(r.revenue);
+    const latestCapexRatio=latestCapex!==null&&latestRevenue!==null&&latestRevenue>0?latestCapex/latestRevenue:null;
     if(Number.isFinite(capexPctY5)&&Number.isFinite(latestCapexRatio)&&latestCapexRatio>capexPctY5*1.45)
       capexPctY5=weightedAverage([[capexPctY5,.80],[latestCapexRatio,.20]]);
 
@@ -517,8 +525,10 @@
       wacc:n(overrides.wacc,wacc),
       terminalGrowth:n(overrides.terminalGrowth,terminalGrowth),
       terminalRoic:n(overrides.terminalRoic,terminalRoic),
-      capexPctY5:n(overrides.capexPctY5,Number.isFinite(capexPctY5)?capexPctY5:Number(r.capex)/Number(r.revenue)),
-      daPctY5:n(overrides.daPctY5,Number.isFinite(daPctY5)?daPctY5:Number(r.da)/Number(r.revenue)),
+      capexPctY5:n(overrides.capexPctY5,Number.isFinite(capexPctY5)?capexPctY5:(latestCapexRatio??0)),
+      daPctY5:n(overrides.daPctY5,Number.isFinite(daPctY5)?daPctY5:(()=>{
+        const da=finiteNumber(r.da),rev=finiteNumber(r.revenue);return da!==null&&rev!==null&&rev>0?da/rev:0;
+      })()),
       nwcPctY5:n(overrides.nwcPctY5,Number.isFinite(nwcPctY5)?nwcPctY5:0),
       bearGrowthAdj:n(overrides.bearGrowthAdj,-growthSpread),
       bearMarginAdj:n(overrides.bearMarginAdj,-marginSpread),
@@ -527,7 +537,17 @@
       bullMarginAdj:n(overrides.bullMarginAdj,marginSpread),
       bullWaccAdj:n(overrides.bullWaccAdj,-Math.min(.012,waccSpread*.75))
     };
-    return {assumptions,profile:p,dataQuality:q,metrics:{g1,g3,g5,growthVol,margin3,margin5,marginTrend,roicMedian,roicVol,persistence,leverage,uncertainty},source:'company-history-adaptive'};
+    return {assumptions,profile:p,dataQuality:q,metrics:{
+      g1,g3,g5,growthVol,margin3,margin5,marginTrend,roicMedian,roicVol,persistence,leverage,uncertainty,
+      // Canonical aliases consumed by CAP, terminal-state and WACC policies. Earlier builds
+      // produced the statistics under short names but downstream policies looked for these
+      // canonical names, silently dropping stability/moat evidence in production.
+      revenueCagr:Number.isFinite(g5)?g5:(Number.isFinite(g3)?g3:g1),
+      growthVolatility:growthVol,
+      marginVolatility:finiteNumber(p?.marginVol),
+      marginVol:finiteNumber(p?.marginVol),
+      roicStability:persistence
+    },source:'company-history-adaptive'};
   }
 
   // Walk-forward self-check: each historical prediction is built only with data that existed at that anchor.
@@ -665,11 +685,11 @@
   function jukaFundamentalForecastEngine(annualFacts=[], adaptive={}){
     const rows=deriveFundamentals(annualFacts),r=rows.at(-1),a=adaptive?.assumptions||{};
     if(!r||rows.length<3)return null;
-    const rev=Number(r.revenue);
+    const rev=finiteNumber(r.revenue);
     const g1=fieldCagr(rows,'revenue',rows.length-1,1),g3=fieldCagr(rows,'revenue',rows.length-1,3),g5=fieldCagr(rows,'revenue',rows.length-1,5);
     const old3=rows.length>=7?fieldCagr(rows,'revenue',rows.length-4,3):null;
-    const latestMargin=Number(r.operatingMargin),medMargin=robustRecentMedian(rows,'operatingMargin',5);
-    const growthVol=Number(adaptive?.metrics?.growthVol);
+    const latestMargin=finiteNumber(r.operatingMargin),medMargin=robustRecentMedian(rows,'operatingMargin',5);
+    const growthVol=finiteNumber(adaptive?.metrics?.growthVol);
 
     // 1) Growth evidence: robust blend, with recency winning only when supported by 3Y history.
     const hist=clamp(weightedAverage([[g1,.35],[g3,.45],[g5,.20]]),-.08,.45);
@@ -731,8 +751,8 @@
     let year5=a.terminalGrowth+(year1-a.terminalGrowth)*persistence;
     year5=clamp(year5,.01,.15);
 
-    const old=rows.length>=4?Number(rows[rows.length-4].operatingMargin):latestMargin;
-    const marginTrend=(latestMargin-old)/3;
+    const old=rows.length>=4?finiteNumber(rows[rows.length-4].operatingMargin):latestMargin;
+    const marginTrend=latestMargin!==null&&old!==null?(latestMargin-old)/3:0;
     let margin5=weightedAverage([[latestMargin,.60],[medMargin,.40]])+clamp(marginTrend,-.025,.025);
     margin5=clamp(margin5,-.05,.65);
 
@@ -754,9 +774,9 @@
   // Growth is not free: reinvestment rate = growth / return on incremental capital.
   // This prevents a model from simultaneously assuming very high growth and nearly all NOPAT as distributable cash.
   function jukaWaccPolicy(adaptive={}){
-    const a=adaptive?.assumptions||{},raw=Number(a.wacc),m=adaptive?.metrics||{};
-    if(!Number.isFinite(raw))return {wacc:raw,low:null,high:null,spread:null,quality:'unavailable',marketPriceUsed:false};
-    const gv=Number(m.growthVol),mv=Number(m.marginVol),rs=Number(m.roicStability);
+    const a=adaptive?.assumptions||{},raw=finiteNumber(a.wacc),m=adaptive?.metrics||{};
+    if(raw===null)return {wacc:null,low:null,high:null,spread:null,quality:'unavailable',marketPriceUsed:false};
+    const gv=finiteNumber(m.growthVol),mv=finiteNumber(m.marginVol),rs=finiteNumber(m.roicStability);
     let half=.0075;
     if(Number.isFinite(gv)&&gv>.15)half+=.0025;
     if(Number.isFinite(mv)&&mv>.08)half+=.0025;
@@ -783,8 +803,8 @@
 
   function jukaCompetitiveAdvantagePeriod(adaptive={}){
     const a=adaptive?.assumptions||{},m=adaptive?.metrics||{},q=adaptive?.dataQuality||{};
-    const roic=Number(m.roicMedian),wacc=Number(a.wacc),growth=Number(a.growthY1);
-    const revCagr=Number(m.revenueCagr),marginVol=Number(m.marginVolatility),growthVol=Number(m.growthVolatility);
+    const roic=finiteNumber(m.roicMedian),wacc=finiteNumber(a.wacc),growth=finiteNumber(a.growthY1);
+    const revCagr=finiteNumber(m.revenueCagr),marginVol=finiteNumber(m.marginVolatility),growthVol=finiteNumber(m.growthVolatility);
     const economicsKnown=Number.isFinite(roic)&&Number.isFinite(wacc);
     const excess=economicsKnown?roic-wacc:null;
     let score=economicsKnown?48:18;
@@ -810,9 +830,9 @@
   }
 
   function jukaMatureTerminalPolicy(adaptive={}){
-    const a=adaptive?.assumptions||{},wacc=Number(a.wacc),raw=Number(a.terminalRoic),g=Number(a.terminalGrowth);
-    if(!Number.isFinite(wacc)||!Number.isFinite(raw))return {terminalRoic:raw,rawTerminalRoic:raw,excessReturn:null,cap:null,premium:null};
-    const stability=Number(adaptive?.metrics?.roicStability),histRoic=Number(adaptive?.metrics?.roicMedian);
+    const a=adaptive?.assumptions||{},wacc=finiteNumber(a.wacc),raw=finiteNumber(a.terminalRoic),g=finiteNumber(a.terminalGrowth);
+    if(wacc===null||raw===null)return {terminalRoic:raw,rawTerminalRoic:raw,excessReturn:null,cap:null,premium:null};
+    const stability=finiteNumber(adaptive?.metrics?.roicStability),histRoic=finiteNumber(adaptive?.metrics?.roicMedian);
     const excess=Number.isFinite(histRoic)?histRoic-wacc:null;
     // A durable, repeatedly observed excess return deserves a longer fade and a higher
     // mature-state ROIC than a generic company. This is still capped: current ROIC is
@@ -855,9 +875,9 @@
   function jukaReinvestmentEfficiency(annualFacts=[],adaptive={}){
     const rows=deriveFundamentals(annualFacts),levels=[],marginal=[];
     for(let i=0;i<rows.length;i++){
-      const r=rows[i],rev=Number(r.revenue),icObj=jukaNormalizedInvestedCapital(r),ic=icObj.value;
-      if(rev>0&&ic>0)levels.push(rev/ic);
-      if(i){const p=rows[i-1],pic=jukaNormalizedInvestedCapital(p).value,dr=rev-Number(p.revenue),di=Number.isFinite(ic)&&Number.isFinite(pic)?ic-pic:null;if(dr>0&&di>0)marginal.push(dr/di);}
+      const r=rows[i],rev=finiteNumber(r.revenue),icObj=jukaNormalizedInvestedCapital(r),ic=icObj.value;
+      if(rev!==null&&rev>0&&ic>0)levels.push(rev/ic);
+      if(i){const p=rows[i-1],prevRev=finiteNumber(p.revenue),pic=jukaNormalizedInvestedCapital(p).value,dr=rev!==null&&prevRev!==null?rev-prevRev:null,di=Number.isFinite(ic)&&Number.isFinite(pic)?ic-pic:null;if(dr!==null&&dr>0&&di>0)marginal.push(dr/di);}
     }
     const level=median(levels.slice(-5)),marg=median(marginal.slice(-4));
     const c=[level,marg].filter(x=>Number.isFinite(x)&&x>.1&&x<20);
@@ -966,23 +986,35 @@
   // growth from the company's own history, fade growth, discount, then bridge
   // enterprise value to equity. Market price is never an input to value.
   function jukaSimpleIntrinsicOperating(annualFacts=[],adaptive={},scenario='base'){
-    const rows=deriveFundamentals(annualFacts).filter(x=>Number(x.revenue)>0&&Number.isFinite(Number(x.operatingIncome))&&Number(x.shares)>0);
+    const rows=deriveFundamentals(annualFacts).filter(x=>{
+      const revenue=finiteNumber(x.revenue),operatingIncome=finiteNumber(x.operatingIncome),shares=finiteNumber(x.shares);
+      return revenue!==null&&revenue>0&&operatingIncome!==null&&shares!==null&&shares>0;
+    });
     if(rows.length<3)return null;
     const latest=rows.at(-1),annualHistory=rows.filter(x=>!x.isTTM),historicalRecent=(annualHistory.length?annualHistory:rows).slice(-5),taxFallback=.21;
     const ownerFromRow=(r)=>{
-      const revenue=Number(r.revenue), ebit=Number(r.operatingIncome);
-      const tax=Number.isFinite(Number(r.taxRate))?clamp(Number(r.taxRate),.08,.35):taxFallback;
+      const revenue=finiteNumber(r.revenue), ebit=finiteNumber(r.operatingIncome);
+      if(revenue===null||revenue<=0||ebit===null)return {fy:r.fy,date:r.date,isTTM:!!r.isTTM,revenue,owner:null,cashOwner:null,reason:'operating-data-missing'};
+      const taxRaw=finiteNumber(r.taxRate),tax=taxRaw!==null?clamp(taxRaw,.08,.35):taxFallback;
       const nopat=ebit*(1-tax);
-      const da=Number.isFinite(Number(r.da))&&Number(r.da)>=0?Number(r.da):null;
-      const capex=Number.isFinite(Number(r.capex))&&Number(r.capex)>=0?Number(r.capex):null;
+      const daRaw=finiteNumber(r.da),capexRaw=finiteNumber(r.capex);
+      const da=daRaw!==null&&daRaw>=0?daRaw:null;
+      const capex=capexRaw!==null&&capexRaw>=0?capexRaw:null;
       // Buffett owner earnings require maintenance capex, not reported capex. When both
       // are known, avoid the old optimistic hard cap at 1.15x D&A: replacement needs can
       // legitimately exceed depreciation. Use the lower of reported capex and a conservative
       // 1.35x D&A ceiling; missing values remain explicit estimates rather than free growth.
-      const maintenanceCapex=da!==null&&capex!==null?Math.min(capex,da*1.35):(da!==null?da:(capex!==null?capex:0));
-      const wc=Number.isFinite(Number(r.deltaNwc))?Number(r.deltaNwc):0;
-      const maintenanceWc=Math.max(0,wc);
-      const owner=nopat+(da||0)-maintenanceCapex-maintenanceWc;
+      const maintenanceCapex=da!==null&&capex!==null?Math.min(capex,da*1.35):(da!==null?da:(capex!==null?capex:null));
+      const wc=finiteNumber(r.deltaNwc);
+      // Owner earnings are a no-growth earning-power concept. A positive ΔNWC in a
+      // rapidly expanding business is predominantly growth investment, not maintenance.
+      // Charging it here and then charging forecast growth again through economic ROIC
+      // double-counts reinvestment (especially for hypergrowth compounders). Keep the
+      // observed ΔNWC for audit/cash-conversion purposes, but let the forward economic
+      // reinvestment model fund growth exactly once.
+      const maintenanceWc=0;
+      if(maintenanceCapex===null)return {fy:r.fy,date:r.date,isTTM:!!r.isTTM,revenue,nopat,da,capex,maintenanceCapex:null,maintenanceWc,owner:null,cashOwner:null,reason:'maintenance-capex-unavailable'};
+      const owner=nopat+(da??0)-maintenanceCapex-maintenanceWc;
       const cfo=finiteNumber(r.cfo),interest=finiteNumber(r.interestExpense),sbc=finiteNumber(r.sbc);
       const cashOwner=cfo!==null?cfo+(interest!==null?interest*(1-tax):0)-maintenanceCapex-(sbc!==null?Math.max(0,sbc):0):null;
       return {fy:r.fy,date:r.date,isTTM:!!r.isTTM,revenue,nopat,da,capex,maintenanceCapex,maintenanceWc,owner,cashOwner};
@@ -993,7 +1025,16 @@
     const normalizedOwner=ownerRows.reduce((a,x,i)=>a+x.owner*weights[i],0)/wsum;
     const currentOwner=ownerFromRow(latest),latestOwner=Number(currentOwner.owner);
     if(!(latestOwner>0))return null;
-    const owner0=.60*latestOwner+.40*normalizedOwner;
+    // Do not mechanically pull a genuine new earnings regime back toward stale history.
+    // The historical blend remains dominant for ordinary companies, but when revenue and
+    // owner earnings both show a supported step-up the latest run-rate receives more weight.
+    const forecastGrowth=finiteNumber(adaptive?.fundamentalForecast?.growthY1);
+    const latestRevenueGrowth=finiteNumber(latest.revenueGrowthYoY);
+    const regimeGrowth=Math.max(forecastGrowth??-Infinity,latestRevenueGrowth??-Infinity);
+    const ownerStep=normalizedOwner>0?latestOwner/normalizedOwner-1:0;
+    const regimeShift=Number.isFinite(regimeGrowth)&&regimeGrowth>.18&&ownerStep>.20;
+    const latestWeight=regimeShift?.82:.60;
+    const owner0=latestWeight*latestOwner+(1-latestWeight)*normalizedOwner;
 
     const revCagr=fieldCagr(rows,'revenue',rows.length-1,Math.min(5,Math.max(1,annualHistory.length-1)));
     const ownerFirst=ownerRows[0],ownerLast=currentOwner;
@@ -1023,16 +1064,24 @@
     // than balance-sheet ROIC heuristics imply. Preserve observed economics when they are
     // persistent; do not force every company into the old 45% marginal-return ceiling.
     const capPolicy=jukaCompetitiveAdvantagePeriod(adaptive);
-    const roicStability=Number(adaptive?.metrics?.roicStability);
+    const roicStability=finiteNumber(adaptive?.metrics?.roicStability);
     const capexRates=historicalRecent.map(r=>Number(r.revenue)>0&&finiteNumber(r.capex)!==null?finiteNumber(r.capex)/Number(r.revenue):null).filter(Number.isFinite);
     const capexIntensity=capexRates.length?median(capexRates):null;
-    const assetLight=Number.isFinite(capexIntensity)&&capexIntensity<.06&&Number.isFinite(histRoic)&&histRoic>.20;
-    const roicCeiling=assetLight&&Number.isFinite(roicStability)&&roicStability>.60?.75:.50;
+    const assetLight=Number.isFinite(capexIntensity)&&capexIntensity<.08&&Number.isFinite(histRoic)&&histRoic>.20;
+    const roicCeiling=assetLight&&Number.isFinite(roicStability)&&roicStability>.60?.85:.55;
     const economicRoic=clamp((Number.isFinite(histRoic)?histRoic:terminalRoic)*cfg.roic,.06,roicCeiling);
-    const affordableGrowth=Math.max(0,economicRoic*(assetLight?.65:.55));
-    const evidenceGrowth=clamp(rawGrowth,-.03,.12);
+    const affordableGrowth=Math.max(0,economicRoic*(assetLight?.70:.55));
     const ownerGrowthAdj=clamp(finiteNumber(adaptive?.assumptions?.ownerGrowthAdj)??0,-.05,.05);
-    const startGrowth=clamp(Math.min(evidenceGrowth+cfg.growth+ownerGrowthAdj,affordableGrowth),-.03,.14);
+    // IMPORTANT: the fundamental forecast is the forward-looking history-based evidence
+    // layer. The previous engine calculated up to ~35% Y1 growth and then silently replaced
+    // it with a 12-14% cap here, structurally understating firms such as Nvidia. Use the
+    // forecast when available, while retaining affordability and hard safety ceilings.
+    const forecastY1=finiteNumber(adaptive?.fundamentalForecast?.growthY1);
+    const forecastY5=finiteNumber(adaptive?.fundamentalForecast?.growthY5);
+    const evidenceY1=clamp(forecastY1!==null?forecastY1:rawGrowth,-.03,.35);
+    const startGrowth=clamp(Math.min(evidenceY1+cfg.growth+ownerGrowthAdj,affordableGrowth),-.03,.35);
+    const evidenceY5=clamp(forecastY5!==null?forecastY5:Math.max(terminalGrowth,rawGrowth*.55),terminalGrowth,.18);
+    const year5Growth=clamp(Math.min(evidenceY5+cfg.growth*.55+ownerGrowthAdj*.50,affordableGrowth),terminalGrowth,.18);
     const excessReturn=Number.isFinite(histRoic)?histRoic-wacc0:0;
     // Competitive-advantage period is company-specific and derived from persistent excess
     // returns, growth/margin stability and data quality. This replaces the old hard 9-year cap.
@@ -1042,8 +1091,21 @@
 
     let owner=owner0,pv=0,flows=[];
     for(let y=1;y<=years;y++){
-      const t=years===1?1:(y-1)/(years-1);
-      const g=startGrowth+(terminalGrowth-startGrowth)*t;
+      // Explicit two-stage maturation: use the independently derived Y1 -> Y5
+      // fundamental path first, hold/fade through the competitive-advantage period,
+      // and only then converge to mature terminal growth. This avoids forcing a
+      // hypergrowth company directly from Y1 to terminal growth across the whole CAP.
+      let g;
+      if(y<=5){
+        const t=(y-1)/4;
+        g=startGrowth+(year5Growth-startGrowth)*t;
+      }else if(y<=years-5){
+        g=year5Growth;
+      }else{
+        const fadeYears=Math.min(5,Math.max(1,years-5));
+        const t=Math.min(1,(y-Math.max(5,years-5))/fadeYears);
+        g=year5Growth+(terminalGrowth-year5Growth)*t;
+      }
       // Growth has a cost. Deduct the incremental capital required to create it.
       const preGrowthOwner=owner;
       const grown=owner*(1+g);
@@ -1073,7 +1135,7 @@
       ownerRows,currentOwner,
       cashConversion:Number.isFinite(currentOwner.cashOwner)&&latestOwner>0?currentOwner.cashOwner/latestOwner:null,
       history:{revenueCagr:revCagr,ownerEarningsCagr:ownerCagr,historicalRoic:histRoic},
-      assumptions:{startGrowth,terminalGrowth,wacc,economicRoic,terminalRoic,rawTerminalRoic,terminalPremium,years,durability,assetLight,capexIntensity,competitiveAdvantageScore:capPolicy?.score},
+      assumptions:{startGrowth,year5Growth,terminalGrowth,wacc,economicRoic,terminalRoic,rawTerminalRoic,terminalPremium,years,durability,assetLight,capexIntensity,competitiveAdvantageScore:capPolicy?.score,regimeShift,latestWeight},
       pvExplicit:pv,terminalValue,terminalPv,terminalShare:enterprise>0?terminalPv/enterprise:null,
       flows,scenario,method:'normalized-owner-earnings-intrinsic-value',marketPriceUsed:false
     };
@@ -1233,7 +1295,7 @@
 
   function jukaReleaseMatrixCase(model,valuation={},stability=null,quality={}){
     const m=String(model||'').toLowerCase(),blockers=[],warnings=[];
-    if(!valuation||!Number.isFinite(Number(valuation.base)))blockers.push('valuation-unavailable');
+    if(!valuation||finiteNumber(valuation.base)===null)blockers.push('valuation-unavailable');
     if(!stability)blockers.push('stability-unavailable');
     else if(stability.status==='instabil')blockers.push('model-instability');
     else if(stability.status==='sensitiv')warnings.push('model-sensitive');
@@ -1352,7 +1414,7 @@
 
 
   function jukaHistoricalIntegrityAudit(history=[]){
-    const rows=(history||[]).filter(x=>Number.isFinite(Number(x.base))&&Number(x.base)>0);
+    const rows=(history||[]).filter(x=>finiteNumber(x.base)!==null&&finiteNumber(x.base)>0);
     if(!rows.length)return {available:false,reason:'no-historical-fair-value',marketPriceUsed:false};
     const flags=[],filingPoints=[];let lastKey=null;
     for(const x of rows){
@@ -1617,9 +1679,10 @@
     const historicalMultipleCheck=jukaHistoricalMultipleCheck(rows,owner);
     const marginOfSafety=jukaBuffettMarginOfSafety({confidence,owner,triangulation});
     const buyBelow=owner.valuePerShare*(1-marginOfSafety);
-    const reverse=inp&&Number(price)>0?jukaReverseDcf(inp,Number(price)):null;
+    const livePrice=finiteNumber(price);
+    const reverse=inp&&livePrice!==null&&livePrice>0?jukaReverseDcf(inp,livePrice):null;
     const result={
-      version:'JUKA Fair Value 8.3',model:'buffett-owner-earnings-intrinsic-value',
+      version:'JUKA Fair Value 8.3.2',model:'buffett-owner-earnings-intrinsic-value',
       framework:{primary:'buffett-owner-earnings',historicalAnchor:'eulerpool-style-multiple-check',
         philosophy:'intrinsic-value-first; historical multiples are diagnostics only',marginOfSafety,buyBelow,historicalMultipleCheck},
       valuation,assumptions:inp,adaptive,fundamentalForecast,rdPolicy,rdAdjustment,reverse,sensitivity,confidence,ownerEarnings:owner,economicDcf:economic,triangulation,
@@ -1800,7 +1863,7 @@
       r.taxRate=Number.isFinite(pretax)&&pretax>0&&Number.isFinite(tax)?clamp(tax/pretax,0,.45):null;
       r.ebitda=Number.isFinite(ebit)&&Number.isFinite(da)?ebit+da:null;
       r.netDebt=Number.isFinite(debt)&&Number.isFinite(cash)?debt-cash:null;
-      r.netCash=Number.isFinite(cash)&&Number.isFinite(debt)?cash-debt:(Number.isFinite(Number(r.netCash))?Number(r.netCash):null);
+      r.netCash=Number.isFinite(cash)&&Number.isFinite(debt)?cash-debt:finiteNumber(r.netCash);
       r.netDebtToEbitda=Number.isFinite(r.netDebt)&&Number.isFinite(r.ebitda)&&r.ebitda!==0?r.netDebt/r.ebitda:null;
       r.interestCoverage=Number.isFinite(ebit)&&Number.isFinite(interest)&&interest>0?ebit/interest:null;
       const invested=Number.isFinite(equity)&&Number.isFinite(debt)&&Number.isFinite(cash)?equity+debt-cash:null;
@@ -1808,9 +1871,9 @@
       r.roic=Number.isFinite(nopat)&&Number.isFinite(invested)&&invested>0?nopat/invested:null;
       r.fcfConversion=Number.isFinite(fcf)&&Number.isFinite(ni)&&ni!==0?fcf/ni:null;
       r.sbcToRevenue=Number.isFinite(sbc)&&Number.isFinite(revenue)&&revenue!==0?sbc/revenue:null;
-      r.revenueGrowthYoY=!r.isTTM&&prev&&!prev.isTTM&&Number(prev.revenue)>0&&Number.isFinite(revenue)?revenue/Number(prev.revenue)-1:null;
-      r.fcfGrowthYoY=!r.isTTM&&prev&&!prev.isTTM&&Number(prev.fcf)>0&&Number.isFinite(fcf)?fcf/Number(prev.fcf)-1:null;
-      r.shareGrowthYoY=prev&&Number(prev.shares)>0&&Number(r.shares)>0?Number(r.shares)/Number(prev.shares)-1:null;
+      r.revenueGrowthYoY=!r.isTTM&&prev&&!prev.isTTM&&finiteNumber(prev.revenue)>0&&Number.isFinite(revenue)?revenue/finiteNumber(prev.revenue)-1:null;
+      r.fcfGrowthYoY=!r.isTTM&&prev&&!prev.isTTM&&finiteNumber(prev.fcf)>0&&Number.isFinite(fcf)?fcf/finiteNumber(prev.fcf)-1:null;
+      r.shareGrowthYoY=prev&&finiteNumber(prev.shares)>0&&finiteNumber(r.shares)>0?finiteNumber(r.shares)/finiteNumber(prev.shares)-1:null;
       r.revenueCagr5y=fieldCagr(rows,'revenue',i,5); r.fcfCagr5y=fieldCagr(rows,'fcf',i,5); r.dilutionPa=fieldCagr(rows,'shares',i,5);
       r.revenueCagr3y=fieldCagr(rows,'revenue',i,3); r.epsCagr3y=fieldCagr(rows,'eps',i,3);
       const roic3=lastFinite(rows,'roic',Math.max(0,i-3)); r.roicTrend=Number.isFinite(r.roic)&&roic3&&roic3.index<i?r.roic-roic3.value:null;
@@ -1847,7 +1910,8 @@
     const reportedNetFin=finiteNumber(r.netFinancialPosition),debtValue=finiteNumber(r.debt),cashValue=finiteNumber(r.cash);
     const netFin=reportedNetFin!==null?reportedNetFin:(debtValue!==null&&cashValue!==null?debtValue-cashValue:null);
     if(netFin===null)return null;
-    return {revenue,ebit,taxRate,da,capex,deltaNwc:Number.isFinite(Number(r.deltaNwc))?Number(r.deltaNwc):0,shares,netDebt:netFin,netFinancialPosition:netFin,growthY1:g1,growthY5:g5,targetEbitMarginY5:clamp(n(assumptions.targetEbitMarginY5,marginMedian),-.05,.60),wacc:n(assumptions.wacc,.09),terminalGrowth,terminalRoic,capexPctY5:n(assumptions.capexPctY5,Number.isFinite(capexPct)?capexPct:capex/revenue),daPctY5:n(assumptions.daPctY5,Number.isFinite(daPct)?daPct:da/revenue),nwcPctY5:n(assumptions.nwcPctY5,Number.isFinite(nwcPct)?nwcPct:0),bearGrowthAdj:n(assumptions.bearGrowthAdj,-.03),bearMarginAdj:n(assumptions.bearMarginAdj,-.03),bearWaccAdj:n(assumptions.bearWaccAdj,.015),bullGrowthAdj:n(assumptions.bullGrowthAdj,.03),bullMarginAdj:n(assumptions.bullMarginAdj,.03),bullWaccAdj:n(assumptions.bullWaccAdj,-.01),sourceFy:r.fy,sourceDate:r.date,availableFrom:r.accepted||r.filed||r.filedDate||r.publishedDate||r.availableFrom||null,maintenanceData:{daKnown,capexKnown,proxyUsed:!daKnown||!capexKnown}};
+    const deltaNwcKnown=finiteNumber(r.deltaNwc)!==null;
+    return {revenue,ebit,taxRate,da,capex,deltaNwc:deltaNwcKnown?finiteNumber(r.deltaNwc):0,shares,netDebt:netFin,netFinancialPosition:netFin,growthY1:g1,growthY5:g5,targetEbitMarginY5:clamp(n(assumptions.targetEbitMarginY5,marginMedian),-.05,.60),wacc:n(assumptions.wacc,.09),terminalGrowth,terminalRoic,capexPctY5:n(assumptions.capexPctY5,Number.isFinite(capexPct)?capexPct:capex/revenue),daPctY5:n(assumptions.daPctY5,Number.isFinite(daPct)?daPct:da/revenue),nwcPctY5:n(assumptions.nwcPctY5,Number.isFinite(nwcPct)?nwcPct:0),bearGrowthAdj:n(assumptions.bearGrowthAdj,-.03),bearMarginAdj:n(assumptions.bearMarginAdj,-.03),bearWaccAdj:n(assumptions.bearWaccAdj,.015),bullGrowthAdj:n(assumptions.bullGrowthAdj,.03),bullMarginAdj:n(assumptions.bullMarginAdj,.03),bullWaccAdj:n(assumptions.bullWaccAdj,-.01),sourceFy:r.fy,sourceDate:r.date,availableFrom:r.accepted||r.filed||r.filedDate||r.publishedDate||r.availableFrom||null,maintenanceData:{daKnown,capexKnown,deltaNwcKnown,proxyUsed:!daKnown||!capexKnown||!deltaNwcKnown}};
   }
   function buildHistoricalJukaFairSeries(priceRows,annualFacts,assumptions={}){
     if(!Array.isArray(priceRows)||!priceRows.length)return [];
@@ -1875,7 +1939,10 @@
         bull:roll(sc.bull,sc.detail?.bull?.wacc??(inp.wacc+inp.bullWaccAdj),days),
         model:'juka-10y',rollForward:true,sourceFy:inp.sourceFy,availableFrom:available};
       const f=chosen.x,growth=Number.isFinite(f.revenueCagr3y)?clamp(f.revenueCagr3y,-.02,.22):n(assumptions.growth,.08);
-      const legacy=scenarioValues({fcf0:n(f.fcf),growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:10,netCash:n(f.netCash),shares:n(f.shares)});
+      const legacyFcf=finiteNumber(f.fcf),legacyNetCash=finiteNumber(f.netCash),legacyShares=finiteNumber(f.shares);
+      const legacy=legacyFcf!==null&&legacyFcf>0&&legacyNetCash!==null&&legacyShares!==null&&legacyShares>0
+        ? scenarioValues({fcf0:legacyFcf,growth,fadeGrowth:n(assumptions.fadeGrowth,.04),wacc:n(assumptions.wacc,.09),terminalGrowth:n(assumptions.terminalGrowth,.025),years:10,netCash:legacyNetCash,shares:legacyShares})
+        : null;
       return {...row,
         base:legacy?roll(legacy.base,n(assumptions.wacc,.09),days):null,
         bear:legacy?roll(legacy.bear,n(assumptions.wacc,.09)+.015,days):null,
@@ -1999,7 +2066,7 @@
     if(model==='operating-company'){
       if(!readiness.ready){result.diagnostics.push(`Pflichtdaten fehlen: ${readiness.missingRequired.join(', ')}`);return result;}
       const fv2=jukaFairValue2Operating(stock,rows,price,overrides);
-      if(!fv2){result.diagnostics.push('JUKA Fair Value 8.0 konnte aus den verfügbaren Daten nicht vollständig berechnet werden.');return result;}
+      if(!fv2){result.diagnostics.push('JUKA Fair Value 8.3.2 konnte aus den verfügbaren Daten nicht vollständig berechnet werden.');return result;}
       const a=fv2.adaptive?.assumptions||{};
       result.assumptions={dcf:fv2.assumptions,auto:fv2.adaptive,fairValue2:{version:fv2.version,model:fv2.model,confidence:fv2.confidence,drivers:fv2.drivers,checks:fv2.checks}};
       result.valuation=fv2.valuation;
@@ -2108,7 +2175,7 @@
         cache.set(chosen.i,engine);
       }
       const engine=cache.get(chosen.i),v=engine?.valuation;
-      if(!v||!Number.isFinite(Number(v.base)))return {...p,bear:null,base:null,bull:null,model,sourceFy:chosen.x.fy,availableFrom:chosen.available};
+      if(!v||finiteNumber(v.base)===null)return {...p,bear:null,base:null,bull:null,model,sourceFy:chosen.x.fy,availableFrom:chosen.available};
       const factor=Number(shareBasis.factors[chosen.i])||1;
       // No synthetic WACC roll-forward between filings. With no new public
       // information, the historical intrinsic-value estimate stays unchanged.
@@ -2121,7 +2188,7 @@
         releaseStatus:engine?.release?.status||null,liveReady:engine?.release?.liveReady===true
       };
     });
-    if(!out.some(x=>Number.isFinite(Number(x.base))))return [];
+    if(!out.some(x=>finiteNumber(x.base)!==null))return [];
     out.shareBasis=shareBasis;
     return out;
   }
