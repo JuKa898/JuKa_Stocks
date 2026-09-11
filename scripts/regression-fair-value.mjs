@@ -45,7 +45,15 @@ assert.ok(mature.terminalRoic<.10,'Mature terminal ROIC must be allowed below WA
 assert.ok(mature.terminalRoic>.02,'Terminal ROIC must still support perpetual growth mathematically');
 
 const fv82=core.jukaFairValue2Operating({s:'TEST'},rows,15,{});
-assert.equal(fv82.version,'JUKA Fair Value 8.2');
+assert.equal(fv82.version,'JUKA Fair Value 8.3');
 assert.equal(fv82.framework.primary,'buffett-owner-earnings');
 assert.ok(fv82.framework.marginOfSafety>=.15&&fv82.framework.marginOfSafety<=.40,'Margin of safety must stay conservative and bounded');
 assert.ok(fv82.framework.buyBelow<fv82.valuation.base,'Buy-below price must be below intrinsic value');
+
+// Fair Value 8.3: persistent high-return compounders must not be forced into a generic 9-year moat.
+const durableAdaptive={assumptions:{wacc:.085,terminalGrowth:.025,terminalRoic:.28,growthY1:.09},metrics:{roicMedian:.35,roicStability:.82,revenueCagr:.09,marginVolatility:.015,growthVolatility:.025},dataQuality:{score:90}};
+const durableCap=core.jukaCompetitiveAdvantagePeriod(durableAdaptive);
+assert.ok(durableCap.years>9,'Persistent high-return compounder should be eligible for >9 year competitive-advantage period');
+const durableTerminal=core.jukaMatureTerminalPolicy(durableAdaptive);
+assert.ok(durableTerminal.terminalRoic>=.14,'Strong persistent economics should retain a meaningful mature ROIC premium');
+assert.ok(durableTerminal.terminalRoic<.28,'Current exceptional ROIC must still fade rather than be perpetuated unchanged');

@@ -60,4 +60,25 @@ assert.equal(tri.values.legacyDcf,null);
 const plaus=Core.jukaFairValuePlausibilityAudit({valuation:{},checks:{},triangulation:{},adaptive:{assumptions:{}},stability:{}},[]);
 assert.equal(plaus.flags.some(x=>x.code==='terminal-spread'),false);
 
+// 9) Central numeric helpers must preserve missing-data semantics.
+assert.equal(Core.n(null,7),7);
+assert.equal(Core.n(undefined,7),7);
+assert.equal(Core.n('',7),7);
+assert.equal(Core.inputNetDebt({}),null);
+assert.equal(Core.inputNetDebt({netDebt:0}),0);
+
+// 10) Direct valuation calls must never assume an unknown equity bridge is debt-free.
+const directInput={revenue:1000,ebit:250,taxRate:.21,shares:100,da:30,capex:35};
+const directAdaptive={assumptions:{growthY1:.08,growthY5:.05,targetEbitMarginY5:.25,wacc:.09,terminalGrowth:.025,terminalRoic:.14},metrics:{roicMedian:.25}};
+assert.equal(Core.jukaOwnerEarningsIntrinsicValue(directInput,directAdaptive),null);
+assert.equal(Core.jukaEconomicDcf({...directInput,annualFacts:[]},directAdaptive),null);
+assert.equal(Core.jukaEarningsPowerValue(directInput,directAdaptive).available,false);
+assert.equal(Core.jukaEarningsPowerValue(directInput,directAdaptive).reason,'net-debt-unavailable');
+
+// 11) Legacy historical helper must use publication dates, not fiscal period ends (no look-ahead bias).
+const legacyFacts=[{date:'2025-12-31',filed:'2026-02-15',revenueCagr3y:.08,fcf:100,netCash:20,shares:10}];
+const legacySeries=Core.buildFairSeries([{date:'2026-01-31',price:50},{date:'2026-02-16',price:52}],legacyFacts,{});
+assert.equal(legacySeries[0].base,null);
+assert.ok(Number.isFinite(legacySeries[1].base));
+
 console.log('System regression tests: OK');
