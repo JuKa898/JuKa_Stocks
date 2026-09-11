@@ -85,3 +85,24 @@
 - SEC class-share dot/hyphen fallback.
 - Alpha symbol search equity preference.
 - Partial snapshot on market-provider outage.
+
+## TTM-first 14.6
+- US operating fundamentals: SEC 10-K + current 10-Q YTD − prior-year comparable YTD.
+- Current balance-sheet values use latest filed quarter/annual instant facts.
+- Current shares prefer latest shares outstanding; diluted weighted-average fallback.
+- EU keeps Alpha Vantage quarterly/TTM path from 14.5.
+- Annual statements remain history/fallback, not the preferred current operating basis.
+- TTM metadata survives pipeline normalization and is visible in Fair Value data-basis diagnostics.
+
+## System hardening 14.7
+- Quality scale bugs fixed across fallback, verdict, reality check and UI.
+- CAGR is date-aware; TTM does not compress multi-year growth windows.
+- TTM-to-FY is not mislabeled as YoY growth.
+- Pipeline preserves R&D, net cash and NWC.
+- Fundamentals-only snapshots survive temporary market-data outages.
+- EU TTM no longer turns missing fields into zero.
+- EU TTM balance sheet is aligned to the TTM quarter.
+- /api/market gets provider-native EU symbol fallback.
+- /api/analysis reports the actually used Alpha symbol.
+- /api/sec delegates EU to the real EU fundamentals adapter.
+- Legacy historical helper no longer uses fiscal dates as publication dates.

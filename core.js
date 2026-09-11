@@ -20,7 +20,7 @@
     add('Cashflow-Qualität',Number.isFinite(fcfm)?(fcfm>=.20?15:fcfm>=.12?12:fcfm>=.06?9:fcfm>0?6:1):7,15,Number.isFinite(fcfm)?`${(fcfm*100).toFixed(1)}% FCF-Marge`:'nicht verfügbar');
     add('Bilanzqualität',Number.isFinite(nde)?(nde<=0?10:nde<=1?9:nde<=2?7:nde<=3?5:2):5,10,Number.isFinite(nde)?`${nde.toFixed(1)}× Net Debt / EBIT`:'nicht verfügbar');
     add('Verwässerung',Number.isFinite(dilution)?(dilution<=0?10:dilution<=.01?8:dilution<=.03?5:2):5,10,Number.isFinite(dilution)?`${(dilution*100).toFixed(1)}% Aktien-CAGR`:'nicht verfügbar');
-    const grade=score>=8.5?'A':score>=70?'B':score>=55?'C':score>=40?'D':'E';
+    const grade=score>=85?'A':score>=70?'B':score>=55?'C':score>=40?'D':'E';
     const label=score>=85?'Exzellent':score>=70?'Stark':score>=55?'Solide':score>=40?'Durchschnittlich':'Schwach';
     return {score:Math.round(score),grade,label,parts};
   }
@@ -222,7 +222,7 @@
     let verdict='Datenlage für ein belastbares Qualitätsurteil noch zu dünn.';
     let recommendation='Weitere Fundamentaldaten abwarten.';
     if(score!=null){
-      if(score>=85){verdict='Außergewöhnlich hohe fundamentale Qualität mit mehreren robusten Stärken.';recommendation='Qualitativ klar investierbar; Bewertung und Risiken entscheiden über den Einstieg.';}
+      if(score>=8.5){verdict='Außergewöhnlich hohe fundamentale Qualität mit mehreren robusten Stärken.';recommendation='Qualitativ klar investierbar; Bewertung und Risiken entscheiden über den Einstieg.';}
       else if(score>=7.2){verdict='Überdurchschnittlich gutes Qualitätsprofil mit überwiegend starken Fundamentaldaten.';recommendation='Attraktiver Qualitätskandidat; Schwachstellen und Bewertung gezielt prüfen.';}
       else if(score>=5.8){verdict='Solides Unternehmen, aber die Qualität ist nicht in allen Bereichen überdurchschnittlich.';recommendation='Selektiv interessant; nur bei passender Bewertung und verständlichen Schwächen.';}
       else if(score>=4.5){verdict='Gemischtes Qualitätsprofil mit mehreren Punkten, die genauer geprüft werden sollten.';recommendation='Eher Watchlist als Qualitätskauf; erst Schwächen und Bewertung klären.';}
@@ -1660,10 +1660,25 @@
   }
   function fieldCagr(rows,key,endIndex,years=5){
     const end=lastFinite(rows,key,endIndex); if(!end||end.value<=0)return null;
+    const endDate=Date.parse(rows[end.index]?.date||'');
+    if(Number.isFinite(endDate)){
+      const target=new Date(endDate);target.setFullYear(target.getFullYear()-Math.max(1,years));
+      let start=null,best=Infinity;
+      for(let i=0;i<end.index;i++){
+        const v=Number(rows[i]?.[key]),t=Date.parse(rows[i]?.date||'');
+        if(!(Number.isFinite(v)&&v>0&&Number.isFinite(t)&&t<endDate))continue;
+        const distance=Math.abs(t-target.getTime());
+        if(distance<best){best=distance;start={index:i,value:v,time:t};}
+      }
+      if(start){
+        const elapsed=(endDate-start.time)/(365.25*86400000);
+        if(elapsed>=Math.max(.75,years*.55))return cagr(start.value,end.value,elapsed);
+      }
+    }
     let start=null;
-    for(let i=end.index-1;i>=0;i--){const v=Number(rows[i]?.[key]); if(Number.isFinite(v)&&v>0&&end.index-i>=years){start={index:i,value:v};break;}}
-    if(!start){for(let i=0;i<end.index;i++){const v=Number(rows[i]?.[key]);if(Number.isFinite(v)&&v>0){start={index:i,value:v};break;}}}
-    if(!start)return null; return cagr(start.value,end.value,end.index-start.index);
+    for(let i=end.index-1;i>=0;i--){const v=Number(rows[i]?.[key]);if(Number.isFinite(v)&&v>0&&end.index-i>=years){start={index:i,value:v};break;}}
+    if(!start)return null;
+    return cagr(start.value,end.value,end.index-start.index);
   }
   function medianField(rows,key,start,end){return median(rows.slice(Math.max(0,start),end+1).map(r=>Number(r?.[key])).filter(Number.isFinite));}
   function deriveFundamentals(annualFacts=[]){
@@ -1685,8 +1700,8 @@
       r.roic=Number.isFinite(nopat)&&Number.isFinite(invested)&&invested>0?nopat/invested:null;
       r.fcfConversion=Number.isFinite(fcf)&&Number.isFinite(ni)&&ni!==0?fcf/ni:null;
       r.sbcToRevenue=Number.isFinite(sbc)&&Number.isFinite(revenue)&&revenue!==0?sbc/revenue:null;
-      r.revenueGrowthYoY=prev&&Number(prev.revenue)>0&&Number.isFinite(revenue)?revenue/Number(prev.revenue)-1:null;
-      r.fcfGrowthYoY=prev&&Number(prev.fcf)>0&&Number.isFinite(fcf)?fcf/Number(prev.fcf)-1:null;
+      r.revenueGrowthYoY=!r.isTTM&&prev&&!prev.isTTM&&Number(prev.revenue)>0&&Number.isFinite(revenue)?revenue/Number(prev.revenue)-1:null;
+      r.fcfGrowthYoY=!r.isTTM&&prev&&!prev.isTTM&&Number(prev.fcf)>0&&Number.isFinite(fcf)?fcf/Number(prev.fcf)-1:null;
       r.shareGrowthYoY=prev&&Number(prev.shares)>0&&Number(r.shares)>0?Number(r.shares)/Number(prev.shares)-1:null;
       r.revenueCagr5y=fieldCagr(rows,'revenue',i,5); r.fcfCagr5y=fieldCagr(rows,'fcf',i,5); r.dilutionPa=fieldCagr(rows,'shares',i,5);
       r.revenueCagr3y=fieldCagr(rows,'revenue',i,3); r.epsCagr3y=fieldCagr(rows,'eps',i,3);
@@ -1726,7 +1741,7 @@
   function buildHistoricalJukaFairSeries(priceRows,annualFacts,assumptions={}){
     if(!Array.isArray(priceRows)||!priceRows.length)return [];
     const facts=deriveFundamentals(annualFacts);
-    const dated=facts.map((x,i)=>({x,i,available:String(x.filed||x.date)})).filter(x=>x.available).sort((a,b)=>a.available.localeCompare(b.available));
+    const dated=facts.map((x,i)=>({x,i,available:String(x.accepted||x.filed||x.filedDate||x.publishedDate||x.availableFrom||'')})).filter(x=>x.available).sort((a,b)=>a.available.localeCompare(b.available));
     const cache=new Map();
     function roll(v,rate,days){
       if(!Number.isFinite(Number(v)))return null;
@@ -1754,7 +1769,7 @@
         base:legacy?roll(legacy.base,n(assumptions.wacc,.09),days):null,
         bear:legacy?roll(legacy.bear,n(assumptions.wacc,.09)+.015,days):null,
         bull:legacy?roll(legacy.bull,Math.max(.001,n(assumptions.wacc,.09)-.01),days):null,
-        model:legacy?'fcf-fallback':'none',rollForward:!!legacy,sourceFy:f.fy,availableFrom:f.filed||f.date};
+        model:legacy?'fcf-fallback':'none',rollForward:!!legacy,sourceFy:f.fy,availableFrom:f.accepted||f.filed||f.filedDate||f.publishedDate||f.availableFrom||null};
     });
   }
 
@@ -2129,7 +2144,7 @@
       else if(valuation>=.25)valuationScore=-2; else if(valuation>=.10)valuationScore=-1;
     }
     let qualityScore=0;
-    if(Number.isFinite(quality)){if(quality>=80)qualityScore=2;else if(quality>=65)qualityScore=1;else if(quality<45)qualityScore=-2;else if(quality<55)qualityScore=-1;}
+    if(Number.isFinite(quality)){if(quality>=8.0)qualityScore=2;else if(quality>=6.5)qualityScore=1;else if(quality<4.5)qualityScore=-2;else if(quality<5.5)qualityScore=-1;}
     let relativeScore=0, relativeText='Relative Bewertung nicht ausreichend belegt.';
     if(model==='operating-company'&&Number.isFinite(rel.pe)&&Number.isFinite(rel.peY5)){
       const compression=rel.peY5/rel.pe;
@@ -2150,7 +2165,7 @@
       (model==='operating-company'?rel.pe:model==='bank-insurance'?rel.pb:rel.paFFO)].filter(Number.isFinite).length;
     const drivers=[];
     if(Number.isFinite(valuation))drivers.push(`${Math.abs(valuation*100).toFixed(1)}% ${valuation<0?'unter':'über'} dem Base-Fair-Value`);
-    if(Number.isFinite(quality))drivers.push(`Qualität ${quality.toFixed(0)}/100`);
+    if(Number.isFinite(quality))drivers.push(`Qualität ${quality.toFixed(1)}/10`);
     drivers.push(relativeText);
     let breaker='Mehr Fundamentaldaten nötig.';
     if(model==='operating-company'){
@@ -2162,7 +2177,7 @@
   }
 
   function filterPeriod(rows,period){const months={"1Y":12,"3Y":36,"5Y":60,"MAX":9999}[period]||60;return rows.slice(Math.max(0,rows.length-months-1));}
-  function dataRoute(stock={}){const region=String(stock.region||'').toUpperCase();if(region==='US')return {market:'twelve-data',fundamentals:'sec',filings:'sec',currency:stock.currency||'USD'};if(region==='EU')return {market:'twelve-data-or-eod-adapter',fundamentals:'eu-adapter',filings:'issuer-reports',currency:stock.currency||'EUR'};return {market:'generic-adapter',fundamentals:'generic-adapter',filings:'issuer-reports',currency:stock.currency||'USD'};}
+  function dataRoute(stock={}){const region=String(stock.region||'').toUpperCase();if(region==='US')return {market:'twelve-data',fundamentals:'sec',filings:'sec',currency:stock.currency||'USD'};if(region==='EU')return {market:'alpha-vantage',fundamentals:'alpha-vantage',filings:'provider-reported-dates',currency:stock.currency||'EUR'};return {market:'generic-adapter',fundamentals:'generic-adapter',filings:'issuer-reports',currency:stock.currency||'USD'};}
   function buildFairSeries(priceRows, annualFacts, assumptions={}){
     if(!Array.isArray(priceRows)||!priceRows.length)return [];
     const facts=(annualFacts||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
