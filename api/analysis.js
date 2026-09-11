@@ -109,14 +109,15 @@ function secTtmRow(facts,annual){
   const anchor=R||N||C||O;if(!anchor)return null;
   const end=anchor.end,filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
   const cash=instantCandidate(facts,['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'],'USD',end)?.val??null;
-  const dc=instantCandidate(facts,['LongTermDebtCurrent','LongTermDebtAndFinanceLeaseObligationsCurrent','ShortTermBorrowings'],'USD',end)?.val??0;
-  const dn=instantCandidate(facts,['LongTermDebtNoncurrent','LongTermDebtAndFinanceLeaseObligationsNoncurrent'],'USD',end)?.val??0;
+  const dcFact=instantCandidate(facts,['LongTermDebtCurrent','LongTermDebtAndFinanceLeaseObligationsCurrent','ShortTermBorrowings'],'USD',end);
+  const dnFact=instantCandidate(facts,['LongTermDebtNoncurrent','LongTermDebtAndFinanceLeaseObligationsNoncurrent'],'USD',end);
+  const dc=dcFact?.val??null,dn=dnFact?.val??null;
   let shares=instantCandidate(facts,['CommonStockSharesOutstanding','EntityCommonStockSharesOutstanding'],'shares',end)?.val??null;
   if(!(Number.isFinite(shares)&&shares>0)){
     const qshares=ytdRows(rawUnits(facts,'WeightedAverageNumberOfDilutedSharesOutstanding','shares'));
     shares=latestOnOrBefore(qshares,end)?.val??annual.at(-1)?.shares??null;
   }
-  const revenue=R?.val??null,operatingIncome=O?.val??null,netIncome=N?.val??null,cfo=C?.val??null,capex=X?.val??null,debt=dc+dn;
+  const revenue=R?.val??null,operatingIncome=O?.val??null,netIncome=N?.val??null,cfo=C?.val??null,capex=X?.val??null,debt=(dcFact||dnFact)?(dc??0)+(dn??0):null;
   const D=M(['DepreciationDepletionAndAmortization','DepreciationDepletionAndAmortizationPropertyPlantAndEquipment']);
   const Sb=M(['ShareBasedCompensation']);
   const Rd=M(['ResearchAndDevelopmentExpense','ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost','ResearchAndDevelopmentExpenseSoftwareExcludingAcquiredInProcessCost']);
@@ -125,7 +126,7 @@ function secTtmRow(facts,annual){
   const T=M(['IncomeTaxExpenseBenefit']);
   return {fy:Number(String(end).slice(0,4)),date:end,filed,availableFrom:filed,isTTM:true,ttmSource:'SEC FY + current YTD − prior-year YTD',
     revenue,operatingIncome,netIncome,eps:netIncome!=null&&shares>0?netIncome/shares:null,cfo,capex,fcf:cfo!=null&&capex!=null?cfo-capex:null,
-    cash,debt,netCash:cash!=null?cash-debt:null,shares,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,
+    cash,debt,netCash:cash!=null&&debt!=null?cash-debt:null,shares,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,
     interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,
     equity:instantCandidate(facts,['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],'USD',end)?.val??null,
     ffo:null,nwc:null,deltaNwc:null};
@@ -170,7 +171,7 @@ async function secAdapter(stock){
     const g=k=>closest(sets[k],date);
     const R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),Rd=g('rd'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ffo=g('ffo'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
     const revenue=R?.val??null,operatingIncome=O?.val??null,cfo=C?.val??null,capex=X?.val??null;
-    const cash=Ca?.val??null,debt=(Dc?.val??0)+(Dn?.val??0);
+    const cash=Ca?.val??null,debt=(Dc||Dn)?(Dc?.val??0)+(Dn?.val??0):null;
     const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null;
     const deltaNwc=nwc!=null&&priorNwc!=null?nwc-priorNwc:null;
     if(nwc!=null)priorNwc=nwc;
@@ -179,7 +180,7 @@ async function secAdapter(stock){
     return {
       fy:Number(String(periodDate).slice(0,4)),date:periodDate,filed,
       revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo,capex,
-      fcf:cfo!=null&&capex!=null?cfo-capex:null,cash,debt,netCash:cash!=null?cash-debt:null,
+      fcf:cfo!=null&&capex!=null?cfo-capex:null,cash,debt,netCash:cash!=null&&debt!=null?cash-debt:null,
       shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,interestExpense:I?.val??null,
       pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,ffo:Ffo?.val??null,nwc,deltaNwc
     };
@@ -298,6 +299,7 @@ module.exports=async function handler(req,res){
         valuationMethods:out.valuationMethods||null,
         historicalPlausibility:out.historicalPlausibility||null,
         historicalIntegrity:out.historicalIntegrity||null,
+        fairValueIntegrity:out.fairValueIntegrity||null,
         relative:out.relative,
         reality:out.reality,
         riskAudit:out.riskAudit,
