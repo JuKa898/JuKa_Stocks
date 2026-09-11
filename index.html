@@ -757,11 +757,11 @@ function renderValuationDataBasis(snap){
 function updateFromSnapshot(symbol,snap){
   const z=stocks.find(x=>x.s===symbol)||{s:symbol,n:snap?.fundamentals?.name||symbol};
   activeCurrency=snap.currency||z.currency||'USD';
-  if(!snap.market?.prices?.length)throw new Error('Keine Kursdaten erhalten');
+  const hasMarket=Array.isArray(snap.market?.prices)&&snap.market.prices.length>0;
   chartData=(snap.historical||[]).map(x=>({...x,date:new Date(x.date),price:Number(x.price)}));
-  if(!chartData.length)chartData=snap.market.prices.map(x=>({date:new Date(x.date),price:Number(x.close),base:null,bear:null,bull:null}));
+  if(!chartData.length&&hasMarket)chartData=snap.market.prices.map(x=>({date:new Date(x.date),price:Number(x.close),base:null,bear:null,bull:null}));
   const last=chartData.at(-1),fact=snap.latest,fair=snap.valuation?.base??last?.base??null,vp=JuKaCore.valuationPct(snap.price,fair);
-  document.getElementById('price').textContent=money(snap.price);document.getElementById('priceDate').textContent='Aktienkurs · Stand '+last.date.toLocaleDateString('de-DE');
+  document.getElementById('price').textContent=Number.isFinite(Number(snap.price))?money(snap.price):'—';document.getElementById('priceDate').textContent=hasMarket&&last?.date?'Aktienkurs · Stand '+last.date.toLocaleDateString('de-DE'):'Marktdaten vorübergehend nicht verfügbar';
   document.getElementById('name').textContent=snap.fundamentals?.name||z.n||symbol;document.getElementById('symbol').textContent=symbol;updateCompanyLogo(z);updateBusiness(z);
   document.getElementById('market').textContent=[snap.exchange,activeCurrency,snap.market?.source||'Marktdaten',snap.model].filter(Boolean).join(' · ');
   document.getElementById('fvMetric').textContent=Number.isFinite(fair)?money(fair):'—';document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
@@ -782,7 +782,10 @@ function updateFromSnapshot(symbol,snap){
   const releaseText=snap.release?.status?` · Fair-Value-Status: ${snap.release.status}`:'';
   document.getElementById('fundNote').textContent=`Datenpipeline: ${snap.market?.source||'Marktdaten'} + ${snap.fundamentals?.source||'Fundamentaldaten'} · Status: ${snap.analysisStatus||'—'} · Modell: ${snap.model}${readyText}${releaseText}.${warningText}`;
   document.getElementById('chartNote').textContent='Historische Fair Values respektieren das jeweilige Filing-Datum. EU-Fundamentals laufen über Alpha Vantage, sofern ein serverseitiger API-Key gesetzt ist. Fehlen Daten oder Key, bleibt JUKA bewusst im Market-only-Modus.';
-  renderValuationDataBasis(snap);setStatus('LIVE · Fair Value 9.0',true);draw();renderPerformanceFromChart();
+  renderValuationDataBasis(snap);
+  setStatus(hasMarket?'LIVE · Fair Value 9.0':'TEIL-LIVE · Fundamentals · Fair Value 9.0',hasMarket);
+  draw();
+  if(hasMarket)renderPerformanceFromChart();
 }
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
@@ -964,7 +967,8 @@ async function loadLiveStock(symbol,token){
  updateFromSnapshot(symbol,snap);
  renderLiveBeta(snap,!fromCache);
  const provider=snap.market?.source||snap.provenance?.market?.source||'Marktdaten';
- setStatus(fromCache?'CACHE · Live-Abruf fehlgeschlagen':`LIVE · ${provider}`,!fromCache);
+ const partial=snap.analysisStatus==='fundamentals-only'||snap.analysisStatus==='market-only'||snap.analysisStatus==='partial';
+ setStatus(fromCache?'CACHE · Live-Abruf fehlgeschlagen':partial?`TEIL-LIVE · ${provider}`:`LIVE · ${provider}`,!fromCache&&!partial);
 }
 
 const META_DCF_INPUT={revenue:228247,ebit:86926,taxRate:.18,da:22729,capex:89325,deltaNwc:-724,shares:2567,netFinancialPosition:-6596,growthY1:.18,growthY5:.10,targetEbitMarginY5:.40,wacc:.095,terminalGrowth:.03,terminalRoic:.20,capexPctY5:.22,daPctY5:.12,nwcPctY5:.005,bearGrowthAdj:-.03,bearMarginAdj:-.03,bearWaccAdj:.015,bullGrowthAdj:.03,bullMarginAdj:.03,bullWaccAdj:-.01};
