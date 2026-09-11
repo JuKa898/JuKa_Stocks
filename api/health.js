@@ -23,7 +23,7 @@ module.exports=async function handler(req,res){
     ok,
     service:'JUKA',
     version:'10.6.0-fair-value-integrity',
-    fairValueEngine:'JUKA Fair Value 8.2',
+    fairValueEngine:'JUKA Fair Value 8.3',
     environment:process.env.VERCEL_ENV||'unknown',
     files,
     env,
