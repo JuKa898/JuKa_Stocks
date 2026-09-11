@@ -690,12 +690,13 @@ function prepareStock(z){
 
 const q=document.getElementById('search'),r=document.getElementById('results');
 const LIVE_CAPABLE=(location.protocol==='http:'||location.protocol==='https:') && !['localhost','127.0.0.1'].includes(location.hostname);
+function uiNum(v){if(v===null||v===undefined||v==='')return null;const x=Number(v);return Number.isFinite(x)?x:null;}
 function fmtBig(v){if(v==null||!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:activeCurrency||'USD',notation:'compact',maximumFractionDigits:2}).format(Number(v));}
 function setStatus(text,live=false){const e=document.getElementById('dataStatus');if(!e)return;e.textContent='JUKA · '+text;e.style.borderColor=live?'#3b7859':'#2b3e4d';}
 function latestFacts(annual){return (annual||[]).filter(x=>x&&x.date).sort((a,b)=>String(a.date).localeCompare(String(b.date))).at(-1)||null;}
 function annualEpsGrowth(annual){const a=(annual||[]).filter(x=>Number.isFinite(Number(x.eps))&&Number(x.eps)>0);if(a.length<4)return .08;return JuKaCore.clamp(JuKaCore.cagr(Number(a.at(-4).eps),Number(a.at(-1).eps),3)??.08,-.02,.20);}
-function fmtPctMaybe(v){return Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—';}
-function fmtX(v){return Number.isFinite(Number(v))?Number(v).toFixed(1)+'×':'—';}
+function fmtPctMaybe(v){const x=uiNum(v);return x!==null?(x*100).toFixed(1)+'%':'—';}
+function fmtX(v){const x=uiNum(v);return x!==null?x.toFixed(1)+'×':'—';}
 function renderFundamentalHistory(annual,source='SEC Company Facts'){
  const rows=JuKaCore.deriveFundamentals(annual).slice(-8).reverse(),pct=v=>Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—',sh=v=>Number.isFinite(Number(v))?(Number(v)/1e9).toFixed(2)+' Mrd.':'—';
  document.getElementById('fundamentalHistory').innerHTML=rows.length?rows.map(x=>`<tr><td>${x.fy??'—'}</td><td>${fmtBig(x.revenue)}</td><td>${pct(x.revenueGrowthYoY)}</td><td>${fmtBig(x.operatingIncome)}</td><td>${pct(x.operatingMargin)}</td><td>${fmtBig(x.netIncome)}</td><td>${Number.isFinite(Number(x.eps))?money(x.eps):'—'}</td><td>${fmtBig(x.cfo)}</td><td>${fmtBig(x.capex)}</td><td>${fmtBig(x.fcf)}</td><td>${pct(x.fcfMargin)}</td><td>${fmtBig(x.cash)}</td><td>${fmtBig(x.debt)}</td><td>${fmtBig(x.netCash)}</td><td>${sh(x.shares)}</td><td>${pct(x.sbcToRevenue)}</td><td>${pct(x.roic)}</td><td>${fmtX(x.netDebtToEbitda)}</td><td>${x.filed?new Date(x.filed).toLocaleDateString('de-DE'):'—'}</td></tr>`).join(''):'<tr><td colspan="19">Keine historischen Fundamentaldaten verfügbar.</td></tr>';
@@ -728,14 +729,14 @@ function updateFromLive(symbol,marketData,secData){
 function valuationDataBasis(snap){
   const rows=snap?.fundamentals?.annual||[],latest=snap?.latest||rows.at(-1)||{};
   const keys=['revenue','operatingIncome','netIncome','cfo','capex','shares','cash','debt'];
-  const present=keys.filter(k=>Number.isFinite(Number(latest?.[k]))).length;
+  const present=keys.filter(k=>uiNum(latest?.[k])!==null).length;
   const coverage=Math.round(present/keys.length*100);
   const dateRaw=latest?.date||snap?.fundamentalsAsOf||snap?.fundamentals?.asOf||null;
   const d=dateRaw?new Date(dateRaw):null;
   const ageDays=d&&!Number.isNaN(+d)?Math.round((Date.now()-d.getTime())/86400000):null;
   let level=coverage>=75&&rows.length>=5?'gut':coverage>=50&&rows.length>=3?'mittel':'schwach';
   if(ageDays!=null&&ageDays>240&&level==='gut')level='mittel';
-  const missing=keys.filter(k=>!Number.isFinite(Number(latest?.[k])));
+  const missing=keys.filter(k=>uiNum(latest?.[k])===null);
   return {rows:rows.length,coverage,level,date:dateRaw,ageDays,missing,isTTM:!!latest?.isTTM,
     valuationStatus:snap?.fairValueIntegrity?.status||null,historicalStatus:snap?.historicalIntegrity?.status||null,
     releaseStatus:snap?.release?.status||null,cashConversion:snap?.fairValue2?.checks?.cashConversion??null};
@@ -747,7 +748,7 @@ function renderValuationDataBasis(snap){
   const miss=b.missing.length?' · Fehlend: '+b.missing.join(', '):'';
   const valuation=b.valuationStatus||'prüfen',bad=valuation==='nicht belastbar',warn=valuation==='prüfen';
   el.className='valuationDataNote '+(bad?'dataBad':warn?'dataWarn':b.level==='gut'?'dataGood':'dataWarn');
-  const cash=Number.isFinite(Number(b.cashConversion))?` · Cash-Conversion ${Number(b.cashConversion).toFixed(2)}×`:'';
+  const cash=uiNum(b.cashConversion)!==null?` · Cash-Conversion ${uiNum(b.cashConversion).toFixed(2)}×`:'';
   el.innerHTML=`<b>Datenbasis: ${b.level} · Fair Value: ${valuation}</b><span>${b.rows} Perioden · ${freshness} · Feldabdeckung ${b.coverage}% · Historie ${b.historicalStatus||'—'}${cash}${miss}</span>`;
 }
 function updateFromSnapshot(symbol,snap){
@@ -808,7 +809,7 @@ function applySummaryNumbers(symbol,summary){
 
   const fact=summary.latest||{};
   const price=Number(summary.price);
-  const fair=Number(summary.valuation?.base),bear=Number(summary.valuation?.bear),bull=Number(summary.valuation?.bull);
+  const fair=uiNum(summary.valuation?.base),bear=uiNum(summary.valuation?.bear),bull=uiNum(summary.valuation?.bull);
   const vp=JuKaCore.valuationPct(price,Number.isFinite(fair)?fair:null);
 
   document.getElementById('price').textContent=Number.isFinite(price)?money(price):'—';
@@ -823,13 +824,13 @@ function applySummaryNumbers(symbol,summary){
   document.getElementById('fvMetric').textContent=Number.isFinite(fair)?money(fair):'—';
   document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
 
-  const revenue=Number(fact.revenue),op=Number(fact.operatingIncome);
+  const revenue=uiNum(fact.revenue),op=uiNum(fact.operatingIncome);
   document.getElementById('revenueMetric').textContent=fmtBig(revenue);
   document.getElementById('ebitMetric').textContent=fmtBig(op);
   document.getElementById('marginMetric').textContent=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(op)?fmtPctMaybe(op/revenue):'—';
-  document.getElementById('epsMetric').textContent=Number.isFinite(Number(fact.eps))?money(Number(fact.eps)):'—';
-  document.getElementById('fcfMetric').textContent=fmtBig(Number(fact.fcf));
-  document.getElementById('netCashMetric').textContent=fmtBig(Number(fact.netCash));
+  document.getElementById('epsMetric').textContent=uiNum(fact.eps)!==null?money(fact.eps):'—';
+  document.getElementById('fcfMetric').textContent=fmtBig(fact.fcf);
+  document.getElementById('netCashMetric').textContent=fmtBig(fact.netCash);
   document.getElementById('peMetric').textContent=Number.isFinite(Number(summary.relative?.pe))?Number(summary.relative.pe).toFixed(1)+'×':'—';
   document.getElementById('forwardPeMetric').textContent=Number.isFinite(Number(summary.relative?.peY5))?Number(summary.relative.peY5).toFixed(1)+'×':'—';
 
@@ -858,7 +859,7 @@ function applySummaryNumbers(symbol,summary){
     `<tr><td>Datenqualität</td><td>${summary.dataQuality?.score??'—'}/100 · ${summary.dataQuality?.label||''}</td></tr>`+
     `<tr><td>Risiko</td><td>${summary.riskAudit?.severity||'—'}</td></tr></tbody>`;
 
-  document.getElementById('fundamentalHistory').innerHTML=`<tr><td>${fact.fy??'—'}</td><td>${fmtBig(revenue)}</td><td>—</td><td>${fmtBig(op)}</td><td>${Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(op)?fmtPctMaybe(op/revenue):'—'}</td><td>${fmtBig(Number(fact.netIncome))}</td><td>${Number.isFinite(Number(fact.eps))?money(Number(fact.eps)):'—'}</td><td>${fmtBig(Number(fact.cfo))}</td><td>${fmtBig(Number(fact.capex))}</td><td>${fmtBig(Number(fact.fcf))}</td><td>—</td><td>${fmtBig(Number(fact.cash))}</td><td>${fmtBig(Number(fact.debt))}</td><td>${fmtBig(Number(fact.netCash))}</td><td>${Number.isFinite(Number(fact.shares))?(Number(fact.shares)/1e9).toFixed(2)+' Mrd.':'—'}</td><td>—</td><td>—</td><td>—</td><td>${fmtLiveDate(fact.filed)}</td></tr>`;
+  document.getElementById('fundamentalHistory').innerHTML=`<tr><td>${fact.fy??'—'}</td><td>${fmtBig(revenue)}</td><td>—</td><td>${fmtBig(op)}</td><td>${Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(op)?fmtPctMaybe(op/revenue):'—'}</td><td>${fmtBig(fact.netIncome)}</td><td>${uiNum(fact.eps)!==null?money(fact.eps):'—'}</td><td>${fmtBig(fact.cfo)}</td><td>${fmtBig(fact.capex)}</td><td>${fmtBig(fact.fcf)}</td><td>—</td><td>${fmtBig(fact.cash)}</td><td>${fmtBig(fact.debt)}</td><td>${fmtBig(fact.netCash)}</td><td>${uiNum(fact.shares)!==null?(uiNum(fact.shares)/1e9).toFixed(2)+' Mrd.':'—'}</td><td>—</td><td>—</td><td>—</td><td>${fmtLiveDate(fact.filed)}</td></tr>`;
   document.getElementById('historySource').textContent='Quelle: '+(summary.provenance?.fundamentals?.source||'SEC/Alpha Vantage');
   document.getElementById('historyAvailability').textContent='Schnellmodus: aktuelles Geschäftsjahr';
   document.getElementById('historyCoverage').textContent='Datenqualität: '+(summary.dataQuality?.score??'—')+'/100';
@@ -1313,7 +1314,7 @@ const svg=document.getElementById('valuationChart'), tooltip=document.getElement
 let currentPeriod='3Y'; let activeCurrency='USD';
 const NS='http://www.w3.org/2000/svg';
 const periods={"1Y":1,"3Y":3,"5Y":5,"MAX":null};
-function money(v,currency=activeCurrency){if(!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:currency||'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v));}
+function money(v,currency=activeCurrency){if(v===null||v===undefined||v===''||!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('de-DE',{style:'currency',currency:currency||'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v));}
 metaChartReference=chartData.map(x=>({...x}));
 if(!LIVE_CAPABLE){
   try{
