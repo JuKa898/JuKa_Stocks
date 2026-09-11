@@ -25,8 +25,8 @@ module.exports=async function handler(req,res){
   return res.status(filesOk?200:503).json({
     ok,
     service:'JUKA',
-    version:'4.8.4',
-    fairValueEngine:'JUKA Fair Value 8.3.2',
+    version:'4.9.0',
+    fairValueEngine:'JUKA Fair Value 9.0 · Eulerpool-style + Buffett intrinsic cross-check',
     environment:process.env.VERCEL_ENV||'unknown',
     status:filesOk?(fullProviderCoverage?'ok':'degraded'):'unhealthy',
     files,

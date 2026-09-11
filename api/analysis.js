@@ -269,7 +269,7 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-4.8.4 · Fair Value 8.3.2';
+    out.engineVersion='JUKA-4.9.0 · Fair Value 9.0';
     res.setHeader('Cache-Control',resolved.region==='EU'?'s-maxage=86400, stale-while-revalidate=604800':'s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.history||'')==='1'){
       const rows=out.fundamentals?.annual||out.derived||[];
@@ -302,6 +302,8 @@ module.exports=async function handler(req,res){
         stability:out.stability||null,
         fairValue2:out.fairValue2?{version:out.fairValue2.version,model:out.fairValue2.model,confidence:out.fairValue2.confidence,checks:out.fairValue2.checks}:null,
         valuationMethods:out.valuationMethods||null,
+        intrinsicValuation:out.intrinsicValuation||null,
+        marketNormalizedFairValue:out.marketNormalizedFairValue||null,
         historicalPlausibility:out.historicalPlausibility||null,
         historicalIntegrity:out.historicalIntegrity||null,
         fairValueIntegrity:out.fairValueIntegrity||null,
