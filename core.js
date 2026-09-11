@@ -1870,7 +1870,7 @@
     if(model==='operating-company'){
       if(!readiness.ready){result.diagnostics.push(`Pflichtdaten fehlen: ${readiness.missingRequired.join(', ')}`);return result;}
       const fv2=jukaFairValue2Operating(stock,rows,price,overrides);
-      if(!fv2){result.diagnostics.push('JUKA Fair Value 7.0 konnte aus den verfügbaren Daten nicht vollständig berechnet werden.');return result;}
+      if(!fv2){result.diagnostics.push('JUKA Fair Value 8.0 konnte aus den verfügbaren Daten nicht vollständig berechnet werden.');return result;}
       const a=fv2.adaptive?.assumptions||{};
       result.assumptions={dcf:fv2.assumptions,auto:fv2.adaptive,fairValue2:{version:fv2.version,model:fv2.model,confidence:fv2.confidence,drivers:fv2.drivers,checks:fv2.checks}};
       result.valuation=fv2.valuation;

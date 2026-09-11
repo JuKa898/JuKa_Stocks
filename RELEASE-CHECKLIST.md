@@ -27,7 +27,7 @@
 - Header shows provider/source rather than generic LIVE.
 
 ## Final system hardening 13.2 / engine 9.2.0
-- `/api/analysis` exposes `release`, `stability`, `valuationMethods` and Fair Value 7.0 metadata.
+- `/api/analysis` exposes `release`, `stability`, `valuationMethods` and Fair Value 8.0 metadata.
 - `fundamentals.asOf` uses publication/availability metadata only.
 - Server + browser cache keys are listing-aware.
 - EU daily market data stays on Alpha Vantage `outputsize=compact`; long history uses weekly data.
@@ -58,3 +58,11 @@
 - Terminal growth requires terminal reinvestment.
 - Cash/debt bridge and diluted shares convert enterprise value to per-share value.
 - Old Economic DCF / Earnings Power remain diagnostics, not averaging inputs.
+
+## System hardening 14.1
+- Browser performs one `/api/analysis` request per stock load.
+- Market and fundamentals adapters execute in parallel.
+- Provider timeouts are bounded individually and return identifiable error codes.
+- No duplicated frontend retry amplification.
+- Cached detail snapshot is the only browser fallback.
+- Health, engine, UI and package versions agree on Fair Value 8.0 / engine 10.0.1.

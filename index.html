@@ -585,7 +585,7 @@ function renderFundamentalHistory(annual,source='SEC Company Facts'){
  const rows=JuKaCore.deriveFundamentals(annual).slice(-8).reverse(),pct=v=>Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—',sh=v=>Number.isFinite(Number(v))?(Number(v)/1e9).toFixed(2)+' Mrd.':'—';
  document.getElementById('fundamentalHistory').innerHTML=rows.length?rows.map(x=>`<tr><td>${x.fy??'—'}</td><td>${fmtBig(x.revenue)}</td><td>${pct(x.revenueGrowthYoY)}</td><td>${fmtBig(x.operatingIncome)}</td><td>${pct(x.operatingMargin)}</td><td>${fmtBig(x.netIncome)}</td><td>${Number.isFinite(Number(x.eps))?money(x.eps):'—'}</td><td>${fmtBig(x.cfo)}</td><td>${fmtBig(x.capex)}</td><td>${fmtBig(x.fcf)}</td><td>${pct(x.fcfMargin)}</td><td>${fmtBig(x.cash)}</td><td>${fmtBig(x.debt)}</td><td>${fmtBig(x.netCash)}</td><td>${sh(x.shares)}</td><td>${pct(x.sbcToRevenue)}</td><td>${pct(x.roic)}</td><td>${fmtX(x.netDebtToEbitda)}</td><td>${x.filed?new Date(x.filed).toLocaleDateString('de-DE'):'—'}</td></tr>`).join(''):'<tr><td colspan="19">Keine historischen Fundamentaldaten verfügbar.</td></tr>';
  const latest=rows[0],fields=latest?['revenue','operatingIncome','netIncome','eps','cfo','capex','fcf','cash','debt','shares','da','sbc','pretaxIncome','incomeTax','equity'].filter(k=>latest[k]!==null&&latest[k]!==undefined&&Number.isFinite(Number(latest[k]))).length:0;
- document.getElementById('historySource').textContent='Quelle: '+source;document.getElementById('historyAvailability').textContent='Historischer Fair Value: Filing-Datum + Zeit-Rollforward';document.getElementById('historyCoverage').textContent=`Datenabdeckung: ${fields}/15 Kernfelder`;
+ document.getElementById('historySource').textContent='Quelle: '+source;document.getElementById('historyAvailability').textContent='Historischer Fair Value: Point-in-Time je Filing';document.getElementById('historyCoverage').textContent=`Datenabdeckung: ${fields}/15 Kernfelder`;
 }
 function updateFromLive(symbol,marketData,secData){
   const z=stocks.find(x=>x.s===symbol); activeCurrency=marketData.meta?.currency||z?.currency||'USD';
@@ -607,7 +607,7 @@ function updateFromLive(symbol,marketData,secData){
     else{const qs=JuKaCore.qualityScore({roic:fact.roic,operatingMargin:fact.operatingMargin,revenueCagr3y:fact.revenueCagr3y,epsCagr3y:fact.epsCagr3y,fcfMargin:fact.fcfMargin,netDebtToEbit:fact.operatingIncome?fact.netDebt/fact.operatingIncome:null,shareCagr3y:fact.dilutionPa});document.getElementById('qualityScore').textContent=qs.score;document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+' · Daten-Fallback';document.querySelector('.bar>div').style.width=qs.score+'%';document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${p.points}/${p.max} · ${p.reason}</strong></div>`).join('');}
   }
   renderFundamentalHistory(annual,secData?.source||'SEC Company Facts');
-  const modelName=last?.valuationEngine||last?.model||'JUKA Fair Value'; document.getElementById('fundNote').textContent=`Fundamentaldaten: SEC Company Facts · Bewertungsengine: ${modelName}.`; document.getElementById('chartNote').textContent='Echte Tageskurse. Historische Fair Values werden nur mit Fundamentaldaten berechnet, deren Filing-Datum am jeweiligen Kurstag bereits bekannt war.'; setStatus('LIVE · JUKA Fair Value 7.0',true); draw();
+  const modelName=last?.valuationEngine||last?.model||'JUKA Fair Value'; document.getElementById('fundNote').textContent=`Fundamentaldaten: SEC Company Facts · Bewertungsengine: ${modelName}.`; document.getElementById('chartNote').textContent='Echte Tageskurse. Historische Fair Values werden nur mit Fundamentaldaten berechnet, deren Filing-Datum am jeweiligen Kurstag bereits bekannt war.'; setStatus('LIVE · JUKA Fair Value 8.0',true); draw();
 }
 function updateFromSnapshot(symbol,snap){
   const z=stocks.find(x=>x.s===symbol)||{s:symbol,n:snap?.fundamentals?.name||symbol};
@@ -637,7 +637,7 @@ function updateFromSnapshot(symbol,snap){
   const releaseText=snap.release?.status?` · Fair-Value-Status: ${snap.release.status}`:'';
   document.getElementById('fundNote').textContent=`Datenpipeline: ${snap.market?.source||'Marktdaten'} + ${snap.fundamentals?.source||'Fundamentaldaten'} · Status: ${snap.analysisStatus||'—'} · Modell: ${snap.model}${readyText}${releaseText}.${warningText}`;
   document.getElementById('chartNote').textContent='Historische Fair Values respektieren das jeweilige Filing-Datum. EU-Fundamentals laufen über Alpha Vantage, sofern ein serverseitiger API-Key gesetzt ist. Fehlen Daten oder Key, bleibt JUKA bewusst im Market-only-Modus.';
-  setStatus('LIVE · JUKA Fair Value 7.0',true);draw();renderPerformanceFromChart();
+  setStatus('LIVE · JUKA Fair Value 8.0',true);draw();renderPerformanceFromChart();
 }
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
@@ -751,8 +751,8 @@ function applyRealMarketChart(marketData,levels){
   draw();renderPerformanceFromChart();
 }
 
-async function fetchJson(url,label,timeoutMs=15000){
-  const attempts=2;
+async function fetchJson(url,label,timeoutMs=25000){
+  const attempts=1;
   let lastErr=null;
   for(let attempt=1;attempt<=attempts;attempt++){
     const controller=new AbortController();
@@ -782,7 +782,7 @@ async function fetchJson(url,label,timeoutMs=15000){
 function jukaCacheKey(symbol,kind){
   const z=stocks.find(x=>x.s===symbol)||{};
   const listing=[String(z.region||'US').toUpperCase(),String(z.marketSymbol||symbol).toUpperCase(),String(z.currency||'USD').toUpperCase()].join('|');
-  return 'juka-live-v10:'+kind+':'+String(symbol).toUpperCase()+':'+listing
+  return 'juka-live-v11:'+kind+':'+String(symbol).toUpperCase()+':'+listing
 }
 function jukaCacheSet(symbol,kind,data){try{localStorage.setItem(jukaCacheKey(symbol,kind),JSON.stringify({savedAt:Date.now(),data}))}catch{}}
 function jukaCacheGet(symbol,kind,maxAgeMs=86400000){
@@ -803,70 +803,22 @@ async function loadLiveStock(symbol,token){
  setStatus('Analyse wird geladen…');
  const z=stocks.find(x=>x.s===symbol)||{s:symbol,region:'US',marketSymbol:symbol,currency:'USD'};
  const baseParams={symbol:z.s,region:z.region||'US',currency:z.currency||'USD',market_symbol:z.marketSymbol||z.s,name:z.n||z.s,model:z.valuationModel||'',sector:z.sector||''};
- let summary;let summaryFromCache=false;
- // EU uses exactly one full analysis request to protect the free Alpha Vantage quota.
- if(String(z.region||'').toUpperCase()==='EU'){
-   let snap;let fromCache=false;
-   try{
-     snap=await fetchJson('/api/analysis?'+new URLSearchParams(baseParams).toString(),'EU-Analyse',45000);
-     ensureActiveLoad(token);jukaCacheSet(symbol,'detail',snap);
-   }catch(e){
-     const cached=jukaCacheGet(symbol,'detail');if(!cached)throw e;
-     snap=cached.data;fromCache=true;
-     snap.warnings=[...(snap.warnings||[]),'Zwischengespeicherte EU-Daten: Provider-Abruf aktuell nicht verfügbar.'];
-   }
-   ensureActiveLoad(token);applySummaryNumbers(symbol,snap);updateFromSnapshot(symbol,snap);
-   document.getElementById('chartNote').textContent='EU-Kurse: Alpha Vantage Free-kompatibel (kompakte Tagesdaten + langfristige Wochendaten). Bear/Base/Bull verwenden nur Fundamentalstände mit bekanntem Veröffentlichungszeitpunkt.';
-   setStatus(fromCache?'CACHE · EU':'EU · Alpha Vantage',!fromCache);
-   return;
- }
+ let snap,fromCache=false;
  try{
-   summary=await fetchJson('/api/analysis?'+new URLSearchParams({...baseParams,summary:'1'}).toString(),'Schnellanalyse',20000);
+   snap=await fetchJson('/api/analysis?'+new URLSearchParams(baseParams).toString(),'Analyse',25000);
    ensureActiveLoad(token);
-   jukaCacheSet(symbol,'summary',summary);
+   jukaCacheSet(symbol,'detail',snap);
  }catch(e){
-   const cached=jukaCacheGet(symbol,'summary');
+   const cached=jukaCacheGet(symbol,'detail');
    if(!cached)throw e;
-   summary=cached.data;summaryFromCache=true;
-   summary.warnings=[...(summary.warnings||[]),'Zwischengespeicherte Daten: Live-Abruf aktuell nicht verfügbar.'];
-   setStatus('CACHE · Live-Abruf fehlgeschlagen');
+   snap=cached.data;fromCache=true;
+   snap.warnings=[...(snap.warnings||[]),'Zwischengespeicherte Daten: Live-Abruf aktuell nicht verfügbar.'];
  }
- ensureActiveLoad(token);applySummaryNumbers(symbol,summary);setStatus(summaryFromCache?'CACHE · Basis geladen':'LIVE · Basis geladen',!summaryFromCache);
- try{
-   setStatus('LIVE · Detailanalyse wird geladen…',true);
-   let snap;
-   try{
-     snap=await fetchJson('/api/analysis?'+new URLSearchParams(baseParams).toString(),'Detailanalyse',35000);
-     ensureActiveLoad(token);
-     jukaCacheSet(symbol,'detail',snap);
-   }catch(e){
-     const cached=jukaCacheGet(symbol,'detail');
-     if(!cached)throw e;
-     snap=cached.data;
-     snap.warnings=[...(snap.warnings||[]),'Zwischengespeicherte Detaildaten: Live-Abruf aktuell nicht verfügbar.'];
-   }
-   ensureActiveLoad(token);updateFromSnapshot(symbol,snap);
-   try{
-     const hist=await fetchJson('/api/analysis?'+new URLSearchParams({...baseParams,history:'1'}).toString(),'Fair-Value-Historie',30000);
-     ensureActiveLoad(token);
-     const points=(hist.history?.points||[]).filter(x=>x.available&&Number.isFinite(Number(x.base))).map(x=>({...x,date:new Date(x.date)})).sort((a,b)=>a.date-b.date);
-     if(points.length){
-       const raw=chartData.map(x=>({...x}));
-       chartData=raw.map(row=>{
-         let chosen=null;for(const pt of points){if(pt.date<=row.date)chosen=pt;else break;}
-         return chosen?{...row,base:Number(chosen.base),bear:Number(chosen.bear),bull:Number(chosen.bull),fairStatus:chosen.status,sourceCutoff:chosen.sourceCutoff}:row;
-       });
-       draw();
-     }
-   }catch(historyErr){console.warn('JUKA point-in-time history enrichment failed:',historyErr);}
-   document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse. Die Zeitraum-Schalter filtern nach echten Kalenderjahren (1J/3J/5J), nicht nach Datenpunkten. Bear/Base/Bull verwenden ausschließlich Fundamentaldaten mit bekanntem Veröffentlichungszeitpunkt; ohne belastbares Veröffentlichungsdatum zeichnet JUKA keinen historischen Fair Value. Zwischen Filings wird der zuletzt zulässige Bewertungsstand verwendet. Die Kurven werden nur visuell geglättet – nicht inhaltlich verändert.';
-   setStatus('LIVE · JUKA Fair Value 7.0',true);
- }catch(detailErr){
-   const msg=String(detailErr?.message||detailErr);console.warn('JUKA detail enrichment failed:',detailErr);
-   document.getElementById('fundNote').textContent='Basisanalyse ist live. Detailanalyse konnte nicht vollständig geladen werden: '+msg;
-   document.getElementById('chartNote').textContent='Basisanalyse ist live; historische Fair-Value-Kurve wartet auf die Detailanalyse.';
-   setStatus('LIVE · Basis · Detailfehler',true);
- }
+ ensureActiveLoad(token);
+ updateFromSnapshot(symbol,snap);
+ renderLiveBeta(snap,!fromCache);
+ const provider=snap.market?.source||snap.provenance?.market?.source||'Marktdaten';
+ setStatus(fromCache?'CACHE · Live-Abruf fehlgeschlagen':`LIVE · ${provider}`,!fromCache);
 }
 
 const META_DCF_INPUT={revenue:228247,ebit:86926,taxRate:.18,da:22729,capex:89325,deltaNwc:-724,shares:2567,netFinancialPosition:-6596,growthY1:.18,growthY5:.10,targetEbitMarginY5:.40,wacc:.095,terminalGrowth:.03,terminalRoic:.20,capexPctY5:.22,daPctY5:.12,nwcPctY5:.005,bearGrowthAdj:-.03,bearMarginAdj:-.03,bearWaccAdj:.015,bullGrowthAdj:.03,bullMarginAdj:.03,bullWaccAdj:-.01};
@@ -1131,8 +1083,8 @@ function loadMetaDemo(){
   document.getElementById('modelBox').style.display='block'; renderExactQuality();
   document.getElementById('fundamentalHistory').innerHTML='<tr><td>TTM</td><td>$228,25 Mrd.</td><td>38,1%</td><td>$5,41 Mrd.</td><td>$26,53</td><td>32,6%</td><td>—</td><td>Excel-Referenz</td></tr>'; document.getElementById('historySource').textContent='Quelle: Excel-Referenz'; document.getElementById('historyAvailability').textContent='Historischer Fair Value: Demo-Reihe'; document.getElementById('historyCoverage').textContent='Datenabdeckung: Referenzmodell';
   if(metaChartReference) chartData=metaChartReference.map(x=>({...x})); applyMetaModel(true);
-  document.getElementById('fundNote').textContent='META-Referenzwerte dienen nur als Referenz. JUKA Fair Value 7.0 verwendet Owner Earnings als Primärwert; Economic DCF, Earnings Power, Reverse Valuation, Risiko-Audit und transparente Annahmen dienen als Kontrollen.';
-  document.getElementById('chartNote').textContent='Demo-Historie; Bear/Base/Bull stammen aus JUKA Fair Value 7.0. Der Marktpreis wird nicht zur Kalibrierung des Fair Value verwendet.';
+  document.getElementById('fundNote').textContent='Demo-/Referenzwerte dienen nur als technische Referenz. JUKA Fair Value 8.0 berechnet den inneren Wert aus normalisierten Owner Earnings; Marktpreise sind nur Vergleichsgröße.';
+  document.getElementById('chartNote').textContent='Demo-Historie; Bear/Base/Bull stammen aus JUKA Fair Value 8.0. Der Marktpreis wird nicht zur Kalibrierung des Fair Value verwendet.';
   setStatus('Excel-Parität · META'); draw();
 }
 ['dcfG1','dcfG5','dcfMargin5','dcfWacc','dcfTg'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{if(document.getElementById('symbol').textContent==='META')applyMetaModel(true);}));

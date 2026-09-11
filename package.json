@@ -1,6 +1,6 @@
 {
-  "name": "juka-3-live",
-  "version": "10.0.0",
+  "name": "juka-research",
+  "version": "10.0.1",
   "private": true,
   "engines": {
     "node": ">=18"
