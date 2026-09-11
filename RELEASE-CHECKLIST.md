@@ -34,3 +34,18 @@
 - Market price must not alter Bear/Base/Bull with unchanged fundamentals.
 - `prüfen` / `nicht belastbar` must never be `liveReady: true`.
 - Before promotion: test operating company + bank + REIT + at least four EU listings.
+
+## Historical FV / EU / Visa fix 13.3
+- Historical Fair Value must not accrete mechanically at WACC between filings.
+- Historical per-share values must be normalized to the same split-adjusted share basis as chart prices.
+- Large near-standard share-count jumps are treated as display-only split normalization, not valuation inputs.
+- Operating companies require revenue + EBIT + shares; missing D&A/capex uses a neutral maintenance replacement proxy and forces review.
+- EU cold full analysis uses one weekly market request + three statement requests; EARNINGS is history-only.
+- Browser cache namespace is `juka-live-v8`.
+
+## Universe hardening 13.4
+- Bear <= Base <= Bull is mandatory.
+- Scenario width >2.5x triggers review; >4x blocks release.
+- Historical filing-to-filing Fair Value jumps >2.5x trigger review; >4x fail integrity.
+- Every curated stock must execute a model-appropriate valuation fixture, not only route structurally.
+- Missing optional data may use transparent proxies only with `liveReady=false`.
