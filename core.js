@@ -3,6 +3,8 @@
   else{root.JuKaCore=factory();}
 })(typeof self!=='undefined'?self:this,function(){
   function n(v,fallback=0){const x=Number(v);return Number.isFinite(x)?x:fallback;}
+  function finiteNumber(v){if(v===null||v===undefined||v==='')return null;const x=Number(v);return Number.isFinite(x)?x:null;}
+  function inputNetDebt(input={}){const direct=finiteNumber(input.netDebt);if(direct!==null)return direct;const legacy=finiteNumber(input.netFinancialPosition);return legacy!==null?legacy:0;}
   function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
   function median(values){const a=values.filter(Number.isFinite).slice().sort((a,b)=>a-b);if(!a.length)return null;const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
   function cagr(start,end,years){start=n(start);end=n(end);years=n(years);if(start<=0||end<=0||years<=0)return null;return Math.pow(end/start,1/years)-1;}
@@ -63,7 +65,8 @@
     if(!rows.length)return {};
     const latest=rows.at(-1),day=86400000;
     const closestBefore=target=>{
-      let best=rows[0];
+      if(!(target instanceof Date)||Number.isNaN(target.getTime())||rows[0].date>target)return null;
+      let best=null;
       for(const r of rows){if(r.date<=target)best=r;else break;}
       return best;
     };
@@ -353,8 +356,8 @@
       const a=Number(rows[i-1].revenue), b=Number(rows[i].revenue);
       if(a>0&&b>0)growths.push(b/a-1);
     }
-    const margins=recent.map(x=>Number(x.operatingMargin)).filter(Number.isFinite);
-    const fcfMargins=recent.map(x=>Number(x.fcfMargin)).filter(Number.isFinite);
+    const margins=recent.map(x=>finiteNumber(x.operatingMargin)).filter(v=>v!==null);
+    const fcfMargins=recent.map(x=>finiteNumber(x.fcfMargin)).filter(v=>v!==null);
     const capexIntensity=recent.map(x=>Number(x.capex)>0&&Number(x.revenue)>0?Number(x.capex)/Number(x.revenue):null).filter(Number.isFinite);
     const shareGrowth=fieldCagr(rows,'shares',rows.length-1,Math.min(5,rows.length-1));
     const revenueCagr=fieldCagr(rows,'revenue',rows.length-1,Math.min(5,rows.length-1));
@@ -420,10 +423,10 @@
     return median(rows.slice(-Math.max(1,years)).map(r=>Number(r?.[key])).filter(Number.isFinite));
   }
   function jukaOperatingRawAssumptions(annualFacts=[],overrides={}){
-    const rows=deriveFundamentals(annualFacts),r=rows.at(-1),q=jukaDataQuality(rows),p=jukaCompanyProfile(rows);
+    const rows=deriveFundamentals(annualFacts),r=rows.at(-1),annualRowsOnly=rows.filter(x=>!x.isTTM),historyRows=annualRowsOnly.length>=3?annualRowsOnly:rows,q=jukaDataQuality(rows),p=jukaCompanyProfile(historyRows);
     if(!r||!p)return null;
 
-    const g1=Number(r.revenueGrowthYoY);
+    const g1=r.isTTM?null:Number(r.revenueGrowthYoY);
     const g3=fieldCagr(rows,'revenue',rows.length-1,3);
     const g5=fieldCagr(rows,'revenue',rows.length-1,5);
     const growthVol=Number(p.growthVol);
@@ -444,19 +447,19 @@
     if(growthY1<.04)growthY5=clamp(weightedAverage([[growthY1,.45],[.03,.55]]),.01,.06);
 
     const latestMargin=Number(r.operatingMargin);
-    const margin3=robustRecentMedian(rows,'operatingMargin',3);
-    const margin5=robustRecentMedian(rows,'operatingMargin',5);
-    const oldMargin=rows.length>=4?Number(rows[rows.length-4].operatingMargin):null;
+    const margin3=robustRecentMedian(historyRows,'operatingMargin',3);
+    const margin5=robustRecentMedian(historyRows,'operatingMargin',5);
+    const oldMargin=historyRows.length>=4?Number(historyRows[historyRows.length-4].operatingMargin):null;
     const marginTrend=Number.isFinite(latestMargin)&&Number.isFinite(oldMargin)?(latestMargin-oldMargin)/3:0;
     let targetMargin=weightedAverage([[latestMargin,.45],[margin3,.35],[margin5,.20]]);
     if(!Number.isFinite(targetMargin))targetMargin=Number(r.operatingIncome)/Number(r.revenue);
     targetMargin=clamp(targetMargin+clamp(marginTrend*2,-.025,.025),-.05,.65);
 
-    const fcf3=robustRecentMedian(rows,'fcfMargin',3),fcf5=robustRecentMedian(rows,'fcfMargin',5);
+    const fcf3=robustRecentMedian(historyRows,'fcfMargin',3),fcf5=robustRecentMedian(historyRows,'fcfMargin',5);
     let targetFcf=weightedAverage([[Number(r.fcfMargin),.40],[fcf3,.35],[fcf5,.25]]);
     if(!Number.isFinite(targetFcf))targetFcf=Number(r.fcfMargin);
 
-    const roics=rows.slice(-5).map(x=>Number(x.roic)).filter(x=>Number.isFinite(x)&&x>0);
+    const roicRows=r.isTTM?[...historyRows.slice(-4),r]:historyRows.slice(-5);const roics=roicRows.map(x=>finiteNumber(x.roic)).filter(x=>x!==null&&x>0);
     const roicMedian=median(roics);
     const roicVol=stdev(roics);
     // Terminal ROIC fades toward a competitive steady state. High, stable ROIC retains more of its economics.
@@ -464,8 +467,8 @@
       ? clamp(1-roicVol/Math.max(roicMedian,.05),.25,.85):.50;
     const terminalRoic=clamp(Number.isFinite(roicMedian)?(.10+(roicMedian-.10)*persistence):.12,.08,.30);
 
-    const debt=Number(r.debt),cash=Number(r.cash),ebitda=Number(r.ebitda);
-    const leverage=Number.isFinite(debt)&&Number.isFinite(ebitda)&&ebitda>0?debt/ebitda:0;
+    const debt=finiteNumber(r.debt),cash=finiteNumber(r.cash),ebitda=finiteNumber(r.ebitda);
+    const leverage=debt!==null&&ebitda!==null&&ebitda>0?debt/ebitda:null;
     // WACC is a transparent risk proxy until a reliable live beta / capital-market feed is available.
     // It varies by company fundamentals instead of being fixed at 9%.
     let wacc=.0825;
@@ -479,11 +482,13 @@
     const terminalGrowth=clamp(weightedAverage([[growthY5,.35],[.025,.65]]),.02,.035);
     if(wacc<=terminalGrowth+.02)wacc=terminalGrowth+.02;
 
-    const capexPct=robustRecentMedian(rows,'capex',3);
-    const revenueMedian=robustRecentMedian(rows,'revenue',3);
-    const capexRatio=rows.slice(-5).map(x=>Number(x.capex)/Number(x.revenue)).filter(Number.isFinite);
-    const daRatio=rows.slice(-5).map(x=>Number(x.da)/Number(x.revenue)).filter(Number.isFinite);
-    const nwcRatio=rows.slice(-5).map(x=>Number(x.deltaNwc)/Number(x.revenue)).filter(Number.isFinite);
+    const capexPct=robustRecentMedian(historyRows,'capex',3);
+    const revenueMedian=robustRecentMedian(historyRows,'revenue',3);
+    const ratioRows=r.isTTM?[...historyRows.slice(-4),r]:historyRows.slice(-5);
+    const ratio=(x,numKey)=>{const num=finiteNumber(x?.[numKey]),den=finiteNumber(x?.revenue);return num!==null&&den!==null&&den!==0?num/den:null;};
+    const capexRatio=ratioRows.map(x=>ratio(x,'capex')).filter(v=>v!==null);
+    const daRatio=ratioRows.map(x=>ratio(x,'da')).filter(v=>v!==null);
+    const nwcRatio=ratioRows.map(x=>ratio(x,'deltaNwc')).filter(v=>v!==null);
     let capexPctY5=median(capexRatio);
     const daPctY5=median(daRatio);
     const nwcPctY5=median(nwcRatio);
@@ -500,7 +505,7 @@
     const waccSpread=clamp(.0075+uncertainty*.07,.009,.016);
 
     const shareGrowth=clamp(Number.isFinite(p.shareGrowth)?p.shareGrowth:0,-.06,.06);
-    const taxRates=rows.slice(-5).map(x=>Number(x.taxRate)).filter(x=>Number.isFinite(x)&&x>=.08&&x<=.35);
+    const taxRates=ratioRows.map(x=>Number(x.taxRate)).filter(x=>Number.isFinite(x)&&x>=.08&&x<=.35);
     const taxMedian=median(taxRates);
     const assumptions={
       growthY1:n(overrides.growthY1,growthY1),
@@ -528,7 +533,7 @@
   // Walk-forward self-check: each historical prediction is built only with data that existed at that anchor.
   // It measures systematic one-year growth and margin errors and can apply a small bias correction.
   function jukaOperatingSelfCheck(annualFacts=[]){
-    const rows=deriveFundamentals(annualFacts),tests=[];
+    const rows=deriveFundamentals(annualFacts).filter(x=>!x.isTTM),tests=[];
     for(let i=3;i<rows.length;i++){
       const hist=rows.slice(0,i),actual=rows[i],prev=rows[i-1];
       const raw=jukaOperatingRawAssumptions(hist,{});
@@ -644,14 +649,15 @@
         asset+=rd[j]*remaining;
         amort+=rd[j]/life;
       }
-      const adjustedOperatingIncome=Number(x.operatingIncome)+current-amort;
-      const adjustedEquity=Number.isFinite(Number(x.equity))?Number(x.equity)+asset:null;
+      const operatingIncome=finiteNumber(x.operatingIncome),equity=finiteNumber(x.equity);
+      const adjustedOperatingIncome=operatingIncome!==null?operatingIncome+current-amort:null;
+      const adjustedEquity=equity!==null?equity+asset:null;
       return {...x,rdAsset:asset,rdAmortization:amort,adjustedOperatingIncome,adjustedEquity};
     });
     const latest=out.at(-1);
     return {available:true,life,rows:out,latest,metrics:{
       rdAsset:latest?.rdAsset??null,rdAmortization:latest?.rdAmortization??null,
-      accountingOperatingIncome:Number(rows.at(-1)?.operatingIncome),
+      accountingOperatingIncome:finiteNumber(rows.at(-1)?.operatingIncome),
       adjustedOperatingIncome:latest?.adjustedOperatingIncome??null
     }};
   }
@@ -808,26 +814,32 @@
     if(Number.isFinite(stability)&&stability>.75)premium=.04;
     else if(Number.isFinite(stability)&&stability>.55)premium=.035;
     const cap=wacc+premium;
-    const terminalRoic=clamp(Math.min(raw,cap),Math.max(wacc,g+.01),.35);
-    return {terminalRoic,rawTerminalRoic:raw,excessReturn:terminalRoic-wacc,cap,premium,competitiveAdvantagePremium:premium,marketPriceUsed:false};
+    // Mature businesses are not guaranteed to earn their cost of capital forever.
+    // Allow terminal ROIC to fade below WACC; only require enough return to fund g without
+    // an impossible (>100%) perpetual reinvestment rate. This removes an optimistic floor.
+    const floor=Math.max(.045,g+.01);
+    const terminalRoic=clamp(Math.min(raw,cap),floor,.35);
+    return {terminalRoic,rawTerminalRoic:raw,excessReturn:terminalRoic-wacc,cap,premium,competitiveAdvantagePremium:premium,
+      matureFadeAllowsValueDestruction:terminalRoic<wacc,marketPriceUsed:false};
   }
 
   function jukaNormalizedInvestedCapital(row={},opts={}){
-    const equity=Number(row.equity),debt=Number(row.debt),cash=Number(row.cash),rdAsset=Number(row.rdAsset);
-    if(!Number.isFinite(equity)||!Number.isFinite(debt))return {value:null,quality:'nicht verfügbar',components:{},marketPriceUsed:false};
+    const equity=finiteNumber(row.equity),debt=finiteNumber(row.debt),cash=finiteNumber(row.cash),rdAsset=finiteNumber(row.rdAsset);
+    if(equity===null||debt===null)return {value:null,quality:'nicht verfügbar',components:{},marketPriceUsed:false};
     // Cash is only netted when reported and positive. R&D asset is already added to equity
     // by the R&D adjustment, so it must not be added twice here.
-    const cashDeduction=Number.isFinite(cash)&&cash>0?cash:0;
-    const leaseDebt=Number(row.leaseDebt);
-    const leaseAdj=Number.isFinite(leaseDebt)&&leaseDebt>0?leaseDebt:0;
+    const cashDeduction=cash!==null&&cash>0?cash:0;
+    const leaseDebt=finiteNumber(row.leaseDebt);
+    const leaseAdj=leaseDebt!==null&&leaseDebt>0?leaseDebt:0;
     const value=equity+debt+leaseAdj-cashDeduction;
     const flags=[];
-    if(!Number.isFinite(cash))flags.push('cash-missing');
-    if(!Number.isFinite(leaseDebt))flags.push('leases-unavailable');
-    if(Number.isFinite(Number(row.goodwill))&&Number(row.goodwill)>0)flags.push('goodwill-present');
+    if(cash===null)flags.push('cash-missing');
+    if(leaseDebt===null)flags.push('leases-unavailable');
+    const goodwill=finiteNumber(row.goodwill);
+    if(goodwill!==null&&goodwill>0)flags.push('goodwill-present');
     return {value:value>0?value:null,quality:flags.length<=1?'mittel':'niedrig',
-      components:{equity,debt,leaseDebt:leaseAdj,cashDeduction,rdAsset:Number.isFinite(rdAsset)?rdAsset:null,
-        goodwill:Number.isFinite(Number(row.goodwill))?Number(row.goodwill):null},
+      components:{equity,debt,leaseDebt:leaseAdj,cashDeduction,rdAsset:rdAsset!==null?rdAsset:null,
+        goodwill},
       flags,marketPriceUsed:false};
   }
 
@@ -849,7 +861,7 @@
 
   function jukaEconomicDcf(input={}, adaptive={}){
     const revenue=n(input.revenue,0), ebit=n(input.ebit,0), tax=clamp(n(input.taxRate,.21),.08,.35);
-    const shares=n(input.shares,0), netDebt=n(input.netDebt,0);
+    const shares=n(input.shares,0), netDebt=inputNetDebt(input);
     if(!(revenue>0&&shares>0))return null;
     const a=adaptive?.assumptions||{};
     const metrics=adaptive?.metrics||{};
@@ -947,41 +959,50 @@
   function jukaSimpleIntrinsicOperating(annualFacts=[],adaptive={},scenario='base'){
     const rows=deriveFundamentals(annualFacts).filter(x=>Number(x.revenue)>0&&Number.isFinite(Number(x.operatingIncome))&&Number(x.shares)>0);
     if(rows.length<3)return null;
-    const recent=rows.slice(-5), latest=recent.at(-1), taxFallback=.21;
-    const ownerRows=recent.map((r,i)=>{
+    const latest=rows.at(-1),annualHistory=rows.filter(x=>!x.isTTM),historicalRecent=(annualHistory.length?annualHistory:rows).slice(-5),taxFallback=.21;
+    const ownerFromRow=(r)=>{
       const revenue=Number(r.revenue), ebit=Number(r.operatingIncome);
       const tax=Number.isFinite(Number(r.taxRate))?clamp(Number(r.taxRate),.08,.35):taxFallback;
       const nopat=ebit*(1-tax);
       const da=Number.isFinite(Number(r.da))&&Number(r.da)>=0?Number(r.da):null;
       const capex=Number.isFinite(Number(r.capex))&&Number(r.capex)>=0?Number(r.capex):null;
-      // Buffett-style maintenance investment is an estimate, not fake precision.
-      // If both fields exist, replacement needs are anchored to depreciation and
-      // cannot exceed reported capex. Missing fields fall back neutrally.
-      const maintenanceCapex=da!==null&&capex!==null?Math.min(capex,da*1.15):(da!==null?da:(capex!==null?capex:0));
+      // Buffett owner earnings require maintenance capex, not reported capex. When both
+      // are known, avoid the old optimistic hard cap at 1.15x D&A: replacement needs can
+      // legitimately exceed depreciation. Use the lower of reported capex and a conservative
+      // 1.35x D&A ceiling; missing values remain explicit estimates rather than free growth.
+      const maintenanceCapex=da!==null&&capex!==null?Math.min(capex,da*1.35):(da!==null?da:(capex!==null?capex:0));
       const wc=Number.isFinite(Number(r.deltaNwc))?Number(r.deltaNwc):0;
-      // Only the recurring/maintenance part of working capital is charged here.
       const maintenanceWc=Math.max(0,wc);
       const owner=nopat+(da||0)-maintenanceCapex-maintenanceWc;
-      return {fy:r.fy,revenue,nopat,da,capex,maintenanceCapex,maintenanceWc,owner};
-    }).filter(x=>Number.isFinite(x.owner)&&x.owner>0);
-
+      const cfo=finiteNumber(r.cfo),interest=finiteNumber(r.interestExpense),sbc=finiteNumber(r.sbc);
+      const cashOwner=cfo!==null?cfo+(interest!==null?interest*(1-tax):0)-maintenanceCapex-(sbc!==null?Math.max(0,sbc):0):null;
+      return {fy:r.fy,date:r.date,isTTM:!!r.isTTM,revenue,nopat,da,capex,maintenanceCapex,maintenanceWc,owner,cashOwner};
+    };
+    const ownerRows=historicalRecent.map(ownerFromRow).filter(x=>Number.isFinite(x.owner)&&x.owner>0);
     if(ownerRows.length<3)return null;
     const weights=ownerRows.map((_,i)=>i+1), wsum=weights.reduce((a,b)=>a+b,0);
     const normalizedOwner=ownerRows.reduce((a,x,i)=>a+x.owner*weights[i],0)/wsum;
-    const latestOwner=ownerRows.at(-1).owner;
-    // Blend recent normalized earning power with latest; this dampens one-off years.
+    const currentOwner=ownerFromRow(latest),latestOwner=Number(currentOwner.owner);
+    if(!(latestOwner>0))return null;
     const owner0=.60*latestOwner+.40*normalizedOwner;
 
-    const revCagr=fieldCagr(rows,'revenue',rows.length-1,Math.min(5,rows.length-1));
-    const ownerFirst=ownerRows[0]?.owner, ownerLast=ownerRows.at(-1)?.owner;
-    const ownerYears=Math.max(1,ownerRows.length-1);
-    const ownerCagr=ownerFirst>0&&ownerLast>0?Math.pow(ownerLast/ownerFirst,1/ownerYears)-1:null;
+    const revCagr=fieldCagr(rows,'revenue',rows.length-1,Math.min(5,Math.max(1,annualHistory.length-1)));
+    const ownerFirst=ownerRows[0],ownerLast=currentOwner;
+    const firstTime=Date.parse(ownerFirst?.date||''),lastTime=Date.parse(ownerLast?.date||'');
+    const ownerYears=Number.isFinite(firstTime)&&Number.isFinite(lastTime)&&lastTime>firstTime?(lastTime-firstTime)/(365.25*86400000):Math.max(1,ownerRows.length-1);
+    const ownerCagr=ownerFirst?.owner>0&&ownerLast?.owner>0?Math.pow(ownerLast.owner/ownerFirst.owner,1/Math.max(.75,ownerYears))-1:null;
     const histGrowth=median([revCagr,ownerCagr].filter(Number.isFinite));
-    const roics=recent.map(x=>Number(x.roic)).filter(Number.isFinite);
+    const roicRows=latest.isTTM?[...historicalRecent.slice(-4),latest]:historicalRecent;
+    const roics=roicRows.map(x=>finiteNumber(x.roic)).filter(v=>v!==null);
     const histRoic=roics.length?median(roics):null;
     const wacc0=clamp(Number(adaptive?.assumptions?.wacc)||.09,.07,.14);
     const terminalGrowth=clamp(Number(adaptive?.assumptions?.terminalGrowth)||.025,.015,.035);
-    const terminalRoic=clamp(Number(adaptive?.assumptions?.terminalRoic)||Number(histRoic)||.12,Math.max(terminalGrowth+.01,.06),.30);
+    const rawTerminalRoic=clamp(Number(adaptive?.assumptions?.terminalRoic)||Number(histRoic)||.12,Math.max(terminalGrowth+.01,.045),.30);
+    // Buffett-style conservatism: durable excess returns may persist, but perpetuity should
+    // not assume today's moat survives unchanged. Cap mature ROIC modestly above WACC and
+    // allow it to fall below WACC when the evidence points there.
+    const terminalPremium=Number.isFinite(histRoic)&&histRoic-wacc0>.10?.035:.025;
+    const terminalRoic=clamp(Math.min(rawTerminalRoic,wacc0+terminalPremium),Math.max(terminalGrowth+.01,.045),.30);
 
     const cfg=scenario==='bear'?{growth:-.025,wacc:.012,years:-1,roic:.85}:
       scenario==='bull'?{growth:.02,wacc:-.007,years:1,roic:1.08}:{growth:0,wacc:0,years:0,roic:1};
@@ -992,7 +1013,8 @@
     const economicRoic=clamp((Number.isFinite(histRoic)?histRoic:terminalRoic)*cfg.roic,.06,.45);
     const affordableGrowth=Math.max(0,economicRoic*.55);
     const evidenceGrowth=clamp(rawGrowth,-.03,.12);
-    const startGrowth=clamp(Math.min(evidenceGrowth+cfg.growth,affordableGrowth),-.03,.14);
+    const ownerGrowthAdj=clamp(finiteNumber(adaptive?.assumptions?.ownerGrowthAdj)??0,-.05,.05);
+    const startGrowth=clamp(Math.min(evidenceGrowth+cfg.growth+ownerGrowthAdj,affordableGrowth),-.03,.14);
     const excessReturn=Number.isFinite(histRoic)?histRoic-wacc0:0;
     const durability=excessReturn>.12?8:excessReturn>.07?7:excessReturn>.03?6:5;
     const years=clamp(durability+cfg.years,4,9);
@@ -1020,23 +1042,48 @@
     const terminalValue=terminalCash/(wacc-terminalGrowth);
     const terminalPv=terminalValue/Math.pow(1+wacc,years);
     const enterprise=pv+terminalPv;
-    const debt=Number(latest.debt),cash=Number(latest.cash);
-    const netDebt=Number.isFinite(Number(latest.netFinancialPosition))?Number(latest.netFinancialPosition):
-      (Number.isFinite(debt)&&Number.isFinite(cash)?debt-cash:0);
+    const debt=finiteNumber(latest.debt),cash=finiteNumber(latest.cash),reportedNetDebt=finiteNumber(latest.netFinancialPosition);
+    const netDebt=reportedNetDebt!==null?reportedNetDebt:(debt!==null&&cash!==null?debt-cash:null);
+    if(netDebt===null)return null;
     const shares=Number(latest.shares);
     const equity=enterprise-netDebt, valuePerShare=shares>0?equity/shares:null;
     return {
       available:Number.isFinite(valuePerShare)&&valuePerShare>0,valuePerShare,enterprise,equity,
       normalizedOwnerEarnings:normalizedOwner,startingOwnerEarnings:owner0,
-      ownerRows,history:{revenueCagr:revCagr,ownerEarningsCagr:ownerCagr,historicalRoic:histRoic},
-      assumptions:{startGrowth,terminalGrowth,wacc,economicRoic,terminalRoic,years,durability},
+      ownerRows,currentOwner,
+      cashConversion:Number.isFinite(currentOwner.cashOwner)&&latestOwner>0?currentOwner.cashOwner/latestOwner:null,
+      history:{revenueCagr:revCagr,ownerEarningsCagr:ownerCagr,historicalRoic:histRoic},
+      assumptions:{startGrowth,terminalGrowth,wacc,economicRoic,terminalRoic,rawTerminalRoic,terminalPremium,years,durability},
       pvExplicit:pv,terminalValue,terminalPv,terminalShare:enterprise>0?terminalPv/enterprise:null,
       flows,scenario,method:'normalized-owner-earnings-intrinsic-value',marketPriceUsed:false
     };
   }
 
+  function jukaSimpleIntrinsicAudit(annualFacts=[],adaptive={},base=null){
+    base=base||jukaSimpleIntrinsicOperating(annualFacts,adaptive,'base');if(!base)return null;
+    const a=adaptive?.assumptions||{},baseV=Number(base.valuePerShare);
+    const rerun=(patch={})=>jukaSimpleIntrinsicOperating(annualFacts,{...adaptive,assumptions:{...a,...patch}},'base')?.valuePerShare??null;
+    const sensitivity={
+      waccMinus05:rerun({wacc:(Number(a.wacc)||base.assumptions?.wacc||.09)-.005}),waccPlus05:rerun({wacc:(Number(a.wacc)||base.assumptions?.wacc||.09)+.005}),
+      waccMinus1:rerun({wacc:(Number(a.wacc)||base.assumptions?.wacc||.09)-.01}),waccPlus1:rerun({wacc:(Number(a.wacc)||base.assumptions?.wacc||.09)+.01}),
+      growthY5Minus2:rerun({ownerGrowthAdj:-.02}),growthY5Plus2:rerun({ownerGrowthAdj:.02}),
+      terminalGrowthMinus05:rerun({terminalGrowth:Math.max(.015,(Number(a.terminalGrowth)||base.assumptions?.terminalGrowth||.025)-.005)}),
+      terminalGrowthPlus05:rerun({terminalGrowth:Math.min(.035,(Number(a.terminalGrowth)||base.assumptions?.terminalGrowth||.025)+.005)}),
+      terminalRoicMinus5:rerun({terminalRoic:Math.max(.06,(Number(a.terminalRoic)||base.assumptions?.terminalRoic||.12)-.05)}),
+      terminalRoicPlus5:rerun({terminalRoic:Math.min(.35,(Number(a.terminalRoic)||base.assumptions?.terminalRoic||.12)+.05)})
+    };
+    const deltas={};for(const [k,v] of Object.entries(sensitivity))deltas[k]=Number.isFinite(v)?v-baseV:null;
+    const latest=deriveFundamentals(annualFacts).at(-1)||{},shares=Number(latest.shares);
+    const reportedNetDebt=finiteNumber(latest.netFinancialPosition),debt=finiteNumber(latest.debt),cash=finiteNumber(latest.cash);
+    const netDebt=reportedNetDebt!==null?reportedNetDebt:(debt!==null&&cash!==null?debt-cash:null);
+    return {valuePerShare:baseV,bridge:{explicitPerShare:shares>0?base.pvExplicit/shares:null,terminalPerShare:shares>0?base.terminalPv/shares:null,
+      netDebtPerShare:shares>0&&netDebt!==null?-netDebt/shares:null,terminalShare:base.terminalShare},sensitivity,deltas,
+      assumptions:{startGrowth:base.assumptions?.startGrowth,wacc:base.assumptions?.wacc,terminalGrowth:base.assumptions?.terminalGrowth,terminalRoic:base.assumptions?.terminalRoic,years:base.assumptions?.years},
+      auditedMethod:base.method,marketPriceUsed:false};
+  }
+
   function jukaOwnerEarningsIntrinsicValue(input={},adaptive={},scenario='base'){
-    const a={...(adaptive?.assumptions||{})},revenue0=Number(input.revenue),ebit0=Number(input.ebit),shares=Number(input.shares),netDebt=Number(input.netDebt)||0;
+    const a={...(adaptive?.assumptions||{})},revenue0=Number(input.revenue),ebit0=Number(input.ebit),shares=Number(input.shares),netDebt=inputNetDebt(input);
     if(!(revenue0>0&&Number.isFinite(ebit0)&&shares>0))return null;
     const tax=clamp(Number(input.taxRate)||.21,.08,.35),margin0=ebit0/revenue0;
     const cap=jukaCompetitiveAdvantagePeriod(adaptive),baseCap=clamp(Number(cap?.years)||7,4,12);
@@ -1114,7 +1161,7 @@
   }
 
   function jukaEarningsPowerValue(input={},adaptive={}){
-    const revenue=Number(input.revenue),ebit=Number(input.ebit),shares=Number(input.shares),netDebt=Number(input.netDebt)||0;
+    const revenue=Number(input.revenue),ebit=Number(input.ebit),shares=Number(input.shares),netDebt=inputNetDebt(input);
     if(!(revenue>0&&Number.isFinite(ebit)&&shares>0))return {available:false,reason:'insufficient-operating-data',marketPriceUsed:false};
     const tax=clamp(Number(input.taxRate)||.21,.08,.35),a=adaptive?.assumptions||{};
     const wacc=Number(a.wacc); if(!(wacc>0))return {available:false,reason:'wacc-unavailable',marketPriceUsed:false};
@@ -1219,7 +1266,7 @@
     const explicitEquivalent=ic0+pvEva-icN/df,explicitGap=explicitEquivalent-Number(d.pvExplicit);
     const tw=Number(d.terminal.wacc),tg=Number(d.terminal.growth),tn=Number(d.terminal.nopat),tv=Number(d.terminal.value);
     const evaNext=tn-tw*icN,evaTv=evaNext/(tw-tg),terminalReconstructed=icN+evaTv,terminalGap=terminalReconstructed-tv;
-    const firmValue=ic0+pvEva+evaTv/df,shares=Number(input.shares)||0,netDebt=Number(input.netDebt)||0,valuePerShare=shares>0?(firmValue-netDebt)/shares:null;
+    const firmValue=ic0+pvEva+evaTv/df,shares=Number(input.shares)||0,netDebt=inputNetDebt(input),valuePerShare=shares>0?(firmValue-netDebt)/shares:null;
     const convergence=Math.abs(valuePerShare-Number(d.valuePerShare))/Math.abs(Number(d.valuePerShare));
     const maxRoicGap=Math.max(...rows.map(x=>Math.abs(Number(x.impliedRoic)-Number(x.targetRoic))).filter(Number.isFinite),0);
     return {available:true,valuePerShare,firmValue,initialInvestedCapital:ic0,pvExplicitEva:pvEva,explicitEnterpriseEquivalent:explicitEquivalent,
@@ -1262,7 +1309,7 @@
     delete sensitivity.capPlus2;
     const deltas={};for(const [k,v] of Object.entries(sensitivity))deltas[k]=Number.isFinite(v)?v-baseV:null;
     return {valuePerShare:baseV,bridge:{explicitPerShare:input.shares>0?base.pvExplicit/input.shares:null,terminalPerShare:input.shares>0?base.terminalPv/input.shares:null,
-      netDebtPerShare:input.shares>0?-Number(input.netDebt||0)/input.shares:null,terminalShare:base.terminalShare},sensitivity,deltas,
+      netDebtPerShare:input.shares>0?-inputNetDebt(input)/input.shares:null,terminalShare:base.terminalShare},sensitivity,deltas,
       assumptions:{growthY1:a.growthY1,growthY5:a.growthY5,targetEbitMarginY5:a.targetEbitMarginY5,wacc:a.wacc,terminalGrowth:base.terminalGrowth,terminalRoic:base.terminalRoic,capYears:base.capYears},
       forecastBridge:(base.flows||[]).map(x=>({year:x.year,growth:x.growth,margin:x.margin,marginalRoic:x.marginalRoic,growthInvestment:x.growthInvestment,growthReinvestmentRate:x.growthReinvestmentRate,ownerEarnings:x.ownerEarnings})),
       marketPriceUsed:false};
@@ -1350,7 +1397,7 @@
     const base=valuation?.detail?.base||jukaEconomicDcf(input,adaptive);
     if(!base)return null;
     const a=adaptive?.assumptions||{};
-    const shares=n(input.shares,0),netDebt=n(input.netDebt,0);
+    const shares=n(input.shares,0),netDebt=inputNetDebt(input);
     const explicitPerShare=shares>0?base.pvExplicit/shares:null;
     const terminalPerShare=shares>0?base.terminalPv/shares:null;
     const netDebtPerShare=shares>0?-netDebt/shares:null;
@@ -1430,14 +1477,14 @@
     const v=result.valuation||{},checks=result.checks||{},tri=result.triangulation||{},stability=result.stability||{};
     const flags=[],metrics={};
     const add=(severity,code,message)=>flags.push({severity,code,message});
-    metrics.terminalShare=Number(checks.terminalShare);
-    metrics.crossCheckDispersion=Number(tri.ownerVsEconomic);
-    metrics.growthY1=Number(f.growthY1);
-    metrics.growthY5=Number(f.growthY5);
-    metrics.marginY5=Number(f.targetEbitMarginY5);
-    metrics.wacc=Number(result.adaptive?.assumptions?.wacc);
-    metrics.terminalGrowth=Number(result.adaptive?.assumptions?.terminalGrowth);
-    metrics.terminalRoic=Number(result.adaptive?.assumptions?.terminalRoic);
+    metrics.terminalShare=finiteNumber(checks.terminalShare);
+    metrics.crossCheckDispersion=finiteNumber(tri.ownerVsEconomic);
+    metrics.growthY1=finiteNumber(f.growthY1);
+    metrics.growthY5=finiteNumber(f.growthY5);
+    metrics.marginY5=finiteNumber(f.targetEbitMarginY5);
+    metrics.wacc=finiteNumber(result.adaptive?.assumptions?.wacc);
+    metrics.terminalGrowth=finiteNumber(result.adaptive?.assumptions?.terminalGrowth);
+    metrics.terminalRoic=finiteNumber(result.adaptive?.assumptions?.terminalRoic);
 
     if(metrics.terminalShare>.75)add('high','terminal-dominance','Mehr als 75% des Enterprise Value stammen aus dem Terminal Value.');
     else if(metrics.terminalShare>.65)add('medium','terminal-heavy','Mehr als 65% des Enterprise Value stammen aus dem Terminal Value.');
@@ -1446,8 +1493,8 @@
     if(metrics.growthY5>.12)add('high','year5-growth','Jahr-5-Wachstum liegt über 12%.');
     else if(metrics.growthY5>.09)add('medium','year5-growth','Jahr-5-Wachstum bleibt über 9%.');
     if(metrics.marginY5>.60)add('medium','extreme-margin','Langfristige EBIT-Marge liegt über 60%.');
-    if(metrics.wacc-metrics.terminalGrowth<.035)add('high','terminal-spread','WACC minus Terminal Growth liegt unter 3,5 Prozentpunkten.');
-    if(metrics.terminalRoic>metrics.wacc+.12)add('medium','perpetual-excess-return','Terminal-ROIC liegt mehr als 12 Prozentpunkte über WACC.');
+    if(metrics.wacc!==null&&metrics.terminalGrowth!==null&&metrics.wacc-metrics.terminalGrowth<.035)add('high','terminal-spread','WACC minus Terminal Growth liegt unter 3,5 Prozentpunkten.');
+    if(metrics.terminalRoic!==null&&metrics.wacc!==null&&metrics.terminalRoic>metrics.wacc+.12)add('medium','perpetual-excess-return','Terminal-ROIC liegt mehr als 12 Prozentpunkte über WACC.');
     const er=result.excessReturn||{};
     if(er.available&&Number.isFinite(er.convergence)){
       if(er.convergence>.15)add('high','excess-return-divergence','DCF und Excess-Return-Modell weichen um mehr als 15% voneinander ab.');
@@ -1462,8 +1509,37 @@
     return {status,score,flags,metrics,marketPriceUsed:false};
   }
 
+  function jukaBuffettMarginOfSafety({confidence=null,owner=null,triangulation=null}={}){
+    const c=finiteNumber(confidence?.score),terminal=finiteNumber(owner?.terminalShare),disp=finiteNumber(triangulation?.ownerVsEconomic);
+    let mos=c>=80?.20:c>=65?.25:.30;
+    if(Number.isFinite(terminal)&&terminal>.70)mos+=.05;
+    if(Number.isFinite(disp)&&disp>.35)mos+=.05;
+    return clamp(mos,.15,.40);
+  }
+
+  function jukaHistoricalMultipleCheck(annualFacts=[],owner=null){
+    const rows=deriveFundamentals(annualFacts).filter(x=>!x.isTTM);
+    const samples=[];
+    for(const r of rows){
+      const price=finiteNumber(r.price??r.close??r.yearEndPrice),eps=finiteNumber(r.eps),fcf=finiteNumber(r.fcf),shares=finiteNumber(r.shares);
+      if(!(price>0))continue;
+      if(eps>0)samples.push({type:'pe',multiple:price/eps});
+      if(fcf>0&&shares>0)samples.push({type:'pfcf',multiple:price/(fcf/shares)});
+    }
+    const robust=(type)=>{
+      const xs=samples.filter(x=>x.type===type).map(x=>x.multiple).filter(x=>x>0&&x<100);
+      if(xs.length<3)return null;
+      const med=median(xs),lo=med*.55,hi=med*1.45,trim=xs.filter(x=>x>=lo&&x<=hi);
+      return {median:median(trim.length>=3?trim:xs),count:xs.length};
+    };
+    const pe=robust('pe'),pfcf=robust('pfcf');
+    return {available:!!(pe||pfcf),pe,pfcf,role:'historical-market-reality-check-only',
+      overridesIntrinsicValue:false,marketPriceUsedForCalibration:false,
+      note:'Historische Multiples sind Plausibilitaetsanker und ersetzen nicht den intrinsischen Owner-Earnings-Wert.'};
+  }
+
   function jukaFairValueTriangulation(owner=null,economic=null,earningsPower=null,legacy=null){
-    const o=Number(owner?.valuePerShare),d=Number(economic?.valuePerShare),e=Number(earningsPower?.valuePerShare),l=Number(legacy?.base);
+    const o=finiteNumber(owner?.valuePerShare),d=finiteNumber(economic?.valuePerShare),e=finiteNumber(earningsPower?.valuePerShare),l=finiteNumber(legacy?.base);
     const comparable=[o,d].filter(x=>Number.isFinite(x)&&x>0),med=median(comparable);
     return {fairValue:o,primaryMethod:'ownerEarnings',medianComparable:med,
       ownerVsEconomic:o>0&&d>0?Math.abs(o-d)/o:null,earningsPowerFloor:e,legacyDiagnostic:l,
@@ -1477,8 +1553,8 @@
     rdAdjustment.policy=rdPolicy;
     if(rdAdjustment.available){
       rows=rdAdjustment.rows.map(x=>({...x,
-        operatingIncome:Number.isFinite(Number(x.adjustedOperatingIncome))?x.adjustedOperatingIncome:x.operatingIncome,
-        equity:Number.isFinite(Number(x.adjustedEquity))?x.adjustedEquity:x.equity
+        operatingIncome:finiteNumber(x.adjustedOperatingIncome)!==null?x.adjustedOperatingIncome:x.operatingIncome,
+        equity:finiteNumber(x.adjustedEquity)!==null?x.adjustedEquity:x.equity
       }));
       latest=rows.at(-1);
     }
@@ -1509,13 +1585,22 @@
     const earningsPower=inp?jukaEarningsPowerValue(inp,adaptive):{valuePerShare:null};
     const triangulation=jukaFairValueTriangulation(owner,economic,earningsPower,legacy);
     let confidence=jukaFairValueConfidence({annualFacts:rows,valuation,selfCheck:adaptive.selfCheck,dataQuality:adaptive.dataQuality,sensitivity});
+    const cashConversion=finiteNumber(owner?.cashConversion);
+    if(Number.isFinite(cashConversion)&&(cashConversion<.55||cashConversion>1.65)){
+      confidence={score:Math.max(0,confidence.score-10),label:confidence.score-10>=80?'hoch':confidence.score-10>=60?'mittel':'niedrig'};
+    }
     // Independent-model disagreement is a confidence penalty, never an automatic price adjustment.
     if(Number.isFinite(triangulation?.ownerVsEconomic)&&triangulation.ownerVsEconomic>.50){
       confidence={score:Math.max(0,confidence.score-12),label:confidence.score-12>=80?'hoch':confidence.score-12>=60?'mittel':'niedrig'};
     }
+    const historicalMultipleCheck=jukaHistoricalMultipleCheck(rows,owner);
+    const marginOfSafety=jukaBuffettMarginOfSafety({confidence,owner,triangulation});
+    const buyBelow=owner.valuePerShare*(1-marginOfSafety);
     const reverse=inp&&Number(price)>0?jukaReverseDcf(inp,Number(price)):null;
     const result={
-      version:'JUKA Fair Value 8.1',model:'normalized-owner-earnings-intrinsic-value',
+      version:'JUKA Fair Value 8.2',model:'buffett-owner-earnings-intrinsic-value',
+      framework:{primary:'buffett-owner-earnings',historicalAnchor:'eulerpool-style-multiple-check',
+        philosophy:'intrinsic-value-first; historical multiples are diagnostics only',marginOfSafety,buyBelow,historicalMultipleCheck},
       valuation,assumptions:inp,adaptive,fundamentalForecast,rdPolicy,rdAdjustment,reverse,sensitivity,confidence,ownerEarnings:owner,economicDcf:economic,triangulation,
       drivers:jukaFairValueDrivers(adaptive,valuation),
       checks:{
@@ -1526,13 +1611,15 @@
           impliedReinvestmentRate:a.terminalGrowth/a.terminalRoic,
           valid:a.terminalRoic>a.terminalGrowth
         },
-        crossCheckDispersion:triangulation?.ownerVsEconomic??null
+        crossCheckDispersion:triangulation?.ownerVsEconomic??null,
+        cashConversion:owner?.cashConversion??null,
+        cashConversionStatus:finiteNumber(owner?.cashConversion)!==null&&(owner.cashConversion<.55||owner.cashConversion>1.65)?'review':finiteNumber(owner?.cashConversion)===null?'unavailable':'ok'
       }
     };
     result.excessReturn=inp&&economic?jukaExcessReturnValuation(inp,adaptive,economic):null;
     result.forecastFeasibility=jukaForecastFeasibility(owner);
     result.economicAudit=inp&&economic?jukaFairValueAudit(inp,adaptive,{...valuation,detail:{...valuation.detail,base:economic}},owner,legacy):null;
-    result.audit=inp?jukaOwnerEarningsAudit(inp,adaptive,owner):{status:'review',flags:['secondary-dcf-input-unavailable'],marketPriceUsed:false};
+    result.audit=jukaSimpleIntrinsicAudit(rows,adaptive,owner)||{status:'review',flags:['primary-owner-earnings-audit-unavailable'],marketPriceUsed:false};
     if(result.audit)result.audit.economicDcfAudit=result.economicAudit;
     result.stability=jukaFairValueStability(result.audit);
     result.plausibility=jukaFairValuePlausibilityAudit(result,rows);
@@ -1655,7 +1742,7 @@
 
 
   function lastFinite(rows,key,endIndex){
-    for(let i=endIndex;i>=0;i--){const v=Number(rows[i]?.[key]);if(Number.isFinite(v))return {index:i,value:v,row:rows[i]};}
+    for(let i=endIndex;i>=0;i--){const v=finiteNumber(rows[i]?.[key]);if(v!==null)return {index:i,value:v,row:rows[i]};}
     return null;
   }
   function fieldCagr(rows,key,endIndex,years=5){
@@ -1665,8 +1752,8 @@
       const target=new Date(endDate);target.setFullYear(target.getFullYear()-Math.max(1,years));
       let start=null,best=Infinity;
       for(let i=0;i<end.index;i++){
-        const v=Number(rows[i]?.[key]),t=Date.parse(rows[i]?.date||'');
-        if(!(Number.isFinite(v)&&v>0&&Number.isFinite(t)&&t<endDate))continue;
+        const v=finiteNumber(rows[i]?.[key]),t=Date.parse(rows[i]?.date||'');
+        if(!(v!==null&&v>0&&Number.isFinite(t)&&t<endDate))continue;
         const distance=Math.abs(t-target.getTime());
         if(distance<best){best=distance;start={index:i,value:v,time:t};}
       }
@@ -1676,16 +1763,16 @@
       }
     }
     let start=null;
-    for(let i=end.index-1;i>=0;i--){const v=Number(rows[i]?.[key]);if(Number.isFinite(v)&&v>0&&end.index-i>=years){start={index:i,value:v};break;}}
+    for(let i=end.index-1;i>=0;i--){const v=finiteNumber(rows[i]?.[key]);if(v!==null&&v>0&&end.index-i>=years){start={index:i,value:v};break;}}
     if(!start)return null;
     return cagr(start.value,end.value,end.index-start.index);
   }
-  function medianField(rows,key,start,end){return median(rows.slice(Math.max(0,start),end+1).map(r=>Number(r?.[key])).filter(Number.isFinite));}
+  function medianField(rows,key,start,end){return median(rows.slice(Math.max(0,start),end+1).map(r=>finiteNumber(r?.[key])).filter(v=>v!==null));}
   function deriveFundamentals(annualFacts=[]){
     const rows=(annualFacts||[]).map(x=>({...x})).filter(x=>x&&x.date).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
     for(let i=0;i<rows.length;i++){
       const r=rows[i], prev=rows[i-1];
-      const revenue=Number(r.revenue), ebit=Number(r.operatingIncome), ni=Number(r.netIncome), fcf=Number(r.fcf), da=Number(r.da), debt=Number(r.debt), cash=Number(r.cash), equity=Number(r.equity), pretax=Number(r.pretaxIncome), tax=Number(r.incomeTax), interest=Number(r.interestExpense), sbc=Number(r.sbc);
+      const revenue=finiteNumber(r.revenue), ebit=finiteNumber(r.operatingIncome), ni=finiteNumber(r.netIncome), fcf=finiteNumber(r.fcf), da=finiteNumber(r.da), debt=finiteNumber(r.debt), cash=finiteNumber(r.cash), equity=finiteNumber(r.equity), pretax=finiteNumber(r.pretaxIncome), tax=finiteNumber(r.incomeTax), interest=finiteNumber(r.interestExpense), sbc=finiteNumber(r.sbc);
       r.operatingMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(ebit)?ebit/revenue:null;
       r.netMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(ni)?ni/revenue:null;
       r.fcfMargin=Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(fcf)?fcf/revenue:null;
@@ -1731,12 +1818,15 @@
     const gHist=fieldCagr(rows,'revenue',i,3)??fieldCagr(rows,'revenue',i,5)??.06;
     const g1=clamp(n(assumptions.growthY1,gHist),-.05,.30), terminalGrowth=n(assumptions.terminalGrowth,.025), g5=clamp(n(assumptions.growthY5,Math.max(terminalGrowth+.01,g1*.60)),terminalGrowth,.20);
     const marginMedian=medianField(rows,'operatingMargin',i-2,i)??r.operatingMargin??ebit/revenue;
-    const capexPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.capex)/Number(x.revenue)).filter(Number.isFinite));
-    const daPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.da)/Number(x.revenue)).filter(Number.isFinite));
-    const nwcPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>Number(x.deltaNwc)/Number(x.revenue)).filter(Number.isFinite));
+    const safeRatio=(row,key)=>{const num=finiteNumber(row?.[key]),den=finiteNumber(row?.revenue);return num!==null&&den!==null&&den!==0?num/den:null;};
+    const capexPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>safeRatio(x,'capex')).filter(v=>v!==null));
+    const daPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>safeRatio(x,'da')).filter(v=>v!==null));
+    const nwcPct=median(rows.slice(Math.max(0,i-2),i+1).map(x=>safeRatio(x,'deltaNwc')).filter(v=>v!==null));
     const taxRate=Number.isFinite(r.taxRate)?r.taxRate:n(assumptions.taxRate,.21); const terminalRoic=clamp(n(assumptions.terminalRoic,Number.isFinite(r.roic)?r.roic:.15),Math.max(terminalGrowth+.01,.06),.35);
-    const netFin=Number.isFinite(Number(r.netFinancialPosition))?Number(r.netFinancialPosition):(Number.isFinite(Number(r.debt))&&Number.isFinite(Number(r.cash))?Number(r.debt)-Number(r.cash):0);
-    return {revenue,ebit,taxRate,da,capex,deltaNwc:Number.isFinite(Number(r.deltaNwc))?Number(r.deltaNwc):0,shares,netFinancialPosition:netFin,growthY1:g1,growthY5:g5,targetEbitMarginY5:clamp(n(assumptions.targetEbitMarginY5,marginMedian),-.05,.60),wacc:n(assumptions.wacc,.09),terminalGrowth,terminalRoic,capexPctY5:n(assumptions.capexPctY5,Number.isFinite(capexPct)?capexPct:capex/revenue),daPctY5:n(assumptions.daPctY5,Number.isFinite(daPct)?daPct:da/revenue),nwcPctY5:n(assumptions.nwcPctY5,Number.isFinite(nwcPct)?nwcPct:0),bearGrowthAdj:n(assumptions.bearGrowthAdj,-.03),bearMarginAdj:n(assumptions.bearMarginAdj,-.03),bearWaccAdj:n(assumptions.bearWaccAdj,.015),bullGrowthAdj:n(assumptions.bullGrowthAdj,.03),bullMarginAdj:n(assumptions.bullMarginAdj,.03),bullWaccAdj:n(assumptions.bullWaccAdj,-.01),sourceFy:r.fy,sourceDate:r.date,availableFrom:r.accepted||r.filed||r.filedDate||r.publishedDate||r.availableFrom||null,maintenanceData:{daKnown,capexKnown,proxyUsed:!daKnown||!capexKnown}};
+    const reportedNetFin=finiteNumber(r.netFinancialPosition),debtValue=finiteNumber(r.debt),cashValue=finiteNumber(r.cash);
+    const netFin=reportedNetFin!==null?reportedNetFin:(debtValue!==null&&cashValue!==null?debtValue-cashValue:null);
+    if(netFin===null)return null;
+    return {revenue,ebit,taxRate,da,capex,deltaNwc:Number.isFinite(Number(r.deltaNwc))?Number(r.deltaNwc):0,shares,netDebt:netFin,netFinancialPosition:netFin,growthY1:g1,growthY5:g5,targetEbitMarginY5:clamp(n(assumptions.targetEbitMarginY5,marginMedian),-.05,.60),wacc:n(assumptions.wacc,.09),terminalGrowth,terminalRoic,capexPctY5:n(assumptions.capexPctY5,Number.isFinite(capexPct)?capexPct:capex/revenue),daPctY5:n(assumptions.daPctY5,Number.isFinite(daPct)?daPct:da/revenue),nwcPctY5:n(assumptions.nwcPctY5,Number.isFinite(nwcPct)?nwcPct:0),bearGrowthAdj:n(assumptions.bearGrowthAdj,-.03),bearMarginAdj:n(assumptions.bearMarginAdj,-.03),bearWaccAdj:n(assumptions.bearWaccAdj,.015),bullGrowthAdj:n(assumptions.bullGrowthAdj,.03),bullMarginAdj:n(assumptions.bullMarginAdj,.03),bullWaccAdj:n(assumptions.bullWaccAdj,-.01),sourceFy:r.fy,sourceDate:r.date,availableFrom:r.accepted||r.filed||r.filedDate||r.publishedDate||r.availableFrom||null,maintenanceData:{daKnown,capexKnown,proxyUsed:!daKnown||!capexKnown}};
   }
   function buildHistoricalJukaFairSeries(priceRows,annualFacts,assumptions={}){
     if(!Array.isArray(priceRows)||!priceRows.length)return [];
@@ -1967,14 +2057,15 @@
       if(!(cs>0&&ps>0)){factors[i-1]=cumulative;continue;}
       const ratio=cs/ps,split=nearest(ratio);
       const cr=Number(cur.revenue),pr=Number(prev.revenue),revenueRatio=cr>0&&pr>0?cr/pr:null;
-      // A genuine split changes share count dramatically without a comparable
-      // jump in business scale. This avoids treating large acquisitions/issuance as splits.
-      const scaleMovedSimilarly=Number.isFinite(revenueRatio)&&(
-        (ratio>1.5&&revenueRatio>1.5) || (ratio<.67&&revenueRatio<.67)
-      );
-      if(split&&Math.abs(Math.log(split))>Math.log(1.5)&&!scaleMovedSimilarly){
+      const scaleMovedSimilarly=Number.isFinite(revenueRatio)&&(ratio>1.5&&revenueRatio>1.5);
+      // CompanyFacts can mix restated weighted-average shares with current
+      // point-in-time shares. A reverse-looking ratio may therefore be a tag/basis
+      // switch rather than a true reverse split. Do not auto-adjust those.
+      // TTM rows are not independent fiscal years and are excluded as split evidence.
+      const verifiedForwardSplit=!cur.isTTM&&!prev.isTTM&&split>=2&&ratio>1.5&&!scaleMovedSimilarly;
+      if(verifiedForwardSplit){
         cumulative*=split;
-        events.push({index:i,date:cur.date||null,ratio,normalizedRatio:split,fromShares:ps,toShares:cs});
+        events.push({index:i,date:cur.date||null,ratio,normalizedRatio:split,fromShares:ps,toShares:cs,confidence:'heuristic-forward-split'});
       }
       factors[i-1]=cumulative;
     }
@@ -2025,8 +2116,8 @@
       if(gap<-.25)positives.push('Preis >25% unter Base Fair Value');
     }
     if(model==='operating-company'&&quality){
-      if(quality.score<50)issues.push('Schwacher Quality Score');
-      if(quality.score>=75)positives.push('Starker Quality Score');
+      if(quality.score<5.0)issues.push('Schwacher Quality Score');
+      if(quality.score>=7.5)positives.push('Starker Quality Score');
     }
     if(reverse?.waccGap!=null&&reverse.waccGap<-.02)issues.push('Marktpreis verlangt deutlich niedrigeren WACC');
     if(reverse?.impliedGrowthAdjustment!=null&&reverse.impliedGrowthAdjustment>.06)issues.push('Marktpreis verlangt >6pp Wachstumsaufschlag');
@@ -2046,8 +2137,8 @@
       valuationEngine:'AFFO + Exit-Multiple'
     };
     return {
-      required:['revenue','operatingIncome','shares'],
-      recommended:['da','capex','cash','debt','pretaxIncome','incomeTax','fcf'],
+      required:['revenue','operatingIncome','shares','cash','debt'],
+      recommended:['da','capex','pretaxIncome','incomeTax','fcf'],
       valuationEngine:'Owner Earnings + Economic DCF'
     };
   }
@@ -2126,9 +2217,9 @@
     return {model,metrics,rows,subject:subjectMetrics,medians,comparisons,available,score,label};
   }
   function valuationMultiplesFromSnapshot(snapshot={}){
-    const price=Number(snapshot.price),latest=snapshot.latest||{},shares=Number(latest.shares),debt=Number(latest.debt),cash=Number(latest.cash),eps=Number(latest.eps),ebit=Number(latest.operatingIncome),fcf=Number(latest.fcf),equity=Number(latest.equity),affo=Number(latest.affo);
-    const marketCap=Number.isFinite(price)&&Number.isFinite(shares)?price*shares:null;
-    const enterpriseValue=Number.isFinite(marketCap)?marketCap+(Number.isFinite(debt)?debt:0)-(Number.isFinite(cash)?cash:0):null;
+    const latest=snapshot.latest||{},price=finiteNumber(snapshot.price),shares=finiteNumber(latest.shares),debt=finiteNumber(latest.debt),cash=finiteNumber(latest.cash),eps=finiteNumber(latest.eps),ebit=finiteNumber(latest.operatingIncome),fcf=finiteNumber(latest.fcf),equity=finiteNumber(latest.equity),affo=finiteNumber(latest.affo);
+    const marketCap=price!==null&&shares!==null?price*shares:null;
+    const enterpriseValue=marketCap!==null&&debt!==null&&cash!==null?marketCap+debt-cash:null;
     return {pe:Number.isFinite(price)&&eps>0?price/eps:null,evEbit:Number.isFinite(enterpriseValue)&&ebit>0?enterpriseValue/ebit:null,pFcf:Number.isFinite(marketCap)&&fcf>0?marketCap/fcf:null,pb:Number.isFinite(marketCap)&&equity>0?marketCap/equity:null,paFFO:Number.isFinite(price)&&affo>0?price/affo:null};
   }
 
@@ -2176,7 +2267,14 @@
     return {model,label,total,confidence,valuation,drivers,breaker,components:{valuationScore,qualityScore,relativeScore}};
   }
 
-  function filterPeriod(rows,period){const months={"1Y":12,"3Y":36,"5Y":60,"MAX":9999}[period]||60;return rows.slice(Math.max(0,rows.length-months-1));}
+  function filterPeriod(rows,period){
+    const clean=(rows||[]).filter(x=>x&&x.date).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    if(!clean.length||period==='MAX')return clean;
+    const years={"1Y":1,"3Y":3,"5Y":5}[period]||5,last=new Date(clean.at(-1).date);
+    if(Number.isNaN(last.getTime()))return clean;
+    const from=new Date(last);from.setFullYear(from.getFullYear()-years);
+    return clean.filter(x=>{const d=new Date(x.date);return !Number.isNaN(d.getTime())&&d>=from;});
+  }
   function dataRoute(stock={}){const region=String(stock.region||'').toUpperCase();if(region==='US')return {market:'twelve-data',fundamentals:'sec',filings:'sec',currency:stock.currency||'USD'};if(region==='EU')return {market:'alpha-vantage',fundamentals:'alpha-vantage',filings:'provider-reported-dates',currency:stock.currency||'EUR'};return {market:'generic-adapter',fundamentals:'generic-adapter',filings:'issuer-reports',currency:stock.currency||'USD'};}
   function buildFairSeries(priceRows, annualFacts, assumptions={}){
     if(!Array.isArray(priceRows)||!priceRows.length)return [];
@@ -2199,7 +2297,7 @@
     for(const asOf of dates){
       const knownRows=jukaAsOfRows(rows,asOf);
       if(!knownRows.length){points.push({date:asOf,available:false,reason:'no-public-filing-yet'});continue;}
-      const prices=(priceHistory||[]).filter(p=>new Date(p.date).getTime()<=new Date(asOf).getTime());
+      const prices=(priceHistory||[]).filter(p=>new Date(p.date).getTime()<=new Date(asOf).getTime()).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
       const lastPrice=prices.length?Number(prices.at(-1).close??prices.at(-1).price):null;
       const out=jukaValuationEngine(stock,knownRows,lastPrice,{...options,asOfDate:asOf,pointInTime:true,model});
       if(!out?.valuation){points.push({date:asOf,available:false,reason:'valuation-unavailable'});continue;}
@@ -2216,5 +2314,5 @@
     return {version:'JUKA Fair Value History 1.0',method:'point-in-time-filing-cutoff',model,marketPriceUsedForCalibration:false,points};
   }
 
-  return {n,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,jukaQualityScoreV2,jukaPerformanceWindows,jukaChartSlice,jukaInvestorFundamentals,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaDataQuality,jukaCompanyProfile,jukaAutoAssumptions,jukaOperatingRawAssumptions,jukaOperatingSelfCheck,jukaAdaptiveOperatingAssumptions,jukaFairValueConfidence,jukaFairValueDrivers,jukaAsOfRows,jukaPointInTimeFairValue,jukaMoatEvidencePolicy,jukaCompetitiveAdvantagePeriod,jukaEarningsPowerValue,jukaMultiMethodReleaseGate,jukaReleaseMatrixCase,jukaValidateReleaseMatrix,jukaModelStability,jukaForecastFeasibility,jukaReleaseGate,jukaExcessReturnValuation,jukaNormalizedInvestedCapital,jukaReinvestmentEfficiency,jukaWaccPolicy,jukaMatureTerminalPolicy,jukaFairValueAudit,jukaFairValueStability,jukaFairValuePlausibilityAudit,jukaRdPolicy,jukaRdCapitalization,jukaFundamentalForecastEngine,jukaEconomicDcf,jukaSimpleIntrinsicOperating,jukaOwnerEarningsIntrinsicValue,jukaOwnerEarningsCrossCheck,jukaOwnerEarningsAudit,jukaHistoricalValuationAudit,jukaHistoricalIntegrityAudit,jukaFairValueTriangulation,jukaFairValue2Operating,jukaForecast5Y,jukaForecastScenarios,jukaExpectedReturnMatrix,jukaReturnBridge,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,deriveBankInsuranceMetrics,deriveReitMetrics,jukaBankAutoAssumptions,jukaReitAutoAssumptions,jukaValuationEngine,jukaRiskAudit,modelDataRequirements,jukaModelReadiness,jukaRelativeByModel,peerMetricSet,jukaPeerComparison,valuationMultiplesFromSnapshot,jukaRealityCheck,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,jukaHistoricalShareBasis,buildHistoricalJukaFairSeries,buildHistoricalValuationSeries,filterPeriod,dataRoute,buildFairSeries};
+  return {n,finiteNumber,inputNetDebt,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,jukaQualityScoreV2,jukaPerformanceWindows,jukaChartSlice,jukaInvestorFundamentals,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaDataQuality,jukaCompanyProfile,jukaAutoAssumptions,jukaOperatingRawAssumptions,jukaOperatingSelfCheck,jukaAdaptiveOperatingAssumptions,jukaFairValueConfidence,jukaFairValueDrivers,jukaAsOfRows,jukaPointInTimeFairValue,jukaMoatEvidencePolicy,jukaCompetitiveAdvantagePeriod,jukaEarningsPowerValue,jukaMultiMethodReleaseGate,jukaReleaseMatrixCase,jukaValidateReleaseMatrix,jukaModelStability,jukaForecastFeasibility,jukaReleaseGate,jukaExcessReturnValuation,jukaNormalizedInvestedCapital,jukaReinvestmentEfficiency,jukaWaccPolicy,jukaMatureTerminalPolicy,jukaFairValueAudit,jukaFairValueStability,jukaFairValuePlausibilityAudit,jukaRdPolicy,jukaRdCapitalization,jukaFundamentalForecastEngine,jukaEconomicDcf,jukaSimpleIntrinsicOperating,jukaSimpleIntrinsicAudit,jukaOwnerEarningsIntrinsicValue,jukaOwnerEarningsCrossCheck,jukaOwnerEarningsAudit,jukaHistoricalValuationAudit,jukaHistoricalIntegrityAudit,jukaBuffettMarginOfSafety,jukaHistoricalMultipleCheck,jukaFairValueTriangulation,jukaFairValue2Operating,jukaForecast5Y,jukaForecastScenarios,jukaExpectedReturnMatrix,jukaReturnBridge,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,deriveBankInsuranceMetrics,deriveReitMetrics,jukaBankAutoAssumptions,jukaReitAutoAssumptions,jukaValuationEngine,jukaRiskAudit,modelDataRequirements,jukaModelReadiness,jukaRelativeByModel,peerMetricSet,jukaPeerComparison,valuationMultiplesFromSnapshot,jukaRealityCheck,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,jukaHistoricalShareBasis,buildHistoricalJukaFairSeries,buildHistoricalValuationSeries,filterPeriod,dataRoute,buildFairSeries};
 });

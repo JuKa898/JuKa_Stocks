@@ -106,3 +106,14 @@
 - /api/analysis reports the actually used Alpha symbol.
 - /api/sec delegates EU to the real EU fundamentals adapter.
 - Legacy historical helper no longer uses fiscal dates as publication dates.
+
+## Fair Value Integrity 14.8
+- Historical share-basis normalization does not infer reverse splits from noisy SEC share-tag changes.
+- TTM rows are excluded from split inference.
+- Operating assumptions separate FY history from current TTM.
+- Walk-forward self-check excludes TTM.
+- Owner Earnings normalization does not double-count overlapping TTM as another full year.
+- Owner Earnings CAGR uses elapsed time.
+- Cash-conversion diagnostic reduces confidence on large accounting-vs-cash divergence.
+- Risk Audit Quality thresholds aligned to 1–10.
+- UI separates data completeness from Fair Value robustness.

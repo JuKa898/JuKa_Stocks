@@ -736,15 +736,19 @@ function valuationDataBasis(snap){
   let level=coverage>=75&&rows.length>=5?'gut':coverage>=50&&rows.length>=3?'mittel':'schwach';
   if(ageDays!=null&&ageDays>240&&level==='gut')level='mittel';
   const missing=keys.filter(k=>!Number.isFinite(Number(latest?.[k])));
-  return {rows:rows.length,coverage,level,date:dateRaw,ageDays,missing,isTTM:!!latest?.isTTM};
+  return {rows:rows.length,coverage,level,date:dateRaw,ageDays,missing,isTTM:!!latest?.isTTM,
+    valuationStatus:snap?.fairValueIntegrity?.status||null,historicalStatus:snap?.historicalIntegrity?.status||null,
+    releaseStatus:snap?.release?.status||null,cashConversion:snap?.fairValue2?.checks?.cashConversion??null};
 }
 function renderValuationDataBasis(snap){
   const el=document.getElementById('valuationDataNote');if(!el)return;
   const b=valuationDataBasis(snap),date=b.date?new Date(b.date).toLocaleDateString('de-DE'):'—';
   const freshness=b.isTTM?'TTM / letzte Quartale':`letzter Abschluss ${date}`;
   const miss=b.missing.length?' · Fehlend: '+b.missing.join(', '):'';
-  el.className='valuationDataNote '+(b.level==='gut'?'dataGood':b.level==='mittel'?'dataWarn':'dataBad');
-  el.innerHTML=`<b>Datenbasis Fair Value: ${b.level}</b><span>${b.rows} Perioden · ${freshness} · Feldabdeckung ${b.coverage}%${miss}</span>`;
+  const valuation=b.valuationStatus||'prüfen',bad=valuation==='nicht belastbar',warn=valuation==='prüfen';
+  el.className='valuationDataNote '+(bad?'dataBad':warn?'dataWarn':b.level==='gut'?'dataGood':'dataWarn');
+  const cash=Number.isFinite(Number(b.cashConversion))?` · Cash-Conversion ${Number(b.cashConversion).toFixed(2)}×`:'';
+  el.innerHTML=`<b>Datenbasis: ${b.level} · Fair Value: ${valuation}</b><span>${b.rows} Perioden · ${freshness} · Feldabdeckung ${b.coverage}% · Historie ${b.historicalStatus||'—'}${cash}${miss}</span>`;
 }
 function updateFromSnapshot(symbol,snap){
   const z=stocks.find(x=>x.s===symbol)||{s:symbol,n:snap?.fundamentals?.name||symbol};
@@ -919,7 +923,7 @@ async function fetchJson(url,label,timeoutMs=25000){
 function jukaCacheKey(symbol,kind){
   const z=stocks.find(x=>x.s===symbol)||{};
   const listing=[String(z.region||'US').toUpperCase(),String(z.marketSymbol||symbol).toUpperCase(),String(z.currency||'USD').toUpperCase()].join('|');
-  return 'juka-live-v17:'+kind+':'+String(symbol).toUpperCase()+':'+listing
+  return 'juka-live-v18:'+kind+':'+String(symbol).toUpperCase()+':'+listing
 }
 function jukaCacheSet(symbol,kind,data){try{localStorage.setItem(jukaCacheKey(symbol,kind),JSON.stringify({savedAt:Date.now(),data}))}catch{}}
 function jukaCacheGet(symbol,kind,maxAgeMs=86400000){
