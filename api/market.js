@@ -8,6 +8,17 @@ const Symbols=require('../lib/symbols');
 function alphaError(j){
   return j?.['Error Message']||j?.Note||j?.Information||null;
 }
+
+const alphaSymbolCache=new Map();
+async function alphaResolveSymbol(resolved,key){
+  const ck=String(resolved.displaySymbol||resolved.marketSymbol||'').toUpperCase(),hit=alphaSymbolCache.get(ck);if(hit)return hit;
+  const url=new URL('https://www.alphavantage.co/query');url.searchParams.set('function','SYMBOL_SEARCH');url.searchParams.set('keywords',resolved.displaySymbol);url.searchParams.set('apikey',key);
+  const r=await fetchWithTimeout(url,{},10000),j=await r.json();if(!r.ok||alphaError(j))return resolved.alphaVantageSymbol;
+  const matches=j.bestMatches||[],wanted=String(resolved.displaySymbol||'').toUpperCase(),eq=matches.filter(x=>!x['3. type']||/equity|stock/i.test(String(x['3. type']))),pool=eq.length?eq:matches;
+  const best=pool.find(x=>String(x['1. symbol']||'').toUpperCase().split('.')[0].replace('-','').startsWith(wanted.replace('-','')))||pool[0];
+  const sym=best?.['1. symbol']||resolved.alphaVantageSymbol;if(sym)alphaSymbolCache.set(ck,sym);return sym;
+}
+
 function alphaSeriesRows(j,key){
   const series=j?.[key];
   if(!series||typeof series!=='object')return [];
@@ -42,11 +53,22 @@ async function alphaDaily(resolved){
   const key=process.env.ALPHA_VANTAGE_API_KEY;
   if(!key)throw Object.assign(new Error('ALPHA_VANTAGE_API_KEY fehlt'),{code:'NO_ALPHA_KEY'});
   if(!resolved.alphaVantageSymbol)throw new Error('Kein Alpha-Vantage-Symbol für diesen Markt');
-  const [daily,weekly]=await Promise.all([
-    alphaFetch('TIME_SERIES_DAILY',resolved,key,{outputsize:'compact'}),
-    alphaFetch('TIME_SERIES_WEEKLY',resolved,key)
-  ]);
-  return alphaToMarket(daily,weekly,resolved);
+  let rResolved=resolved,daily,weekly;
+  try{
+    [daily,weekly]=await Promise.all([
+      alphaFetch('TIME_SERIES_DAILY',rResolved,key,{outputsize:'compact'}),
+      alphaFetch('TIME_SERIES_WEEKLY',rResolved,key)
+    ]);
+  }catch(err){
+    const fallback=await alphaResolveSymbol(resolved,key);
+    if(!fallback||fallback===resolved.alphaVantageSymbol)throw err;
+    rResolved={...resolved,alphaVantageSymbol:fallback};
+    [daily,weekly]=await Promise.all([
+      alphaFetch('TIME_SERIES_DAILY',rResolved,key,{outputsize:'compact'}),
+      alphaFetch('TIME_SERIES_WEEKLY',rResolved,key)
+    ]);
+  }
+  return alphaToMarket(daily,weekly,rResolved);
 }
 async function twelveDaily(resolved,key,start_date,end_date){
   const url=new URL('https://api.twelvedata.com/time_series');

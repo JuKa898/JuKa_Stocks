@@ -60,6 +60,77 @@ function candidates(facts,tags,unit){
 }
 function closest(rows,date){return rows.find(x=>String(x.end)===String(date))||null}
 
+function rawUnits(facts,tag,unit){
+  return [...(facts?.['us-gaap']?.[tag]?.units?.[unit]||[]),...(facts?.dei?.[tag]?.units?.[unit]||[])];
+}
+function ytdRows(items){
+  const by={};
+  for(const x of items||[]){
+    if(!x.end||!['10-Q','10-Q/A'].includes(x.form)||!x.start)continue;
+    const days=(Date.parse(x.end)-Date.parse(x.start))/86400000;
+    if(!Number.isFinite(days)||days<65||days>310)continue;
+    const fy=Number(x.fy),fp=String(x.fp||'');
+    if(!Number.isFinite(fy)||!/^Q[1-3]$/.test(fp))continue;
+    const k=fy+'|'+fp,cur=by[k];
+    if(!cur||String(x.filed)>String(cur.filed))by[k]=x;
+  }
+  return Object.values(by).sort((a,b)=>String(a.end).localeCompare(String(b.end)));
+}
+function instantRows(items){
+  const by={};
+  for(const x of items||[]){
+    if(!x.end||!['10-Q','10-Q/A','10-K','10-K/A'].includes(x.form))continue;
+    const k=String(x.end),cur=by[k];
+    if(!cur||String(x.filed)>String(cur.filed))by[k]=x;
+  }
+  return Object.values(by).sort((a,b)=>String(a.end).localeCompare(String(b.end)));
+}
+function latestOnOrBefore(rows,date){return [...(rows||[])].reverse().find(x=>String(x.end)<=String(date))||null}
+function ttmBridge(facts,tags,unit){
+  const raw=tags.flatMap(tag=>rawUnits(facts,tag,unit)),ys=ytdRows(raw);
+  const current=ys.at(-1); if(!current)return null;
+  const previous=ys.find(x=>Number(x.fy)===Number(current.fy)-1&&String(x.fp)===String(current.fp));
+  const annual=annualRows(raw).filter(x=>String(x.end)<String(current.end)).at(-1);
+  if(!annual||!previous)return null;
+  const val=Number(annual.val)+Number(current.val)-Number(previous.val);
+  return Number.isFinite(val)?{val,end:current.end,filed:current.filed,fy:current.fy,fp:current.fp}:null;
+}
+function instantCandidate(facts,tags,unit,end){
+  const rows=tags.flatMap(tag=>instantRows(rawUnits(facts,tag,unit)));
+  return latestOnOrBefore(rows.sort((a,b)=>String(a.end).localeCompare(String(b.end))),end);
+}
+function secTtmRow(facts,annual){
+  const M=(tags,unit='USD')=>ttmBridge(facts,tags,unit);
+  const R=M(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet']);
+  const O=M(['OperatingIncomeLoss']);
+  const N=M(['NetIncomeLoss','ProfitLoss']);
+  const C=M(['NetCashProvidedByUsedInOperatingActivities']);
+  const X=M(['PaymentsToAcquirePropertyPlantAndEquipment','PaymentsForAdditionsToPropertyPlantAndEquipment']);
+  const anchor=R||N||C||O;if(!anchor)return null;
+  const end=anchor.end,filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
+  const cash=instantCandidate(facts,['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'],'USD',end)?.val??null;
+  const dc=instantCandidate(facts,['LongTermDebtCurrent','LongTermDebtAndFinanceLeaseObligationsCurrent','ShortTermBorrowings'],'USD',end)?.val??0;
+  const dn=instantCandidate(facts,['LongTermDebtNoncurrent','LongTermDebtAndFinanceLeaseObligationsNoncurrent'],'USD',end)?.val??0;
+  let shares=instantCandidate(facts,['CommonStockSharesOutstanding','EntityCommonStockSharesOutstanding'],'shares',end)?.val??null;
+  if(!(Number.isFinite(shares)&&shares>0)){
+    const qshares=ytdRows(rawUnits(facts,'WeightedAverageNumberOfDilutedSharesOutstanding','shares'));
+    shares=latestOnOrBefore(qshares,end)?.val??annual.at(-1)?.shares??null;
+  }
+  const revenue=R?.val??null,operatingIncome=O?.val??null,netIncome=N?.val??null,cfo=C?.val??null,capex=X?.val??null,debt=dc+dn;
+  const D=M(['DepreciationDepletionAndAmortization','DepreciationDepletionAndAmortizationPropertyPlantAndEquipment']);
+  const Sb=M(['ShareBasedCompensation']);
+  const Rd=M(['ResearchAndDevelopmentExpense','ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost','ResearchAndDevelopmentExpenseSoftwareExcludingAcquiredInProcessCost']);
+  const I=M(['InterestExpenseNonOperating','InterestAndDebtExpense']);
+  const P=M(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments']);
+  const T=M(['IncomeTaxExpenseBenefit']);
+  return {fy:Number(String(end).slice(0,4)),date:end,filed,availableFrom:filed,isTTM:true,ttmSource:'SEC FY + current YTD − prior-year YTD',
+    revenue,operatingIncome,netIncome,eps:netIncome!=null&&shares>0?netIncome/shares:null,cfo,capex,fcf:cfo!=null&&capex!=null?cfo-capex:null,
+    cash,debt,netCash:cash!=null?cash-debt:null,shares,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,
+    interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,
+    equity:instantCandidate(facts,['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],'USD',end)?.val??null,
+    ffo:null,nwc:null,deltaNwc:null};
+}
+
 async function secAdapter(stock){
   const resolved=Symbols.resolveSymbol(stock);
   if(resolved.region!=='US'){const e=new Error('SEC-Adapter nur für US-Titel');e.code='SEC_REGION';throw e;}
@@ -113,7 +184,9 @@ async function secAdapter(stock){
       pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,ffo:Ffo?.val??null,nwc,deltaNwc
     };
   }).filter(x=>x.date);
-  return {symbol:stock.s,name:found.name,annual,source:'SEC companyfacts',status:'ok'};
+  const ttm=secTtmRow(f,annual);
+  if(ttm&&(!annual.length||String(ttm.date)>String(annual.at(-1).date)))annual.push(ttm);
+  return {symbol:stock.s,name:found.name,annual,source:'SEC companyfacts · Quarterly/TTM',status:'ok',ttm:!!ttm,providerCode:ttm?'SEC_TTM':'SEC_ANNUAL_ONLY'};
 }
 
 async function fundamentalsAdapter(stock){
@@ -154,18 +227,19 @@ async function alphaWeeklyAnalysis(resolved){
   if(!resolved.alphaVantageSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen EU-Markt');e.code='EU_SYMBOL_UNMAPPED';throw e}
   // One call gives long history and a recent weekly close. This cuts a cold EU
   // analysis from 5-6 Alpha calls to 4 (market + 3 statements).
-  let weeklyJson;
+  let weeklyJson,usedSymbol=resolved.alphaVantageSymbol;
   try{weeklyJson=await alphaRequest('TIME_SERIES_WEEKLY',resolved,key);}
   catch(err){
     if(err?.code!=='EU_MARKET_PROVIDER_ERROR')throw err;
     const fallback=await alphaResolvedSymbol(resolved,key);
     if(!fallback||fallback===resolved.alphaVantageSymbol)throw err;
+    usedSymbol=fallback;
     weeklyJson=await alphaRequest('TIME_SERIES_WEEKLY',{...resolved,alphaVantageSymbol:fallback},key);
   }
   const values=alphaRows(weeklyJson,'Weekly Time Series');
   if(!values.length){const e=new Error('Alpha-Vantage-Kursdaten fehlen');e.code='EU_MARKET_PROVIDER_ERROR';throw e}
   return {meta:{symbol:resolved.displaySymbol,exchange:resolved.exchangeHint||'Europe',interval:'weekly',provider:'Alpha Vantage'},
-    values,source:'Alpha Vantage',provider:'Alpha Vantage',status:'ok',resolvedSymbol:resolved.alphaVantageSymbol};
+    values,source:'Alpha Vantage',provider:'Alpha Vantage',status:'ok',resolvedSymbol:usedSymbol};
 }
 async function marketAdapter(stock){
   const resolved=Symbols.resolveSymbol(stock);

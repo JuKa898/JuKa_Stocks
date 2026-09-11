@@ -4,6 +4,7 @@ function fetchWithTimeout(url,options={},ms=12000){
   return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));
 }
 const Symbols=require('../lib/symbols');
+const EU=require('../lib/eu-fundamentals');
 const tickerCache={time:0,map:null};
 const UA=()=>process.env.SEC_USER_AGENT||'JUKA research app contact@example.com';
 async function tickerMap(){
@@ -48,7 +49,12 @@ function closest(rows,date){return rows.find(x=>String(x.end)===String(date))||n
 module.exports=async function handler(req,res){
   try{
     const resolved=Symbols.resolveSymbol({symbol:req.query?.symbol||'META',region:req.query?.region||'US',market_symbol:req.query?.market_symbol});
-    if(resolved.region!=='US')return res.status(200).json({symbol:resolved.displaySymbol,name:req.query?.name||resolved.displaySymbol,annual:[],source:'EU fundamentals adapter pending',status:'pending',warning:'EU-Fundamentaldatenquelle noch nicht aktiviert',providerCode:'EU_FUNDAMENTALS_PENDING'});
+    if(resolved.region!=='US'){
+      const stock={s:resolved.displaySymbol,n:req.query?.name||undefined,region:'EU',marketSymbol:req.query?.market_symbol||req.query?.symbol};
+      const out=await EU.alphaVantageFundamentals(stock,{includeHistoryMetadata:String(req.query?.history||'')==='1'});
+      res.setHeader('Cache-Control','s-maxage=86400, stale-while-revalidate=172800');
+      return res.status(200).json(out);
+    }
     const symbol=resolved.secSymbol,map=await tickerMap(),found=map[symbol]; if(!found)return res.status(404).json({error:'Ticker nicht in SEC gefunden',code:'SEC_NOT_FOUND'});
     const r=await fetchWithTimeout(`https://data.sec.gov/api/xbrl/companyfacts/CIK${found.cik}.json`,{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}}); if(!r.ok)return res.status(r.status).json({error:'SEC companyfacts Fehler '+r.status});
     const j=await r.json(),f=j.facts||{};
@@ -74,6 +80,6 @@ module.exports=async function handler(req,res){
       return {fy,date:periodDate,filed,revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo:cfoVal,capex:capexVal,fcf,cash:cashVal,debt,netCash:cashVal!=null?cashVal-debt:null,shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,nwc,deltaNwc};
     }).filter(x=>x.date);
     for(let i=0;i<annual.length;i++){const x=annual[i];x.operatingMargin=(x.revenue&&x.operatingIncome!=null)?x.operatingIncome/x.revenue:null;x.fcfMargin=(x.revenue&&x.fcf!=null)?x.fcf/x.revenue:null;const p=i>=3?annual[i-3]:null;x.revenueCagr3y=(p?.revenue>0&&x.revenue>0)?Math.pow(x.revenue/p.revenue,1/(i-(i-3)))-1:null;}
-    res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400'); return res.status(200).json({symbol,name:j.entityName||found.name,cik:found.cik,annual,source:'SEC companyfacts',engine:'fundamentals-v1'});
+    res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400'); return res.status(200).json({symbol,name:j.entityName||found.name,cik:found.cik,annual,source:'SEC companyfacts',engine:'fundamentals-v2-annual-endpoint'});
   }catch(e){return res.status(500).json({error:e.message,code:'SEC_PROXY_ERROR'});}
 };
