@@ -70,7 +70,7 @@ async function secAdapter(stock){
   const j=await r.json(),f=j.facts||{};
   const sets={
     rev:candidates(f,['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet'],'USD'),
-    op:candidates(f,['OperatingIncomeLoss'],'USD'),
+    op:candidates(f,['OperatingIncomeLoss','IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'],'USD'),
     ni:candidates(f,['NetIncomeLoss','ProfitLoss'],'USD'),
     eps:candidates(f,['EarningsPerShareDiluted'],'USD/shares'),
     cfo:candidates(f,['NetCashProvidedByUsedInOperatingActivities'],'USD'),
@@ -78,7 +78,7 @@ async function secAdapter(stock){
     cash:candidates(f,['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'],'USD'),
     debtCur:candidates(f,['LongTermDebtCurrent','LongTermDebtAndFinanceLeaseObligationsCurrent','ShortTermBorrowings'],'USD'),
     debtNon:candidates(f,['LongTermDebtNoncurrent','LongTermDebtAndFinanceLeaseObligationsNoncurrent'],'USD'),
-    shares:candidates(f,['WeightedAverageNumberOfDilutedSharesOutstanding','CommonStockSharesOutstanding'],'shares'),
+    shares:candidates(f,['WeightedAverageNumberOfDilutedSharesOutstanding','WeightedAverageNumberOfSharesOutstandingDiluted','CommonStockSharesOutstanding'],'shares'),
     da:candidates(f,['DepreciationDepletionAndAmortization','DepreciationDepletionAndAmortizationPropertyPlantAndEquipment'],'USD'),
     sbc:candidates(f,['ShareBasedCompensation'],'USD'),
     rd:candidates(f,['ResearchAndDevelopmentExpense','ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost','ResearchAndDevelopmentExpenseSoftwareExcludingAcquiredInProcessCost'],'USD'),
@@ -126,6 +126,14 @@ function alphaRows(j,key){
     datetime,open:row['1. open'],high:row['2. high'],low:row['3. low'],close:row['4. close'],volume:row['5. volume']
   })).filter(x=>x.datetime&&Number.isFinite(Number(x.close)));
 }
+const alphaMarketSymbolCache=new Map();
+async function alphaResolvedSymbol(resolved,key){
+  const ck=resolved.displaySymbol||resolved.marketSymbol,hit=alphaMarketSymbolCache.get(ck);if(hit)return hit;
+  const u=new URL('https://www.alphavantage.co/query');u.searchParams.set('function','SYMBOL_SEARCH');u.searchParams.set('keywords',resolved.displaySymbol);u.searchParams.set('apikey',key);
+  const r=await fetchWithTimeout(u,{},10000,'ALPHA_TIMEOUT'),j=await r.json();if(!r.ok||alphaError(j))return resolved.alphaVantageSymbol;
+  const matches=j.bestMatches||[],wanted=String(resolved.displaySymbol||'').toUpperCase(),best=matches.find(x=>String(x['1. symbol']||'').toUpperCase().startsWith(wanted+'.'))||matches[0];
+  const sym=best?.['1. symbol']||resolved.alphaVantageSymbol;if(sym)alphaMarketSymbolCache.set(ck,sym);return sym;
+}
 function mergeAlphaMarket(weekly=[],daily=[]){
   const byDate=new Map();for(const row of weekly)byDate.set(String(row.datetime).slice(0,10),row);
   for(const row of daily)byDate.set(String(row.datetime).slice(0,10),row);
@@ -144,7 +152,14 @@ async function alphaWeeklyAnalysis(resolved){
   if(!resolved.alphaVantageSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen EU-Markt');e.code='EU_SYMBOL_UNMAPPED';throw e}
   // One call gives long history and a recent weekly close. This cuts a cold EU
   // analysis from 5-6 Alpha calls to 4 (market + 3 statements).
-  const weeklyJson=await alphaRequest('TIME_SERIES_WEEKLY',resolved,key);
+  let weeklyJson;
+  try{weeklyJson=await alphaRequest('TIME_SERIES_WEEKLY',resolved,key);}
+  catch(err){
+    if(err?.code!=='EU_MARKET_PROVIDER_ERROR')throw err;
+    const fallback=await alphaResolvedSymbol(resolved,key);
+    if(!fallback||fallback===resolved.alphaVantageSymbol)throw err;
+    weeklyJson=await alphaRequest('TIME_SERIES_WEEKLY',{...resolved,alphaVantageSymbol:fallback},key);
+  }
   const values=alphaRows(weeklyJson,'Weekly Time Series');
   if(!values.length){const e=new Error('Alpha-Vantage-Kursdaten fehlen');e.code='EU_MARKET_PROVIDER_ERROR';throw e}
   return {meta:{symbol:resolved.displaySymbol,exchange:resolved.exchangeHint||'Europe',interval:'weekly',provider:'Alpha Vantage'},
@@ -172,7 +187,7 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-10.0.1-system-hardened';
+    out.engineVersion='JUKA-10.1.0-product-fv-hardened';
     res.setHeader('Cache-Control',resolved.region==='EU'?'s-maxage=86400, stale-while-revalidate=604800':'s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.history||'')==='1'){
       const rows=out.fundamentals?.annual||out.derived||[];

@@ -22,8 +22,8 @@ module.exports=async function handler(req,res){
   return res.status(ok?200:503).json({
     ok,
     service:'JUKA',
-    version:'10.0.1-system-hardened',
-    fairValueEngine:'JUKA Fair Value 8.0',
+    version:'10.1.0-product-fv-hardened',
+    fairValueEngine:'JUKA Fair Value 8.1',
     environment:process.env.VERCEL_ENV||'unknown',
     files,
     env,
