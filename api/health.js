@@ -22,7 +22,7 @@ module.exports=async function handler(req,res){
   return res.status(ok?200:503).json({
     ok,
     service:'JUKA',
-    version:'10.1.0-product-fv-hardened',
+    version:'10.2.1-final-hardened',
     fairValueEngine:'JUKA Fair Value 8.1',
     environment:process.env.VERCEL_ENV||'unknown',
     files,

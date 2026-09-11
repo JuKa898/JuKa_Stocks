@@ -63,7 +63,9 @@ function closest(rows,date){return rows.find(x=>String(x.end)===String(date))||n
 async function secAdapter(stock){
   const resolved=Symbols.resolveSymbol(stock);
   if(resolved.region!=='US'){const e=new Error('SEC-Adapter nur für US-Titel');e.code='SEC_REGION';throw e;}
-  const map=await secTickerMap(),sym=resolved.secSymbol,found=map[sym];
+  const map=await secTickerMap(),sym=resolved.secSymbol,
+    variants=[sym,String(sym||'').replace('.', '-'),String(sym||'').replace('-', '.')],
+    found=variants.map(x=>map[x]).find(Boolean);
   if(!found){const e=new Error('Ticker nicht in SEC gefunden');e.code='SEC_NOT_FOUND';throw e;}
   const r=await fetchWithTimeout(`https://data.sec.gov/api/xbrl/companyfacts/CIK${found.cik}.json`,{headers:{'User-Agent':UA(),'Accept-Encoding':'gzip, deflate'}},9000,'SEC_FACTS_TIMEOUT');
   if(!r.ok)throw new Error('SEC companyfacts '+r.status);
@@ -131,7 +133,7 @@ async function alphaResolvedSymbol(resolved,key){
   const ck=resolved.displaySymbol||resolved.marketSymbol,hit=alphaMarketSymbolCache.get(ck);if(hit)return hit;
   const u=new URL('https://www.alphavantage.co/query');u.searchParams.set('function','SYMBOL_SEARCH');u.searchParams.set('keywords',resolved.displaySymbol);u.searchParams.set('apikey',key);
   const r=await fetchWithTimeout(u,{},10000,'ALPHA_TIMEOUT'),j=await r.json();if(!r.ok||alphaError(j))return resolved.alphaVantageSymbol;
-  const matches=j.bestMatches||[],wanted=String(resolved.displaySymbol||'').toUpperCase(),best=matches.find(x=>String(x['1. symbol']||'').toUpperCase().startsWith(wanted+'.'))||matches[0];
+  const matches=j.bestMatches||[],wanted=String(resolved.displaySymbol||'').toUpperCase(),equities=matches.filter(x=>!x['3. type']||/equity|stock/i.test(String(x['3. type']))),pool=equities.length?equities:matches,best=pool.find(x=>String(x['1. symbol']||'').toUpperCase().startsWith(wanted+'.'))||pool[0];
   const sym=best?.['1. symbol']||resolved.alphaVantageSymbol;if(sym)alphaMarketSymbolCache.set(ck,sym);return sym;
 }
 function mergeAlphaMarket(weekly=[],daily=[]){
