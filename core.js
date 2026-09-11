@@ -212,7 +212,7 @@
     const totalWeight=factors.reduce((s,x)=>s+x.weight,0);
     const weighted=factors.reduce((s,x)=>s+x.score*x.weight,0);
     const score100=totalWeight?weighted/totalWeight:null;
-    const score=score100==null?null:Math.round(score100)/10;
+    const score=score100==null?null:Math.max(1,Math.min(10,Math.round(score100)/10));
     const coverage=Math.min(1,totalWeight/100);
     const confidence=coverage>=.82&&rows.length>=5?'hoch':coverage>=.60&&rows.length>=4?'mittel':'niedrig';
     const grade=score==null?'—':score>=8.5?'A':score>=7.2?'B':score>=5.8?'C':score>=4.5?'D':'E';

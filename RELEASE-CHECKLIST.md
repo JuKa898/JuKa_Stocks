@@ -66,3 +66,22 @@
 - No duplicated frontend retry amplification.
 - Cached detail snapshot is the only browser fallback.
 - Health, engine, UI and package versions agree on Fair Value 8.0 / engine 10.0.1.
+
+## Product tools & screener 14.3
+- Fair Value chart offers exactly 1J / 3J / 5J / Max.
+- Tools menu has hover/focus dropdown and direct entries.
+- Each calculator includes purpose, input guidance, formula, result details, and interpretation.
+- Aktien Screener filters by sector, country, valuation model, market cap, P/E, Quality Score, ROIC, revenue growth, Fair Value discount, and data status.
+- Screener does not fabricate missing current metrics; it reuses cached analyses and loads at most 5 matching companies per batch.
+- Remaining Quality Score UI uses the 1–10 public scale consistently.
+
+## Final hardening 14.4
+- Screener market-cap normalization and EPS fallback.
+- Legacy Quality cache normalization.
+- Tools menu interaction hardened.
+- Fair Value 5Y internally supported.
+- Calculator input validation.
+- EU screener API throttling.
+- SEC class-share dot/hyphen fallback.
+- Alpha symbol search equity preference.
+- Partial snapshot on market-provider outage.

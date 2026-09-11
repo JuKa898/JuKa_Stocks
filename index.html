@@ -182,13 +182,56 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
 .calcGrid label{font-size:11px;color:#66736c}.calcGrid input{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:10px;border:1px solid #cfd6d1}
 .calcResult{margin-top:18px;padding-top:16px;border-top:1px solid #e1e5e2;font:600 28px Georgia,serif}
 @media(max-width:800px){.toolGrid{grid-template-columns:1fr}.calcGrid{grid-template-columns:1fr}.homeHero{padding-top:30px}}
+
+/* JUKA 14.3 — detailed tools + screener */
+.toolsNavWrap{position:relative;display:inline-flex}
+.navChevron{font-size:10px;margin-left:4px}
+.toolsDropdown{position:absolute;z-index:40;left:0;top:calc(100% + 4px);width:330px;padding:7px;background:#fff;border:1px solid #d8dfda;box-shadow:0 12px 28px rgba(23,39,31,.10);display:none}
+.toolsNavWrap:hover .toolsDropdown,.toolsNavWrap:focus-within .toolsDropdown,.toolsDropdown.open{display:block}
+.toolsDropdown button{width:100%;display:grid;grid-template-columns:1fr;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid #edf0ee;background:#fff;color:#1d3026;cursor:pointer}
+.toolsDropdown button:last-child{border-bottom:0}.toolsDropdown button:hover,.toolsDropdown button:focus{background:#f5f7f5;outline:none}
+.toolsDropdown b{font:600 13px Arial}.toolsDropdown span{font:11px Arial;color:#76817b;margin-top:3px}
+.toolIntro{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,.75fr);gap:16px;margin:16px 0 18px}
+.toolIntroMain,.toolGuide,.toolHelp,.screenerPanel,.screenerTableWrap{background:#fff;border:1px solid #dce2de}
+.toolIntroMain{padding:20px}.toolIntroMain h3{font:600 21px Georgia,serif;margin:0 0 8px;color:#182c22}.toolIntroMain p{margin:0;color:#66736c;line-height:1.6}
+.toolGuide{padding:18px}.toolGuide b{display:block;font:600 12px Arial;text-transform:uppercase;letter-spacing:.06em;color:#3f5549;margin-bottom:10px}
+.toolGuide ol{margin:0;padding-left:18px;color:#66736c;font-size:12px;line-height:1.7}
+.toolFormula{margin-top:14px;padding:10px 12px;background:#f7f8f6;border-left:2px solid #637d6e;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#354a3f}
+.calcPanel{max-width:900px}
+.calcFieldHelp{display:block;font-size:10px!important;line-height:1.4!important;color:#8a948f!important;margin-top:4px!important}
+.calcActions{display:flex;gap:8px;margin-top:14px}.calcActions button,.screenerActions button{border:1px solid #bfcac3;background:#fff;padding:9px 13px;color:#263a30;cursor:pointer;font:600 11px Arial}
+.calcActions button.primary,.screenerActions button.primary{background:#213c2f;color:#fff;border-color:#213c2f}
+.calcResults{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;border-top:1px solid #e1e5e2;padding-top:16px}
+.calcResultItem{padding:12px;background:#f8f9f7}.calcResultItem span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#7a867f}.calcResultItem b{display:block;margin-top:4px;font:600 22px Georgia,serif;color:#1d3127}
+.toolHelp{margin-top:16px;padding:18px}.toolHelp h4{margin:0 0 8px;font:600 14px Arial;color:#2a4035}.toolHelp p,.toolHelp li{font-size:12px;line-height:1.6;color:#68756e}.toolHelp ul{margin:8px 0 0;padding-left:18px}
+.screenerPanel{padding:18px}.screenerFilters{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px}
+.screenerFilters label{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#6f7c75}.screenerFilters input,.screenerFilters select{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px;border:1px solid #cfd7d2;background:#fff;color:#24382e}
+.screenerActions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px}.screenerMeta{font-size:11px;color:#748079;margin-left:auto}
+.screenerTableWrap{margin-top:12px;overflow:auto}.screenerTable{width:100%;border-collapse:collapse;min-width:960px}.screenerTable th{position:sticky;top:0;background:#f7f8f6;text-align:left;padding:9px 10px;border-bottom:1px solid #dfe4e1;font:600 10px Arial;text-transform:uppercase;color:#68766f;white-space:nowrap}
+.screenerTable td{padding:10px;border-bottom:1px solid #edf0ee;font-size:11px;color:#425148;white-space:nowrap}.screenerTable tr:hover td{background:#fafbf9}.screenerName{font-weight:600;color:#172a20}.screenerOpen{border:0;background:transparent;text-decoration:underline;color:#284c3a;cursor:pointer;padding:0}
+.metricPending{color:#a0a8a3}.metricGood{color:#28704b}.metricBad{color:#a04a44}.metricNeutral{color:#5e6d65}
+.screenerNotice{margin-top:10px;padding:10px 12px;background:#f7f8f6;font-size:11px;line-height:1.5;color:#6f7b74}
+@media(max-width:900px){.screenerFilters{grid-template-columns:1fr 1fr}.toolIntro{grid-template-columns:1fr}.calcResults{grid-template-columns:1fr 1fr}.toolsDropdown{width:290px}}
+@media(max-width:600px){.screenerFilters{grid-template-columns:1fr}.calcResults{grid-template-columns:1fr}.productNav{overflow:visible}}
 </style>
 <!-- Legacy regression marker: MVP 1.4 -->
 </head>
 <body>
 <div class="wrap">
   <nav class="productNav">
-    <button id="navHome" class="active">Start</button><button id="navStocks">Aktien</button><button id="navTools">Tools</button>
+    <button id="navHome" class="active">Start</button>
+    <button id="navStocks">Aktien</button>
+    <div class="toolsNavWrap">
+      <button id="navTools" aria-haspopup="true" aria-expanded="false">Tools <span class="navChevron">⌄</span></button>
+      <div class="toolsDropdown" id="toolsDropdown" role="menu" aria-label="JUKA Tools">
+        <button data-nav-tool="screener" role="menuitem"><b>Aktien Screener</b><span>Aktien gezielt filtern</span></button>
+        <button data-nav-tool="fairvalue" role="menuitem"><b>Fair-Value-Rechner</b><span>Inneren Wert überschlagen</span></button>
+        <button data-nav-tool="compound" role="menuitem"><b>Zinseszins-Rechner</b><span>Vermögensentwicklung</span></button>
+        <button data-nav-tool="cagr" role="menuitem"><b>CAGR-Rechner</b><span>Wachstumsrate berechnen</span></button>
+        <button data-nav-tool="mos" role="menuitem"><b>Margin of Safety</b><span>Sicherheitsmarge prüfen</span></button>
+        <button data-nav-tool="dividend" role="menuitem"><b>Dividenden-Rechner</b><span>Rendite & Einkommen</span></button>
+      </div>
+    </div>
   </nav>
   <section id="homeScreen" class="homeScreen active">
     <div class="homeHero"><div class="homeEyebrow">JUKA · Invest with clarity.</div><h1>Unternehmen verstehen. Wert erkennen.</h1>
@@ -196,7 +239,7 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
       <div class="homeSearch"><input id="homeSearchInput" placeholder="Aktie suchen, z. B. Microsoft, Apple, SAP"></div></div>
     <div class="homeSection"><h2>Research & Tools</h2><div class="homeSectionLead">Die wichtigsten Werkzeuge für deine Aktienanalyse an einem Ort.</div>
       <div class="toolGrid">
-        <div class="toolCard primary" data-tool="stocks"><div class="toolIcon">⌕</div><b>Aktienfinder & Analyse</b><span>Fundamentals, JUKA Quality Score und Fair Value.</span></div>
+        <div class="toolCard primary" data-tool="screener"><div class="toolIcon">⌕</div><b>Aktien Screener</b><span>Unternehmen nach Sparte, Land, Bewertung, Qualität und Fundamentaldaten filtern.</span></div>
         <div class="toolCard" data-tool="fairvalue"><div class="toolIcon">◇</div><b>Fair-Value-Rechner</b><span>Eigene Cashflow-, Wachstums- und Renditeannahmen.</span></div>
         <div class="toolCard" data-tool="compound"><div class="toolIcon">↗</div><b>Zinseszins-Rechner</b><span>Endwert einer Einmalanlage berechnen.</span></div>
         <div class="toolCard" data-tool="cagr"><div class="toolIcon">%</div><b>CAGR-Rechner</b><span>Jährliche Wachstumsrate bestimmen.</span></div>
@@ -321,7 +364,7 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
         </div>
       </div>
     </div>
-    <div class="analysisHeading">Valuation</div><div class="card chartCard sectionCard" id="valuationSection"><div class="chartToolbar"><div><h3 style="margin-bottom:3px">JUKA Fair Value</h3><div class="note" id="periodLabel">Historische Ansicht · 1 Jahr</div></div><div class="periods" aria-label="Zeitraum auswählen"><button class="periodBtn" data-period="1D">1T</button><button class="periodBtn" data-period="1W">1W</button><button class="periodBtn" data-period="1M">1M</button><button class="periodBtn" data-period="3M">3M</button><button class="periodBtn active" data-period="1Y">1J</button><button class="periodBtn" data-period="3Y">3J</button><button class="periodBtn" data-period="MAX">Max</button></div></div>
+    <div class="analysisHeading">Valuation</div><div class="card chartCard sectionCard" id="valuationSection"><div class="chartToolbar"><div><h3 style="margin-bottom:3px">JUKA Fair Value</h3><div class="note" id="periodLabel">Historische Ansicht · 1 Jahr</div></div><div class="periods" aria-label="Zeitraum auswählen"><button class="periodBtn active" data-period="1Y">1J</button><button class="periodBtn" data-period="3Y">3J</button><button class="periodBtn" data-period="5Y">5J</button><button class="periodBtn" data-period="MAX">Max</button></div></div>
       <div class="chartWrap"><svg id="valuationChart" viewBox="0 0 760 350" role="img" aria-label="Aktienkurs mit Fair Value, Bear-Fair-Value und Bull-Fair-Value"></svg><div id="chartTooltip" class="chartTooltip"></div></div>
       <div class="legend"><span><i class="dot" style="background:#76b7ff"></i>Aktienkurs</span><span><i class="dot" style="background:#111"></i>JUKA Fair Value</span><span><i class="dot" style="background:#b85d59"></i>Bear</span><span><i class="dot" style="background:#ad812a"></i>Bull</span></div>
       <div class="note" id="chartNote" hidden></div>
@@ -661,7 +704,7 @@ function updateFromSnapshot(symbol,snap){
     document.getElementById('epsMetric').textContent=Number.isFinite(Number(fact.eps))?money(fact.eps):'—';document.getElementById('fcfMetric').textContent=fmtBig(fact.fcf);document.getElementById('netCashMetric').textContent=fmtBig(fact.netCash);
     document.getElementById('peMetric').textContent=Number.isFinite(snap.multiples?.pe)?snap.multiples.pe.toFixed(1)+'×':'—';document.getElementById('forwardPeMetric').textContent=Number.isFinite(snap.relative?.peY5)?snap.relative.peY5.toFixed(1)+'×':'—';
   }
-  if(snap.quality){const qs=snap.quality;document.getElementById('qualityScore').textContent=Number.isFinite(Number(qs.score))?(Number.isInteger(qs.score)?qs.score:Number(qs.score).toFixed(1)):'—';document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+(qs.confidence?' · Konfidenz '+qs.confidence:'');document.querySelector('.bar>div').style.width=(Number(qs.score)||0)+'%';const qv=document.getElementById('qualityVerdict');if(qv)qv.textContent=qs.verdict||qs.interpretation||'';const qr=document.getElementById('qualityRecommendation');if(qr)qr.textContent=qs.recommendation||'';document.getElementById('scoreBreakdown').innerHTML=(qs.parts||[]).map(p=>`<div class="scoreItem"><span>${p.label}${p.group?' · '+p.group:''}</span><strong>${Number.isFinite(Number(p.score))?(Number(p.score)/10).toFixed(1)+'/10 · ':''}${p.reason||''}</strong></div>`).join('');renderJukaQualityDetail(qs);}
+  if(snap.quality){const qs=snap.quality;document.getElementById('qualityScore').textContent=Number.isFinite(Number(qs.score))?(Number.isInteger(qs.score)?qs.score:Number(qs.score).toFixed(1)):'—';document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+(qs.confidence?' · Konfidenz '+qs.confidence:'');document.querySelector('.bar>div').style.width=((Number(qs.score)||0)*10)+'%';const qv=document.getElementById('qualityVerdict');if(qv)qv.textContent=qs.verdict||qs.interpretation||'';const qr=document.getElementById('qualityRecommendation');if(qr)qr.textContent=qs.recommendation||'';document.getElementById('scoreBreakdown').innerHTML=(qs.parts||[]).map(p=>`<div class="scoreItem"><span>${p.label}${p.group?' · '+p.group:''}</span><strong>${Number.isFinite(Number(p.score))?(Number(p.score)/10).toFixed(1)+'/10 · ':''}${p.reason||''}</strong></div>`).join('');renderJukaQualityDetail(qs);}
   renderFundamentalHistory(snap.fundamentals?.annual||[],snap.fundamentals?.source||'Pipeline');
   renderMotorAudit(snap);
   renderAutoAssumptions(snap.autoAssumptions||null);
@@ -818,7 +861,7 @@ async function fetchJson(url,label,timeoutMs=25000){
 function jukaCacheKey(symbol,kind){
   const z=stocks.find(x=>x.s===symbol)||{};
   const listing=[String(z.region||'US').toUpperCase(),String(z.marketSymbol||symbol).toUpperCase(),String(z.currency||'USD').toUpperCase()].join('|');
-  return 'juka-live-v12:'+kind+':'+String(symbol).toUpperCase()+':'+listing
+  return 'juka-live-v14:'+kind+':'+String(symbol).toUpperCase()+':'+listing
 }
 function jukaCacheSet(symbol,kind,data){try{localStorage.setItem(jukaCacheKey(symbol,kind),JSON.stringify({savedAt:Date.now(),data}))}catch{}}
 function jukaCacheGet(symbol,kind,maxAgeMs=86400000){
@@ -1226,7 +1269,7 @@ function node(tag,attrs={},text=''){const n=document.createElementNS(NS,tag);Obj
 function getSlice(){
   if(!chartData.length)return [];
   if(currentPeriod==='MAX')return chartData;
-  const last=chartData.at(-1).date,target=new Date(last),meta={'1D':{days:1},'1W':{days:7},'1M':{months:1},'3M':{months:3},'1Y':{years:1},'3Y':{years:3}}[currentPeriod]||{years:1};
+  const last=chartData.at(-1).date,target=new Date(last),meta={'1D':{days:1},'1W':{days:7},'1M':{months:1},'3M':{months:3},'1Y':{years:1},'3Y':{years:3},'5Y':{years:5}}[currentPeriod]||{years:1};
   if(meta.days)target.setDate(target.getDate()-meta.days);if(meta.months)target.setMonth(target.getMonth()-meta.months);if(meta.years)target.setFullYear(target.getFullYear()-meta.years);
   let start=0;for(let i=0;i<chartData.length;i++){if(chartData[i].date<=target)start=i;else break}return chartData.slice(start);
 }
@@ -1365,7 +1408,7 @@ function syncInvestmentSummary(){
   set('summaryFair',get('fvMetric'));
   set('summaryValuation',get('valuationMetric'));
   const q=get('qualityScore'),grade=get('qualityGrade');
-  set('summaryQuality',q==='—'?'—':q+'/100');
+  set('summaryQuality',q==='—'?'—':q+'/10');
   set('summaryQualityNote',grade);
   const baseReturn=get('scenarioBaseReturn');
   set('summaryReturn',baseReturn!=='—'?baseReturn:get('forecastReturn'));
@@ -1406,7 +1449,7 @@ function renderJukaQualityDetail(qs){
   if(w)w.innerHTML=weakest.length?weakest.map(x=>`<div class="qualityExplain">${qualityPlainText(x,false)}</div>`).join(''):'<span class="note">Noch keine ausreichenden Einzelfaktoren verfügbar.</span>';
   if(rows){
     const parts=Array.isArray(qs.parts)?qs.parts:[];
-    rows.innerHTML=parts.length?parts.map(p=>`<tr><td>${escapeHtml(p.label||'—')}</td><td>${escapeHtml(jukaFmtQualityValue(p))}</td><td>${Number.isFinite(Number(p.score))?Number(p.score).toFixed(0)+'/100':'—'}</td><td>${Number.isFinite(Number(p.weight))?Number(p.weight).toFixed(0)+'%':'—'}</td><td>${escapeHtml(p.reason||'—')}</td></tr>`).join(''):'<tr><td colspan="5">Keine ausreichenden Qualitätsdaten verfügbar.</td></tr>';
+    rows.innerHTML=parts.length?parts.map(p=>`<tr><td>${escapeHtml(p.label||'—')}</td><td>${escapeHtml(jukaFmtQualityValue(p))}</td><td>${Number.isFinite(Number(p.score))?(Number(p.score)/10).toFixed(1)+'/10':'—'}</td><td>${Number.isFinite(Number(p.weight))?Number(p.weight).toFixed(0)+'%':'—'}</td><td>${escapeHtml(p.reason||'—')}</td></tr>`).join(''):'<tr><td colspan="5">Keine ausreichenden Qualitätsdaten verfügbar.</td></tr>';
   }
 }
 
@@ -1532,23 +1575,166 @@ async function jukaLoadFairValueHistory(symbol, stockMeta={}){
   }));
 }
 
-// JUKA product navigation / start screen / calculators
+// JUKA product navigation / detailed tools / screener
 (function(){
  const home=document.getElementById('homeScreen'),tools=document.getElementById('toolsScreen'),analysis=document.getElementById('analysisShell');
  const buttons={home:document.getElementById('navHome'),stocks:document.getElementById('navStocks'),tools:document.getElementById('navTools')};
- function show(view){home.classList.toggle('active',view==='home');tools.classList.toggle('active',view==='tools');analysis.classList.toggle('hidden',view!=='stocks');Object.entries(buttons).forEach(([k,b])=>b&&b.classList.toggle('active',k===view));window.scrollTo({top:0,behavior:'smooth'});}
- buttons.home.onclick=()=>show('home');buttons.stocks.onclick=()=>show('stocks');buttons.tools.onclick=()=>openTool('fairvalue');
- document.querySelectorAll('.toolCard').forEach(c=>c.onclick=()=>c.dataset.tool==='stocks'?show('stocks'):openTool(c.dataset.tool));
- const hs=document.getElementById('homeSearchInput');hs.addEventListener('keydown',e=>{if(e.key==='Enter'){show('stocks');const q=document.getElementById('search');q.value=hs.value;q.dispatchEvent(new Event('input',{bubbles:true}));q.focus();}});
- function openTool(kind){show('tools');const title=document.getElementById('toolTitle'),body=document.getElementById('toolBody');
- const specs={
- compound:['Zinseszins-Rechner',[['Startkapital','a',10000],['Rendite p.a. (%)','b',8],['Jahre','c',10]],v=>v.a*Math.pow(1+v.b/100,v.c),'Endwert'],
- cagr:['CAGR-Rechner',[['Anfangswert','a',100],['Endwert','b',200],['Jahre','c',5]],v=>(Math.pow(v.b/v.a,1/v.c)-1)*100,'CAGR %'],
- mos:['Margin of Safety',[['Aktienkurs','a',80],['Fair Value','b',100]],v=>(1-v.a/v.b)*100,'Sicherheitsmarge %'],
- dividend:['Dividendenrendite',[['Jahresdividende je Aktie','a',3],['Aktienkurs','b',100]],v=>v.a/v.b*100,'Dividendenrendite %'],
- fairvalue:['Fair-Value-Rechner',[['Owner Earnings / FCF','a',100],['Wachstum p.a. (%)','b',5],['Diskontsatz (%)','c',9],['Terminalwachstum (%)','d',2.5],['Netto-Schulden','e',0],['Aktienanzahl','f',10]],v=>{if(v.c<=v.d||v.f<=0)return NaN;let pv=0,cf=v.a;for(let y=1;y<=10;y++){const g=(v.b/100)*(1-(y-1)/12);cf*=1+g;pv+=cf/Math.pow(1+v.c/100,y)}const tv=cf*(1+v.d/100)/(v.c/100-v.d/100);return (pv+tv/Math.pow(1+v.c/100,10)-v.e)/v.f},'Fair Value je Aktie']};
- const sp=specs[kind]||specs.fairvalue;title.textContent=sp[0];body.innerHTML='<div class="calcPanel"><div class="calcGrid">'+sp[1].map(x=>`<label>${x[0]}<input data-k="${x[1]}" type="number" step="any" value="${x[2]}"></label>`).join('')+'</div><div class="calcResult"><span id="calcLabel"></span><br><strong id="calcValue">—</strong></div></div>';
- const calc=()=>{const v={};body.querySelectorAll('input').forEach(i=>v[i.dataset.k]=Number(i.value));const x=sp[2](v);document.getElementById('calcLabel').textContent=sp[3];document.getElementById('calcValue').textContent=Number.isFinite(x)?x.toLocaleString('de-DE',{maximumFractionDigits:2}):'—'};body.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));calc();}
+ const dropdown=document.getElementById('toolsDropdown');
+ function show(view){
+   home.classList.toggle('active',view==='home');tools.classList.toggle('active',view==='tools');analysis.classList.toggle('hidden',view!=='stocks');
+   Object.entries(buttons).forEach(([k,b])=>b&&b.classList.toggle('active',k===view));
+   if(buttons.tools)buttons.tools.setAttribute('aria-expanded',view==='tools'?'true':'false');
+   window.scrollTo({top:0,behavior:'smooth'});
+ }
+ buttons.home.onclick=()=>show('home');buttons.stocks.onclick=()=>show('stocks');
+ buttons.tools.onclick=(ev)=>{ev.preventDefault();const open=dropdown?.classList.toggle('open');buttons.tools.setAttribute('aria-expanded',open?'true':'false')};
+ document.querySelectorAll('[data-nav-tool]').forEach(b=>b.addEventListener('click',()=>{openTool(b.dataset.navTool);dropdown?.classList.remove('open')}));
+ document.addEventListener('click',ev=>{if(!ev.target.closest('.toolsNavWrap')){dropdown?.classList.remove('open');buttons.tools?.setAttribute('aria-expanded','false')}});
+ document.addEventListener('keydown',ev=>{if(ev.key==='Escape'){dropdown?.classList.remove('open');buttons.tools?.setAttribute('aria-expanded','false');buttons.tools?.focus()}});
+
+ document.querySelectorAll('.toolCard').forEach(c=>c.onclick=()=>openTool(c.dataset.tool));
+ const hs=document.getElementById('homeSearchInput');
+ hs.addEventListener('keydown',e=>{if(e.key==='Enter'){show('stocks');const q=document.getElementById('search');q.value=hs.value;q.dispatchEvent(new Event('input',{bubbles:true}));q.focus();}});
+
+ const toolDefinitions={
+  fairvalue:{
+   title:'Fair-Value-Rechner',
+   intro:'Schätzt den inneren Wert einer Aktie aus normalisierten Owner Earnings bzw. Free Cashflow. Das Modell diskontiert die zukünftige Ertragskraft und berücksichtigt Netto-Schulden sowie Aktienanzahl.',
+   steps:['Nachhaltige Owner Earnings oder FCF eintragen.','Eine realistische Wachstumsannahme und den Diskontsatz wählen.','Terminalwachstum konservativ unter dem Diskontsatz halten.','Netto-Schulden und verwässerte Aktienanzahl ergänzen.'],
+   formula:'Unternehmenswert = Barwert der Cashflows + Barwert Terminalwert;  Fair Value/Aktie = (Unternehmenswert − Netto-Schulden) ÷ Aktien',
+   fields:[['Owner Earnings / FCF','a',100,'Nachhaltiger jährlicher Cashflow, nicht ein außergewöhnliches Einzeljahr.'],['Wachstum p.a. (%)','b',5,'Erwartetes anfängliches Wachstum; es wird im Rechner allmählich abgeschwächt.'],['Diskontsatz (%)','c',9,'Geforderte Rendite / Risikoabschlag. Muss über dem Terminalwachstum liegen.'],['Terminalwachstum (%)','d',2.5,'Langfristige Wachstumsrate eines reifen Unternehmens.'],['Explizite Jahre','g',10,'Zeitraum, in dem die Cashflows einzeln prognostiziert werden.'],['Netto-Schulden','e',0,'Finanzschulden minus überschüssiges Cash. Bei Netto-Cash negativ eintragen.'],['Aktienanzahl','f',10,'Verwässerte Aktienanzahl in derselben Einheit wie der Unternehmenswert.'],['Sicherheitsmarge (%)','h',20,'Optionaler Abschlag auf den Fair Value für einen konservativen Kaufpreis.']],
+   calc:v=>{if(v.c<=v.d||v.f<=0||v.g<1)return null;let pv=0,cf=v.a;const years=Math.max(1,Math.round(v.g));for(let y=1;y<=years;y++){const fade=Math.max(0,1-(y-1)/(years+2));const gr=(v.b/100)*fade;cf*=1+gr;pv+=cf/Math.pow(1+v.c/100,y)}const tv=cf*(1+v.d/100)/(v.c/100-v.d/100),ev=pv+tv/Math.pow(1+v.c/100,years),eq=ev-v.e,fv=eq/v.f;return [['Fair Value je Aktie',fv],['Kaufpreis mit Sicherheitsmarge',fv*(1-v.h/100)],['Unternehmenswert',ev]]},
+   help:'Der Rechner ist eine Szenariohilfe und ersetzt keine vollständige JUKA-Unternehmensanalyse. Besonders sensibel sind Diskontsatz und Terminalwachstum. Verwende lieber plausible Bandbreiten als eine scheinbar exakte Einzelzahl.'
+  },
+  compound:{
+   title:'Zinseszins-Rechner',
+   intro:'Zeigt, wie sich ein Startkapital zusammen mit regelmäßigen Sparraten über viele Jahre entwickelt.',
+   steps:['Startkapital eintragen.','Monatliche Sparrate ergänzen.','Erwartete durchschnittliche Rendite p.a. festlegen.','Laufzeit wählen und Ergebnis mit den Einzahlungen vergleichen.'],
+   formula:'Endwert = verzinstes Startkapital + Summe aller verzinsten Sparraten',
+   fields:[['Startkapital','a',10000,'Bereits investiertes Kapital.'],['Monatliche Sparrate','m',300,'Zusätzliche Einzahlung am Monatsende.'],['Rendite p.a. (%)','b',8,'Durchschnittliche nominale Jahresrendite.'],['Jahre','c',20,'Anlagedauer.']],
+   calc:v=>{if(v.a<0||v.m<0||v.c<0||v.b<=-100)return null;const months=Math.max(0,Math.round(v.c*12)),r=Math.pow(1+v.b/100,1/12)-1;let value=v.a;for(let i=0;i<months;i++)value=value*(1+r)+v.m;const paid=v.a+v.m*months;return [['Endwert',value],['Einzahlungen',paid],['Wertzuwachs',value-paid]]},
+   help:'Der Rechner unterstellt eine konstante Durchschnittsrendite. In der Realität schwanken Märkte stark. Je länger der Zeitraum, desto größer wird der Einfluss des Zinseszinseffekts gegenüber den reinen Einzahlungen.'
+  },
+  cagr:{
+   title:'CAGR-Rechner',
+   intro:'Berechnet die geglättete durchschnittliche jährliche Wachstumsrate zwischen einem Anfangs- und einem Endwert.',
+   steps:['Anfangswert und Endwert eintragen.','Anzahl der Jahre zwischen beiden Werten angeben.','CAGR mit dem tatsächlichen Verlauf kombinieren – sie zeigt nur die geglättete Rate.'],
+   formula:'CAGR = (Endwert ÷ Anfangswert)^(1 ÷ Jahre) − 1',
+   fields:[['Anfangswert','a',100,'Zum Beispiel Umsatz, EPS, FCF oder Aktienkurs.'],['Endwert','b',200,'Wert am Ende des Zeitraums.'],['Jahre','c',5,'Abstand zwischen Anfangs- und Endwert.']],
+   calc:v=>{if(v.a<=0||v.b<=0||v.c<=0)return null;const c=(Math.pow(v.b/v.a,1/v.c)-1)*100;return [['CAGR',c,'%'],['Gesamtwachstum',(v.b/v.a-1)*100,'%'],['Faktor',v.b/v.a,'×']]},
+   help:'CAGR ist besonders nützlich für Umsatz, Gewinn und Free Cashflow. Sie verschweigt jedoch Schwankungen innerhalb des Zeitraums; zyklische Unternehmen sollten deshalb zusätzlich über mehrere Zeitfenster betrachtet werden.'
+  },
+  mos:{
+   title:'Margin of Safety',
+   intro:'Vergleicht einen Aktienkurs mit deinem geschätzten Fair Value und zeigt den Sicherheitsabstand.',
+   steps:['Aktuellen Aktienkurs eingeben.','Eigenen oder JUKA Fair Value eintragen.','Optional gewünschte Mindestsicherheitsmarge definieren.','Ergebnis nicht isoliert betrachten – Qualität und Unsicherheit des Fair Values bleiben entscheidend.'],
+   formula:'Sicherheitsmarge = 1 − Aktienkurs ÷ Fair Value',
+   fields:[['Aktienkurs','a',80,'Aktueller oder geplanter Kaufkurs.'],['Fair Value','b',100,'Deine unabhängige Schätzung des inneren Werts.'],['Ziel-Sicherheitsmarge (%)','c',20,'Persönlicher Mindestabschlag zum Fair Value.']],
+   calc:v=>{if(v.a<=0||v.b<=0)return null;const mos=(1-v.a/v.b)*100,target=v.b*(1-v.c/100);return [['Aktuelle Sicherheitsmarge',mos,'%'],['Ziel-Kaufpreis',target],['Abstand zum Ziel',((target-v.a)/v.a)*100,'%']]},
+   help:'Eine hohe Sicherheitsmarge kann Bewertungsfehler abfedern, macht eine schlechte Unternehmensanalyse aber nicht automatisch gut. Je unsicherer das Geschäftsmodell oder die Schätzung, desto sinnvoller ist tendenziell eine größere Marge.'
+  },
+  dividend:{
+   title:'Dividenden-Rechner',
+   intro:'Berechnet Dividendenrendite und erwartetes jährliches bzw. monatliches Brutto-Dividendeneinkommen.',
+   steps:['Jahresdividende je Aktie eintragen.','Aktienkurs und Stückzahl ergänzen.','Optional erwartetes Dividendenwachstum angeben.','Ausschüttungsqualität und Finanzierung separat prüfen.'],
+   formula:'Dividendenrendite = Jahresdividende je Aktie ÷ Aktienkurs',
+   fields:[['Jahresdividende je Aktie','a',3,'Summe aller erwarteten Dividenden eines Jahres je Aktie.'],['Aktienkurs','b',100,'Aktueller Kurs je Aktie.'],['Anzahl Aktien','c',100,'Gehaltene oder geplante Stückzahl.'],['Dividendenwachstum p.a. (%)','d',5,'Nur für die optionale 5-Jahres-Projektion.']],
+   calc:v=>{if(v.a<0||v.b<=0||v.c<0||v.d<=-100)return null;const annual=v.a*v.c,yieldPct=v.a/v.b*100,future=v.a*Math.pow(1+v.d/100,5)*v.c;return [['Dividendenrendite',yieldPct,'%'],['Jahresdividende brutto',annual],['Proj. Dividende in 5J',future]]},
+   help:'Die Rendite allein sagt wenig über die Qualität einer Dividende aus. Wichtig sind zusätzlich Gewinn- und Cashflow-Deckung, Verschuldung sowie die historische Stabilität der Ausschüttung.'
+  }
+ };
+
+ function renderCalculator(kind){
+   const sp=toolDefinitions[kind]||toolDefinitions.fairvalue,title=document.getElementById('toolTitle'),body=document.getElementById('toolBody');title.textContent=sp.title;
+   body.innerHTML=`<div class="toolIntro"><div class="toolIntroMain"><h3>${sp.title}</h3><p>${sp.intro}</p><div class="toolFormula">${sp.formula}</div></div><aside class="toolGuide"><b>So benutzt du das Tool</b><ol>${sp.steps.map(x=>`<li>${x}</li>`).join('')}</ol></aside></div>
+   <div class="calcPanel"><div class="calcGrid">${sp.fields.map(x=>`<label>${x[0]}<input data-k="${x[1]}" type="number" step="any" value="${x[2]}"><span class="calcFieldHelp">${x[3]}</span></label>`).join('')}</div><div class="calcActions"><button class="primary" id="calcNow">Berechnen</button><button id="calcReset">Zurücksetzen</button></div><div class="calcResults" id="calcResults"></div></div>
+   <div class="toolHelp"><h4>Einordnung</h4><p>${sp.help}</p></div>`;
+   const calc=()=>{const v={};body.querySelectorAll('input[data-k]').forEach(i=>v[i.dataset.k]=Number(i.value));const out=sp.calc(v),box=document.getElementById('calcResults');if(!out){box.innerHTML='<div class="calcResultItem"><span>Eingaben prüfen</span><b>—</b></div>';return}box.innerHTML=out.map(([label,val,suffix=''])=>`<div class="calcResultItem"><span>${label}</span><b>${Number.isFinite(val)?val.toLocaleString('de-DE',{maximumFractionDigits:2}):'—'}${suffix}</b></div>`).join('')};
+   document.getElementById('calcNow').onclick=calc;document.getElementById('calcReset').onclick=()=>{sp.fields.forEach(x=>{const el=body.querySelector(`[data-k="${x[1]}"]`);if(el)el.value=x[2]});calc()};body.querySelectorAll('input[data-k]').forEach(i=>i.addEventListener('input',calc));calc();
+ }
+
+ const sectorMap={
+   Technology:['AAPL','MSFT','NVDA','AVGO','ADBE','ORCL','CRM','AMD','INTC','QCOM','TXN','SAP','ASML','IFX'],
+   Communication:['META','GOOGL','NFLX','DIS','DTE'],
+   'Consumer Cyclical':['AMZN','MCD','TSLA','HD','NKE','SBUX','ADS','MBG','BMW','LVMH','MC'],
+   'Consumer Defensive':['COST','KO','PEP','PG','WMT','NESN','UNA','ULVR','DGE'],
+   Healthcare:['LLY','JNJ','MRK','ABBV','AZN','SAN','NOVO-B','ROG','NOVN'],
+   Financials:['BRK.B','JPM','V','MA','BAC','WFC','GS','MS','ALV','MUV2','BNP','UBSG','DB1','ADYEN'],
+   Industrials:['SIE','AIR','SU','ABB','ABBN','MAERSK-B','REL'],
+   Energy:['TTE','SHEL','RWE','ENR'],
+   Materials:['BAS'],
+   'Real Estate':['O','PLD','NNN','ADC','WPC'],
+   Semiconductors:['MU']
+ };
+ function screenerSector(stock){if(stock.sector==='Bank'||stock.sector==='Insurance')return 'Financials';if(stock.sector==='REIT')return 'Real Estate';for(const [k,list] of Object.entries(sectorMap))if(list.includes(stock.s))return k;return 'Other'}
+ function screenerMetrics(stock){
+   const cached=typeof jukaCacheGet==='function'?jukaCacheGet(stock.s,'detail'):null,snap=cached?.data||null;
+   if(!snap)return {loaded:false};
+   const latest=snap.latest||{},price=Number(snap.price),shares=Number(latest.shares),eps=Number(latest.eps),fair=Number(snap.valuation?.base),q=Number(snap.quality?.score);
+   let shareUnits=shares;
+   if(Number.isFinite(shares)&&shares>0){
+     const ref=Math.max(Math.abs(Number(latest.revenue)||0),Math.abs(Number(latest.equity)||0),Math.abs(Number(latest.netIncome)||0));
+     if(ref>1e6 && shares<1e8)shareUnits=shares*1e6;
+   }
+   const marketCap=Number.isFinite(price)&&Number.isFinite(shareUnits)&&shareUnits>0?price*shareUnits:null;
+   let epsResolved=eps;
+   if(!(Number.isFinite(epsResolved)&&epsResolved!==0)&&Number.isFinite(Number(latest.netIncome))&&Number.isFinite(shares)&&shares>0)epsResolved=Number(latest.netIncome)/shares;
+   return {loaded:true,price,marketCap,pe:Number.isFinite(price)&&Number.isFinite(epsResolved)&&epsResolved>0?price/epsResolved:null,quality:Number.isFinite(q)?(q>10?q/10:q):null,
+     revenueGrowth:Number.isFinite(Number(latest.revenueGrowthYoY))?Number(latest.revenueGrowthYoY):Number(latest.revenueCagr3y),
+     roic:Number(latest.roic),fair,discount:Number.isFinite(price)&&Number.isFinite(fair)&&fair>0?1-price/fair:null};
+ }
+ function fmtCap(v){if(!Number.isFinite(v))return '—';const a=Math.abs(v);if(a>=1e12)return (v/1e12).toFixed(2)+' Bio.';if(a>=1e9)return (v/1e9).toFixed(1)+' Mrd.';if(a>=1e6)return (v/1e6).toFixed(1)+' Mio.';return v.toLocaleString('de-DE',{maximumFractionDigits:0})}
+ function renderScreener(){
+   const title=document.getElementById('toolTitle'),body=document.getElementById('toolBody');title.textContent='Aktien Screener';
+   const countries=[...new Set(stocks.map(x=>x.country).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de')),sectors=[...new Set(stocks.map(screenerSector))].sort();
+   body.innerHTML=`<div class="toolIntro"><div class="toolIntroMain"><h3>Aktien Screener</h3><p>Filtere das JUKA-Aktienuniversum nach Geschäftsbereich, Land, Unternehmensgröße, Bewertung und fundamentaler Qualität. Strukturfilter funktionieren sofort; Kennzahlenfilter verwenden bereits geladene bzw. gezielt aktualisierte Live-Analysen.</p><div class="toolFormula">Tipp: zuerst Land / Sparte eingrenzen → danach Kennzahlen für die Treffer laden → anschließend KGV, Quality Score, ROIC oder Fair-Value-Abschlag filtern.</div></div><aside class="toolGuide"><b>So benutzt du den Screener</b><ol><li>Land und Sparte auswählen.</li><li>Mit „Kennzahlen laden“ bis zu 5 passende Unternehmen aktualisieren.</li><li>Bewertungs- und Qualitätsfilter setzen.</li><li>Unternehmen anklicken und direkt in JUKA analysieren.</li></ol></aside></div>
+   <div class="screenerPanel"><div class="screenerFilters">
+    <label>Suche<input id="scQuery" placeholder="Name / Symbol"></label>
+    <label>Sparte<select id="scSector"><option value="">Alle Sparten</option>${sectors.map(x=>`<option>${x}</option>`).join('')}</select></label>
+    <label>Land<select id="scCountry"><option value="">Alle Länder</option>${countries.map(x=>`<option>${x}</option>`).join('')}</select></label>
+    <label>Modell<select id="scModel"><option value="">Alle</option><option value="operating-company">Unternehmen</option><option value="bank-insurance">Bank / Versicherung</option><option value="reit">REIT</option></select></label>
+    <label>Marktkap. min. (Mrd.)<input id="scCapMin" type="number" min="0" step="10" placeholder="z. B. 50"></label>
+    <label>KGV max.<input id="scPeMax" type="number" min="0" step="1" placeholder="z. B. 25"></label>
+    <label>Quality Score min.<input id="scQMin" type="number" min="1" max="10" step=".1" placeholder="z. B. 7,5"></label>
+    <label>ROIC min. (%)<input id="scRoicMin" type="number" step="1" placeholder="z. B. 12"></label>
+    <label>Umsatzwachstum min. (%)<input id="scGrowthMin" type="number" step="1" placeholder="z. B. 5"></label>
+    <label>Fair-Value-Abschlag min. (%)<input id="scDiscountMin" type="number" step="1" placeholder="z. B. 15"></label>
+    <label>Datenstatus<select id="scLoaded"><option value="">Alle</option><option value="loaded">Kennzahlen geladen</option><option value="pending">Noch nicht geladen</option></select></label>
+   </div><div class="screenerActions"><button class="primary" id="scLoad">Kennzahlen laden · max. 5</button><button id="scReset">Filter zurücksetzen</button><span class="screenerMeta" id="scMeta"></span></div><div class="screenerNotice">Hinweis: JUKA nutzt kostenlose Datenquellen. Damit der Screener nicht unnötig API-Limits verbraucht, werden Kennzahlen gezielt in kleinen Paketen geladen und anschließend im JUKA-Cache wiederverwendet. Markt- und Bewertungskennzahlen ohne geladenen Snapshot werden bewusst nicht erfunden.</div></div>
+   <div class="screenerTableWrap"><table class="screenerTable"><thead><tr><th>Unternehmen</th><th>Sparte</th><th>Land</th><th>Marktkap.</th><th>KGV</th><th>Quality</th><th>Umsatzwachstum</th><th>ROIC</th><th>Fair-Value-Abschlag</th><th>Daten</th></tr></thead><tbody id="scRows"></tbody></table></div>
+   <div class="toolHelp"><h4>Was bedeuten die wichtigsten Filter?</h4><ul><li><b>Marktkapitalisierung:</b> Aktienkurs × Aktienanzahl; dient als Größenfilter.</li><li><b>KGV:</b> Aktienkurs ÷ Gewinn je Aktie. Bei Verlustunternehmen ist es nicht sinnvoll.</li><li><b>Quality Score:</b> JUKA-Bewertung von 1,0 bis 10,0.</li><li><b>ROIC:</b> Rendite auf das im operativen Geschäft eingesetzte Kapital.</li><li><b>Fair-Value-Abschlag:</b> Positiv = Kurs unter JUKA Fair Value; negativ = Kurs über JUKA Fair Value.</li></ul></div>`;
+   const ids=['scQuery','scSector','scCountry','scModel','scCapMin','scPeMax','scQMin','scRoicMin','scGrowthMin','scDiscountMin','scLoaded'];
+   const structural=stock=>{
+     const q=document.getElementById('scQuery').value.trim().toLowerCase(),sector=document.getElementById('scSector').value,country=document.getElementById('scCountry').value,model=document.getElementById('scModel').value;
+     if(q&&!`${stock.s} ${stock.n}`.toLowerCase().includes(q))return false;if(sector&&screenerSector(stock)!==sector)return false;if(country&&stock.country!==country)return false;if(model&&JuKaCore.classifyValuationModel(stock)!==model)return false;return true;
+   };
+   const filtered=()=>stocks.filter(stock=>{if(!structural(stock))return false;const m=screenerMetrics(stock),get=id=>Number(document.getElementById(id).value);
+     const cap=get('scCapMin'),pe=get('scPeMax'),qs=get('scQMin'),roic=get('scRoicMin'),growth=get('scGrowthMin'),disc=get('scDiscountMin'),status=document.getElementById('scLoaded').value;
+     if(status==='loaded'&&!m.loaded)return false;if(status==='pending'&&m.loaded)return false;
+     if(Number.isFinite(cap)&&document.getElementById('scCapMin').value!==''&&(!m.loaded||!Number.isFinite(m.marketCap)||m.marketCap<cap*1e9))return false;
+     if(Number.isFinite(pe)&&document.getElementById('scPeMax').value!==''&&(!m.loaded||!Number.isFinite(m.pe)||m.pe>pe))return false;
+     if(Number.isFinite(qs)&&document.getElementById('scQMin').value!==''&&(!m.loaded||!Number.isFinite(m.quality)||m.quality<qs))return false;
+     if(Number.isFinite(roic)&&document.getElementById('scRoicMin').value!==''&&(!m.loaded||!Number.isFinite(m.roic)||m.roic*100<roic))return false;
+     if(Number.isFinite(growth)&&document.getElementById('scGrowthMin').value!==''&&(!m.loaded||!Number.isFinite(m.revenueGrowth)||m.revenueGrowth*100<growth))return false;
+     if(Number.isFinite(disc)&&document.getElementById('scDiscountMin').value!==''&&(!m.loaded||!Number.isFinite(m.discount)||m.discount*100<disc))return false;
+     return true;
+   });
+   const drawRows=()=>{const rows=filtered(),tbody=document.getElementById('scRows');document.getElementById('scMeta').textContent=`${rows.length} von ${stocks.length} Unternehmen`;
+     tbody.innerHTML=rows.map(stock=>{const m=screenerMetrics(stock),metric=(v,fmt,cls='metricNeutral')=>m.loaded&&Number.isFinite(v)?`<span class="${cls}">${fmt(v)}</span>`:'<span class="metricPending">—</span>';
+       return `<tr><td><button class="screenerOpen" data-open-stock="${stock.s}"><span class="screenerName">${stock.n}</span> · ${stock.s}</button></td><td>${screenerSector(stock)}</td><td>${stock.country||'—'}</td><td>${metric(m.marketCap,fmtCap)}</td><td>${metric(m.pe,v=>v.toFixed(1)+'×')}</td><td>${metric(m.quality,v=>v.toFixed(1)+'/10',m.quality>=7.5?'metricGood':'metricNeutral')}</td><td>${metric(m.revenueGrowth,v=>(v*100).toFixed(1)+'%')}</td><td>${metric(m.roic,v=>(v*100).toFixed(1)+'%',m.roic>=.12?'metricGood':'metricNeutral')}</td><td>${metric(m.discount,v=>(v*100).toFixed(1)+'%',m.discount>0?'metricGood':'metricBad')}</td><td>${m.loaded?'geladen':'offen'}</td></tr>`}).join('')||'<tr><td colspan="10">Keine Unternehmen entsprechen den aktuellen Filtern.</td></tr>';
+     tbody.querySelectorAll('[data-open-stock]').forEach(b=>b.onclick=()=>{show('stocks');select(b.dataset.openStock)});
+   };
+   ids.forEach(id=>document.getElementById(id).addEventListener(id==='scQuery'?'input':'change',drawRows));
+   document.getElementById('scReset').onclick=()=>{ids.forEach(id=>document.getElementById(id).value='');drawRows()};
+   document.getElementById('scLoad').onclick=async()=>{const btn=document.getElementById('scLoad'),rawCandidates=stocks.filter(structural).filter(s=>!screenerMetrics(s).loaded),
+     euCandidates=rawCandidates.filter(s=>(s.region||'US')!=='US'),usCandidates=rawCandidates.filter(s=>(s.region||'US')==='US'),
+     candidates=euCandidates.length?[euCandidates[0],...usCandidates.slice(0,4)]:usCandidates.slice(0,5);if(!candidates.length){btn.textContent='Keine offenen Treffer';setTimeout(()=>btn.textContent='Kennzahlen laden · max. 5',1200);return}btn.disabled=true;
+     for(let i=0;i<candidates.length;i++){const z=candidates[i];btn.textContent=`Lade ${i+1}/${candidates.length}: ${z.s}`;try{const params={symbol:z.s,region:z.region||'US',currency:z.currency||'USD',market_symbol:z.marketSymbol||z.s,name:z.n||z.s,model:z.valuationModel||'',sector:z.sector||''};const snap=await fetchJson('/api/analysis?'+new URLSearchParams(params).toString(),'Screener',25000);jukaCacheSet(z.s,'detail',snap)}catch(err){console.warn('Screener load failed',z.s,err)}drawRows();await new Promise(r=>setTimeout(r,900))}
+     btn.disabled=false;btn.textContent='Kennzahlen laden · max. 5';drawRows();
+   };
+   drawRows();
+ }
+ function openTool(kind){show('tools');if(kind==='screener')renderScreener();else renderCalculator(kind)}
  window.jukaShowAnalysis=()=>show('stocks');
 })();
 
