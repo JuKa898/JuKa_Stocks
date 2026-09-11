@@ -107,15 +107,18 @@ function secTtmRow(facts,annual){
   const C=M(['NetCashProvidedByUsedInOperatingActivities']);
   const X=M(['PaymentsToAcquirePropertyPlantAndEquipment','PaymentsForAdditionsToPropertyPlantAndEquipment']);
   const anchor=R||N||C||O;if(!anchor)return null;
-  const end=anchor.end,filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
-  const cash=instantCandidate(facts,['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'],'USD',end)?.val??null;
+  const end=anchor.end;
+  const cashFact=instantCandidate(facts,['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'],'USD',end);
+  const cash=cashFact?.val??null;
   const dcFact=instantCandidate(facts,['LongTermDebtCurrent','LongTermDebtAndFinanceLeaseObligationsCurrent','ShortTermBorrowings'],'USD',end);
   const dnFact=instantCandidate(facts,['LongTermDebtNoncurrent','LongTermDebtAndFinanceLeaseObligationsNoncurrent'],'USD',end);
   const dc=dcFact?.val??null,dn=dnFact?.val??null;
-  let shares=instantCandidate(facts,['CommonStockSharesOutstanding','EntityCommonStockSharesOutstanding'],'shares',end)?.val??null;
+  let sharesFact=instantCandidate(facts,['CommonStockSharesOutstanding','EntityCommonStockSharesOutstanding'],'shares',end);
+  let shares=sharesFact?.val??null;
   if(!(Number.isFinite(shares)&&shares>0)){
     const qshares=ytdRows(rawUnits(facts,'WeightedAverageNumberOfDilutedSharesOutstanding','shares'));
-    shares=latestOnOrBefore(qshares,end)?.val??annual.at(-1)?.shares??null;
+    sharesFact=latestOnOrBefore(qshares,end);
+    shares=sharesFact?.val??annual.at(-1)?.shares??null;
   }
   const revenue=R?.val??null,operatingIncome=O?.val??null,netIncome=N?.val??null,cfo=C?.val??null,capex=X?.val??null,debt=(dcFact||dnFact)?(dc??0)+(dn??0):null;
   const D=M(['DepreciationDepletionAndAmortization','DepreciationDepletionAndAmortizationPropertyPlantAndEquipment']);
@@ -124,11 +127,13 @@ function secTtmRow(facts,annual){
   const I=M(['InterestExpenseNonOperating','InterestAndDebtExpense']);
   const P=M(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments']);
   const T=M(['IncomeTaxExpenseBenefit']);
+  const equityFact=instantCandidate(facts,['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],'USD',end);
+  const filed=[R,O,N,C,X,cashFact,dcFact,dnFact,sharesFact,D,Sb,Rd,I,P,T,equityFact].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
   return {fy:Number(String(end).slice(0,4)),date:end,filed,availableFrom:filed,isTTM:true,ttmSource:'SEC FY + current YTD − prior-year YTD',
     revenue,operatingIncome,netIncome,eps:netIncome!=null&&shares>0?netIncome/shares:null,cfo,capex,fcf:cfo!=null&&capex!=null?cfo-capex:null,
     cash,debt,netCash:cash!=null&&debt!=null?cash-debt:null,shares,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,
     interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,
-    equity:instantCandidate(facts,['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],'USD',end)?.val??null,
+    equity:equityFact?.val??null,
     ffo:null,nwc:null,deltaNwc:null};
 }
 
@@ -172,10 +177,10 @@ async function secAdapter(stock){
     const R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),Rd=g('rd'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ffo=g('ffo'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
     const revenue=R?.val??null,operatingIncome=O?.val??null,cfo=C?.val??null,capex=X?.val??null;
     const cash=Ca?.val??null,debt=(Dc||Dn)?(Dc?.val??0)+(Dn?.val??0):null;
-    const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null;
+    const nwc=(Ar&&Ap)?Ar.val+(Inv?.val??0)-Ap.val:null;
     const deltaNwc=nwc!=null&&priorNwc!=null?nwc-priorNwc:null;
     if(nwc!=null)priorNwc=nwc;
-    const filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
+    const filed=[R,O,N,E,C,X,Ca,Dc,Dn,S,D,Sb,Rd,I,P,T,Eq,Ffo,Ar,Inv,Ap].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
     const periodDate=R?.end||O?.end||N?.end||date;
     return {
       fy:Number(String(periodDate).slice(0,4)),date:periodDate,filed,
@@ -264,7 +269,7 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-10.1.0-product-fv-hardened';
+    out.engineVersion='JUKA-4.8.4 · Fair Value 8.3.2';
     res.setHeader('Cache-Control',resolved.region==='EU'?'s-maxage=86400, stale-while-revalidate=604800':'s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.history||'')==='1'){
       const rows=out.fundamentals?.annual||out.derived||[];

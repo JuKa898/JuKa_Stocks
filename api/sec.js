@@ -74,8 +74,8 @@ module.exports=async function handler(req,res){
       const R=closest(rev,date),O=closest(op,date),N=closest(ni,date),E=closest(eps,date),C=closest(cfo,date),X=closest(capex,date),Ca=closest(cash,date),Dc=closest(debtCur,date),Dn=closest(debtNon,date),S=closest(shares,date),D=closest(da,date),Sb=closest(sbc,date),Rd=closest(rd,date),I=closest(interest,date),P=closest(pretax,date),T=closest(tax,date),Eq=closest(equity,date),Ar=closest(ar,date),Inv=closest(inventory,date),Ap=closest(ap,date);
       const revenue=R?.val??null,operatingIncome=O?.val??null,cfoVal=C?.val??null,capexVal=X?.val??null,fcf=(cfoVal!=null&&capexVal!=null)?cfoVal-capexVal:null,cashVal=Ca?.val??null;
       const debt=(Dc||Dn)?(Dc?.val??0)+(Dn?.val??0):null;
-      const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null,deltaNwc=(nwc!=null&&priorNwc!=null)?nwc-priorNwc:null; if(nwc!=null)priorNwc=nwc;
-      const filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||R?.filed||O?.filed||N?.filed||null;
+      const nwc=(Ar&&Ap)?Ar.val+(Inv?.val??0)-Ap.val:null,deltaNwc=(nwc!=null&&priorNwc!=null)?nwc-priorNwc:null; if(nwc!=null)priorNwc=nwc;
+      const filed=[R,O,N,E,C,X,Ca,Dc,Dn,S,D,Sb,Rd,I,P,T,Eq,Ar,Inv,Ap].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||R?.filed||O?.filed||N?.filed||null;
       const periodDate=R?.end||O?.end||N?.end||date;
       const fy=Number(String(periodDate).slice(0,4));
       return {fy,date:periodDate,filed,revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo:cfoVal,capex:capexVal,fcf,cash:cashVal,debt,netCash:cashVal!=null&&debt!=null?cashVal-debt:null,shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,nwc,deltaNwc};
