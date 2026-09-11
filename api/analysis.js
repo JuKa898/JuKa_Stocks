@@ -109,7 +109,7 @@ async function secAdapter(stock){
 
 async function fundamentalsAdapter(stock){
   const resolved=Symbols.resolveSymbol(stock);
-  return resolved.region==='US'?secAdapter(stock):EU.alphaVantageFundamentals(stock);
+  return resolved.region==='US'?secAdapter(stock):EU.alphaVantageFundamentals(stock,{includeHistoryMetadata:stock.historyRequested===true});
 }
 
 function alphaError(j){return j?.['Error Message']||j?.Note||j?.Information||null}
@@ -131,25 +131,23 @@ async function alphaRequest(fn,resolved,key,extra={}){
   if(!r.ok||alphaError(j)){const e=new Error(alphaError(j)||`Alpha Vantage ${r.status}`);e.code='EU_MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e}
   return j;
 }
-async function alphaDailyAnalysis(resolved){
+async function alphaWeeklyAnalysis(resolved){
   const key=process.env.ALPHA_VANTAGE_API_KEY;
   if(!key){const e=new Error('ALPHA_VANTAGE_API_KEY fehlt');e.code='NO_ALPHA_KEY';throw e}
   if(!resolved.alphaVantageSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen EU-Markt');e.code='EU_SYMBOL_UNMAPPED';throw e}
-  // Free Alpha Vantage: daily "full" is premium. Use compact daily + free weekly history.
-  const [dailyJson,weeklyJson]=await Promise.all([
-    alphaRequest('TIME_SERIES_DAILY',resolved,key,{outputsize:'compact'}),
-    alphaRequest('TIME_SERIES_WEEKLY',resolved,key)
-  ]);
-  const values=mergeAlphaMarket(alphaRows(weeklyJson,'Weekly Time Series'),alphaRows(dailyJson,'Time Series (Daily)'));
+  // One call gives long history and a recent weekly close. This cuts a cold EU
+  // analysis from 5-6 Alpha calls to 4 (market + 3 statements).
+  const weeklyJson=await alphaRequest('TIME_SERIES_WEEKLY',resolved,key);
+  const values=alphaRows(weeklyJson,'Weekly Time Series');
   if(!values.length){const e=new Error('Alpha-Vantage-Kursdaten fehlen');e.code='EU_MARKET_PROVIDER_ERROR';throw e}
-  return {meta:{symbol:resolved.displaySymbol,exchange:resolved.exchangeHint||'Europe',interval:'daily+weekly',provider:'Alpha Vantage'},
+  return {meta:{symbol:resolved.displaySymbol,exchange:resolved.exchangeHint||'Europe',interval:'weekly',provider:'Alpha Vantage'},
     values,source:'Alpha Vantage',provider:'Alpha Vantage',status:'ok',resolvedSymbol:resolved.alphaVantageSymbol};
 }
 async function marketAdapter(stock){
   const resolved=Symbols.resolveSymbol(stock);
   // EU is deliberately routed to Alpha Vantage here as well as in /api/market.
   // This fixes the previous split-brain bug where the chart endpoint worked but full analysis still called Twelve Data.
-  if(resolved.region==='EU')return alphaDailyAnalysis(resolved);
+  if(resolved.region==='EU')return alphaWeeklyAnalysis(resolved);
   const key=process.env.TWELVE_DATA_API_KEY;if(!key){const e=new Error('TWELVE_DATA_API_KEY fehlt');e.code='NO_MARKET_KEY';throw e;}
   const start=new Date();start.setFullYear(start.getFullYear()-10);
   const u=new URL('https://api.twelvedata.com/time_series');
@@ -163,11 +161,11 @@ async function marketAdapter(stock){
 module.exports=async function handler(req,res){
   try{
     const q=req.query||{},base={s:String(q.symbol||'META').toUpperCase(),n:q.name||undefined,region:String(q.region||'').toUpperCase(),currency:q.currency||'USD',marketSymbol:q.market_symbol||q.symbol||'META',sector:q.sector||'',valuationModel:q.model||''};
-    const resolved=Symbols.resolveSymbol(base),stock={...base,region:resolved.region,marketSymbol:resolved.marketSymbol,resolved};
+    const resolved=Symbols.resolveSymbol(base),stock={...base,region:resolved.region,marketSymbol:resolved.marketSymbol,resolved,historyRequested:String(q.history||'')==='1'};
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-9.2.0-final-system-hardened';
+    out.engineVersion='JUKA-9.4.0-final-universe-hardened';
     res.setHeader('Cache-Control',resolved.region==='EU'?'s-maxage=86400, stale-while-revalidate=604800':'s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.history||'')==='1'){
       const rows=out.fundamentals?.annual||out.derived||[];
@@ -201,6 +199,7 @@ module.exports=async function handler(req,res){
         fairValue2:out.fairValue2?{version:out.fairValue2.version,model:out.fairValue2.model,confidence:out.fairValue2.confidence,checks:out.fairValue2.checks}:null,
         valuationMethods:out.valuationMethods||null,
         historicalPlausibility:out.historicalPlausibility||null,
+        historicalIntegrity:out.historicalIntegrity||null,
         relative:out.relative,
         reality:out.reality,
         riskAudit:out.riskAudit,
