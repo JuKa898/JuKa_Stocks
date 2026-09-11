@@ -18,3 +18,19 @@
 - NOVO-B:CPH -> NOVO-B.CPH
 - Full /api/analysis must use Alpha Vantage for EU market data, not Twelve Data.
 - EU historical Fair Value may only use annual rows with a mapped reportedDate; never fiscalDateEnding as publication date.
+
+## EU free-key fix 12.1
+- Daily Alpha Vantage uses `outputsize=compact`; `full` is premium.
+- Long EU history uses `TIME_SERIES_WEEKLY` and is merged with recent daily data.
+- EU browser path calls `/api/analysis` once per stock instead of summary + detail + history.
+- EU response cache is 24h with 7d stale window.
+- Header shows provider/source rather than generic LIVE.
+
+## Final system hardening 13.2 / engine 9.2.0
+- `/api/analysis` exposes `release`, `stability`, `valuationMethods` and Fair Value 7.0 metadata.
+- `fundamentals.asOf` uses publication/availability metadata only.
+- Server + browser cache keys are listing-aware.
+- EU daily market data stays on Alpha Vantage `outputsize=compact`; long history uses weekly data.
+- Market price must not alter Bear/Base/Bull with unchanged fundamentals.
+- `prüfen` / `nicht belastbar` must never be `liveReady: true`.
+- Before promotion: test operating company + bank + REIT + at least four EU listings.

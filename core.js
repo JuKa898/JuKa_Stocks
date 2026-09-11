@@ -227,7 +227,7 @@
       else if(score>=45){verdict='Gemischtes Qualitätsprofil mit mehreren Punkten, die genauer geprüft werden sollten.';recommendation='Eher Watchlist als Qualitätskauf; erst Schwächen und Bewertung klären.';}
       else {verdict='Fundamentale Qualität ist aktuell schwach oder sehr uneinheitlich.';recommendation='Vorsicht: nur mit klarer Sondersituation oder deutlicher Sicherheitsmarge näher prüfen.';}
     }
-    return {version:'JuKa Quality 2.0',model,score,grade,label,coverage,confidence,years:rows.length,verdict,recommendation,strengths,weaknesses,parts:factors};
+    return {version:'JUKA Quality Score 2.0',model,score,grade,label,coverage,confidence,years:rows.length,verdict,recommendation,strengths,weaknesses,parts:factors};
   }
 
   // Legacy simplified FCFF DCF kept for partial live datasets.
@@ -937,28 +937,53 @@
       capPolicy:{...capPolicy,years:capYears},waccPolicy,reinvestmentEfficiency,flows};
   }
 
-  function jukaOwnerEarningsCrossCheck(input={},adaptive={}){
-    const a=adaptive?.assumptions||{},revenue=n(input.revenue,0),ebit=n(input.ebit,0),shares=n(input.shares,0),netDebt=n(input.netDebt,0);
-    if(!(revenue>0&&shares>0))return null;
-    const tax=clamp(n(input.taxRate,.21),.08,.35), nopat=ebit*(1-tax);
-    const roic=clamp(n(adaptive?.metrics?.roicMedian,a.terminalRoic||.12),.08,.60);
-    const sustainableGrowth=clamp(n(a.growthY5,.04),.01,.12);
-    const reinvestRate=clamp(sustainableGrowth/roic,0,.85);
-    const ownerEarnings=nopat*(1-reinvestRate);
-    // A conservative finite transition is used instead of capitalizing today's earnings as a perpetuity.
-    let pv=0,oe=ownerEarnings;
-    for(let y=1;y<=10;y++){
-      const g=sustainableGrowth+(a.terminalGrowth-sustainableGrowth)*(y/10);
-      oe*=1+g;
-      pv+=oe/Math.pow(1+a.wacc,y);
+
+  function jukaOwnerEarningsIntrinsicValue(input={},adaptive={},scenario='base'){
+    const a={...(adaptive?.assumptions||{})},revenue0=Number(input.revenue),ebit0=Number(input.ebit),shares=Number(input.shares),netDebt=Number(input.netDebt)||0;
+    if(!(revenue0>0&&Number.isFinite(ebit0)&&shares>0))return null;
+    const tax=clamp(Number(input.taxRate)||.21,.08,.35),margin0=ebit0/revenue0;
+    const cap=jukaCompetitiveAdvantagePeriod(adaptive),baseCap=clamp(Number(cap?.years)||7,4,12);
+    const wacc0=clamp(Number(a.wacc)||.09,.055,.14),terminalGrowth=clamp(Number(a.terminalGrowth)||.025,.015,.035);
+    // Stable-growth excess returns are capped by the same mature-company policy as the economic DCF.
+    const terminalPolicy=jukaMatureTerminalPolicy(adaptive);
+    const terminalRoic=clamp(Number(terminalPolicy.terminalRoic)||Math.max(wacc0+.01,.12),terminalGrowth+.01,.35);
+    const cfg=scenario==='bear'?{gm:.72,md:-.025,cd:-2,wd:.012,roc:.85}:scenario==='bull'?{gm:1.18,md:.018,cd:2,wd:-.007,roc:1.08}:{gm:1,md:0,cd:0,wd:0,roc:1};
+    const capYears=clamp(baseCap+cfg.cd,4,14),years=capYears+5;
+    const g1=clamp(Number(a.growthY1)||.06,-.08,.35)*cfg.gm,g5=clamp(Number(a.growthY5)||.04,.005,.16)*cfg.gm;
+    const targetMargin=clamp((Number(a.targetEbitMarginY5)||margin0)+cfg.md,-.05,.70),wacc=clamp(wacc0+cfg.wd,.05,.16);
+    const forecastReturn=Number(adaptive?.fundamentalForecast?.economicReturn);
+    const histRoic=Number(adaptive?.metrics?.roicMedian);
+    const startMarginalRoic=clamp((Number.isFinite(forecastReturn)?forecastReturn:Number.isFinite(histRoic)?histRoic:terminalRoic)*cfg.roc,.06,.60);
+    let revenue=revenue0,pv=0,flows=[];
+    for(let y=1;y<=years;y++){
+      let growth=y<=5?g1+(g5-g1)*((y-1)/4):g5;if(y>capYears)growth=g5+(terminalGrowth-g5)*((y-capYears)/5);
+      const margin=y<=5?margin0+(targetMargin-margin0)*(y/5):targetMargin,prevRevenue=revenue;revenue*=1+growth;
+      const nopat=revenue*margin*(1-tax),prevMargin=y===1?margin0:(y-1<=5?margin0+(targetMargin-margin0)*((y-1)/5):targetMargin);
+      const prevNopat=prevRevenue*prevMargin*(1-tax),fade=y<=capYears?0:(y-capYears)/5;
+      const marginalRoic=clamp(startMarginalRoic+(terminalRoic-startMarginalRoic)*fade,.05,.60);
+      // Growth is never free. This is economic reinvestment, not accounting capex.
+      const incrementalNopat=Math.max(0,nopat-prevNopat),growthInvestment=incrementalNopat/Math.max(.05,marginalRoic);
+      const daRate=clamp(Number(a.daRevenue)||Number(input.da)/revenue0||0,0,.25),capexRate=clamp(Number(a.capexRevenue)||Number(input.capex)/revenue0||daRate,0,.40);
+      // Buffett owner-earnings logic: replacement investment is a guess. We use a conservative,
+      // bounded excess of normalized capex over D&A as the maintenance investment not already expensed.
+      const maintenanceCapexRate=Math.min(capexRate,daRate*1.25);
+      const maintenanceExcess=Math.max(0,maintenanceCapexRate-daRate)*revenue;
+      const ownerEarnings=nopat-growthInvestment-maintenanceExcess,discountFactor=Math.pow(1+wacc,y);
+      pv+=ownerEarnings/discountFactor;
+      flows.push({year:y,revenue,growth,margin,nopat,marginalRoic,incrementalNopat,growthInvestment,
+        growthReinvestmentRate:nopat>0?growthInvestment/nopat:null,maintenanceCapexRate,maintenanceExcess,ownerEarnings,discountFactor});
     }
-    const termReinvest=Math.max(0,a.terminalGrowth/a.terminalRoic);
-    const termNopat=(ebit*(1-tax))*Math.pow(1+sustainableGrowth,5)*Math.pow(1+a.terminalGrowth,5)*(1+a.terminalGrowth);
-    const termOE=termNopat*(1-termReinvest);
-    const tv=termOE/(a.wacc-a.terminalGrowth);
-    const equity=pv+tv/Math.pow(1+a.wacc,10)-netDebt;
-    return {valuePerShare:equity/shares,currentNopat:nopat,reinvestmentRate:reinvestRate,ownerEarnings,terminalReinvestmentRate:termReinvest};
+    const last=flows.at(-1);if(!(wacc>terminalGrowth))return null;
+    const terminalNopat=last.nopat*(1+terminalGrowth),terminalReinvestmentRate=terminalGrowth/terminalRoic;
+    const terminalReinvestment=terminalNopat*terminalReinvestmentRate,terminalOwnerEarnings=terminalNopat-terminalReinvestment;
+    const terminalValue=terminalOwnerEarnings/(wacc-terminalGrowth),terminalPv=terminalValue/Math.pow(1+wacc,years);
+    const enterprise=pv+terminalPv,equity=enterprise-netDebt,valuePerShare=equity/shares;
+    return {available:Number.isFinite(valuePerShare)&&valuePerShare>0,valuePerShare,enterprise,equity,pvExplicit:pv,terminalValue,terminalPv,
+      terminalShare:enterprise>0?terminalPv/enterprise:null,capYears,explicitYears:years,wacc,terminalGrowth,terminalRoic,terminalReinvestmentRate,
+      startMarginalRoic,scenario,flows,terminalPolicy,method:'owner-earnings-economic-intrinsic-value',marketPriceUsed:false};
   }
+
+  function jukaOwnerEarningsCrossCheck(input={},adaptive={}){return jukaOwnerEarningsIntrinsicValue(input,adaptive,'base');}
 
 
 
@@ -1008,29 +1033,29 @@
   }
 
   function jukaMultiMethodReleaseGate(result={},input={},adaptive={}){
-    const primary=Number(result?.valuation?.base),owner=Number(result?.ownerEarnings?.valuePerShare);
+    const primary=Number(result?.valuation?.base),economic=Number(result?.economicDcf?.valuePerShare);
     const epv=jukaEarningsPowerValue(input,adaptive),ep=Number(epv.valuePerShare);
-    const methods=[['economicDcf',primary],['ownerEarnings',owner],['earningsPower',ep]].filter(x=>Number.isFinite(x[1])&&x[1]>0);
-    const independent=methods.filter(x=>x[0]!=='economicDcf');
-    const dispersions={};
-    for(const [name,v] of independent)dispersions[name]=Math.abs(v-primary)/Math.abs(primary);
-    const vals=methods.map(x=>x[1]),lo=vals.length?Math.min(...vals):null,hi=vals.length?Math.max(...vals):null;
-    const rangeDispersion=Number.isFinite(lo)&&lo>0?(hi-lo)/lo:null;
-    const independentMax=Math.max(0,...Object.values(dispersions).filter(Number.isFinite));
-    const blockers=[],warnings=[];
-    if(methods.length<2)blockers.push('insufficient-independent-methods');
-    if(independentMax>.60)blockers.push('independent-method-dispersion-high');
-    else if(independentMax>.35)warnings.push('independent-method-dispersion');
-    const positiveEvidence=[];
-    if(methods.length>=3&&independentMax<=.25)positiveEvidence.push('independent-methods-convergent');
+    const methods=[['ownerEarnings',primary],['economicDcf',economic],['earningsPower',ep]].filter(x=>Number.isFinite(x[1])&&x[1]>0);
+    const blockers=[],warnings=[],positiveEvidence=[];
+    const dcfDispersion=primary>0&&economic>0?Math.abs(economic-primary)/primary:null;
+    const epvPremium=primary>0&&ep>0?ep/primary-1:null;
+    if(!(primary>0))blockers.push('primary-owner-earnings-unavailable');
+    if(!(economic>0))blockers.push('economic-dcf-unavailable');
+    else if(dcfDispersion>.60)blockers.push('economic-dcf-dispersion-high');
+    else if(dcfDispersion>.35)warnings.push('economic-dcf-dispersion');
+    // Earnings Power deliberately assumes no growth. A low EPV is therefore not a reason to reject a growth-company value.
+    // It is a floor/sanity check; EPV materially above the primary value is suspicious.
+    if(ep>0&&epvPremium>.25)warnings.push('earnings-power-above-primary');
+    if(ep>0&&epvPremium>.60)blockers.push('earnings-power-materially-above-primary');
+    if(Number.isFinite(dcfDispersion)&&dcfDispersion<=.20)positiveEvidence.push('owner-earnings-economic-dcf-convergent');
+    if(ep>0&&ep<=primary*1.15)positiveEvidence.push('earnings-power-floor-consistent');
     const baseGate=result?.releaseGate||{};
     if(baseGate.status==='hold')blockers.push(...(baseGate.blockers||[]));
     else if(baseGate.status==='review')warnings.push(...(baseGate.warnings||[]));
     const status=blockers.length?'nicht belastbar':warnings.length?'prüfen':'belastbar';
-    return {status,liveReady:status==='belastbar',primaryMethod:'economicDcf',primaryValue:primary,
-      methods:Object.fromEntries(methods),earningsPower:epv,dispersions,independentMaxDispersion:independentMax,
-      range:{low:lo,high:hi,dispersion:rangeDispersion},blockers:[...new Set(blockers)],warnings:[...new Set(warnings)],
-      positiveEvidence,marketPriceUsed:false};
+    return {status,liveReady:status==='belastbar',primaryMethod:'ownerEarnings',primaryValue:primary,
+      methods:Object.fromEntries(methods),earningsPower:epv,dcfDispersion,earningsPowerToPrimary:primary>0&&ep>0?ep/primary:null,
+      blockers:[...new Set(blockers)],warnings:[...new Set(warnings)],positiveEvidence,marketPriceUsed:false};
   }
 
   function jukaReleaseMatrixCase(model,valuation={},stability=null,quality={}){
@@ -1062,28 +1087,18 @@
       releaseSafe:counts.fp===0,rows};
   }
 
-  function jukaForecastFeasibility(economic={}){
-    const flows=economic?.flows||[],flags=[]; if(!flows.length)return {status:'nicht verfügbar',flags,score:0};
-    const rates=flows.map(x=>Number(x.reinvestmentRate)).filter(Number.isFinite);
-    const eff=flows.map(x=>Number(x.efficiencyGrowth)).filter(Number.isFinite);
+  function jukaForecastFeasibility(model={}){
+    const flows=model?.flows||[],flags=[]; if(!flows.length)return {status:'nicht verfügbar',flags,score:0};
+    const rates=flows.map(x=>Number(x.reinvestmentRate??x.growthReinvestmentRate)).filter(Number.isFinite);
     const cliffs=flows.slice(1).map((x,i)=>Math.abs(Number(x.growth)-Number(flows[i].growth))).filter(Number.isFinite);
-    const negativeFcffYears=flows.filter(x=>Number(x.fcff)<0).length;
+    const negativeCashYears=flows.filter(x=>Number(x.fcff??x.ownerEarnings)<0).length;
     const extremeReinvestmentYears=rates.filter(x=>x>1.5).length;
-    const highEfficiencyYears=eff.filter(x=>Math.abs(x)>.12).length;
     const maxGrowthCliff=cliffs.length?Math.max(...cliffs):0;
-    const transition=Number(economic?.terminal?.transitionInvestment)||0;
-    const finalExplicitCapital=Number(economic?.capitalPath?.finalExplicitInvestedCapital)||0;
-    const transitionPct=finalExplicitCapital>0?Math.abs(transition)/finalExplicitCapital:null;
-    if(extremeReinvestmentYears>=3)flags.push({severity:'high',code:'reinvestment-extreme',text:'Reinvestment liegt in mindestens drei Jahren über 150% des NOPAT.'});
-    else if(extremeReinvestmentYears)flags.push({severity:'medium',code:'reinvestment-high',text:'Reinvestment liegt zeitweise über 150% des NOPAT.'});
-    if(highEfficiencyYears>=3)flags.push({severity:'high',code:'efficiency-growth-extreme',text:'Ein großer Teil des Ergebniswachstums hängt wiederholt von Effizienzänderungen statt neuen Investitionen ab.'});
+    if(extremeReinvestmentYears>=3)flags.push({severity:'high',code:'reinvestment-extreme',text:'Wachstumsreinvestition liegt in mindestens drei Jahren über 150% des NOPAT.'});
+    else if(extremeReinvestmentYears)flags.push({severity:'medium',code:'reinvestment-high',text:'Wachstumsreinvestition liegt zeitweise über 150% des NOPAT.'});
     if(maxGrowthCliff>.08)flags.push({severity:'medium',code:'growth-cliff',text:'Der Wachstumspfad verändert sich zwischen zwei Jahren um mehr als 8 Prozentpunkte.'});
-    if(Number.isFinite(transitionPct)&&transitionPct>.10)flags.push({severity:'high',code:'terminal-transition-large',text:'Die Kapitalanpassung beim Übergang in die stabile Phase übersteigt 10% der expliziten Kapitalbasis.'});
-    else if(Number.isFinite(transitionPct)&&transitionPct>.05)flags.push({severity:'medium',code:'terminal-transition',text:'Die Kapitalanpassung beim Übergang in die stabile Phase übersteigt 5% der expliziten Kapitalbasis.'});
     const high=flags.filter(x=>x.severity==='high').length,medium=flags.filter(x=>x.severity==='medium').length;
-    return {status:high?'nicht belastbar':medium?'prüfen':'plausibel',score:Math.max(0,100-high*30-medium*12),
-      flags,negativeFcffYears,extremeReinvestmentYears,highEfficiencyYears,maxGrowthCliff,terminalTransitionPct:transitionPct,
-      marketPriceUsed:false};
+    return {status:high?'nicht belastbar':medium?'prüfen':'plausibel',score:Math.max(0,100-high*30-medium*12),flags,negativeCashYears,extremeReinvestmentYears,maxGrowthCliff,marketPriceUsed:false};
   }
 
   function jukaExcessReturnValuation(input={},adaptive={},economic=null){
@@ -1106,6 +1121,60 @@
       dcfExplicit:Number(d.pvExplicit),explicitGap,terminalInvestedCapital:icN,requiredTerminalCapital:Number(cp.terminalRequiredCapital),
       terminalCapitalGap:icN-Number(cp.terminalRequiredCapital),terminalReconstructed,terminalGap,convergence,maxRoicGap,rows,
       capitalConsistent:Math.abs(explicitGap)<1e-6&&Math.abs(terminalGap)<1e-6,averageVsMarginalRoicGap:maxRoicGap,marketPriceUsed:false};
+  }
+
+  function jukaOwnerEarningsAudit(input={},adaptive={},base=null){
+    base=base||jukaOwnerEarningsIntrinsicValue(input,adaptive,'base');if(!base)return null;
+    const a=adaptive?.assumptions||{},baseV=Number(base.valuePerShare);
+    const rerun=(patch={},extra={})=>{
+      const aa={...a,...patch};if(aa.wacc<=aa.terminalGrowth+.02)aa.wacc=aa.terminalGrowth+.02;
+      return jukaOwnerEarningsIntrinsicValue(input,{...adaptive,assumptions:aa},extra.scenario||'base')?.valuePerShare??null;
+    };
+    const capBase=Number(base.capYears)||jukaCompetitiveAdvantagePeriod(adaptive).years;
+    const sensitivity={
+      waccMinus05:rerun({wacc:a.wacc-.005}),waccPlus05:rerun({wacc:a.wacc+.005}),
+      waccMinus1:rerun({wacc:a.wacc-.01}),waccPlus1:rerun({wacc:a.wacc+.01}),
+      growthY1Minus2:rerun({growthY1:a.growthY1-.02}),growthY1Plus2:rerun({growthY1:a.growthY1+.02}),
+      growthY5Minus2:rerun({growthY5:Math.max(.005,a.growthY5-.02)}),growthY5Plus2:rerun({growthY5:Math.min(.16,a.growthY5+.02)}),
+      marginMinus2:rerun({targetEbitMarginY5:a.targetEbitMarginY5-.02}),marginPlus2:rerun({targetEbitMarginY5:a.targetEbitMarginY5+.02}),
+      terminalGrowthMinus05:rerun({terminalGrowth:Math.max(.015,a.terminalGrowth-.005)}),terminalGrowthPlus05:rerun({terminalGrowth:Math.min(.035,a.terminalGrowth+.005)}),
+      capMinus2:jukaOwnerEarningsIntrinsicValue(input,{...adaptive,assumptions:{...a},moatEvidence:{...(adaptive.moatEvidence||{}),modifierYears:-2}},'base')?.valuePerShare??null,
+      capPlus2:(()=>{const fake={...adaptive,assumptions:{...a},metrics:{...(adaptive.metrics||{})}}; const target=clamp(capBase+2,4,14); fake.assumptions.capYearsOverride=target; return null;})()
+    };
+    // CAP override is explicit to prevent the sensitivity from being contaminated by the moat evidence policy.
+    const capValue=(years)=>{
+      const original=jukaCompetitiveAdvantagePeriod(adaptive),delta=years-original.years;
+      const fake={...adaptive,moatEvidence:{available:true,modifierYears:Math.min(0,delta),classification:'audit',sources:['internal-audit']}};
+      if(delta>0){ // quantitative score cannot be increased by qualitative evidence; approximate by extending growth persistence in a controlled audit.
+        const b=jukaOwnerEarningsIntrinsicValue(input,fake,'base');
+        if(!b)return null;
+        // Recalculate directly by using bull/base interpolation only for the audit is not acceptable; leave unavailable when extension cannot be source-justified.
+        return null;
+      }
+      return jukaOwnerEarningsIntrinsicValue(input,fake,'base')?.valuePerShare??null;
+    };
+    sensitivity.capMinus2=capValue(Math.max(4,capBase-2));
+    delete sensitivity.capPlus2;
+    const deltas={};for(const [k,v] of Object.entries(sensitivity))deltas[k]=Number.isFinite(v)?v-baseV:null;
+    return {valuePerShare:baseV,bridge:{explicitPerShare:input.shares>0?base.pvExplicit/input.shares:null,terminalPerShare:input.shares>0?base.terminalPv/input.shares:null,
+      netDebtPerShare:input.shares>0?-Number(input.netDebt||0)/input.shares:null,terminalShare:base.terminalShare},sensitivity,deltas,
+      assumptions:{growthY1:a.growthY1,growthY5:a.growthY5,targetEbitMarginY5:a.targetEbitMarginY5,wacc:a.wacc,terminalGrowth:base.terminalGrowth,terminalRoic:base.terminalRoic,capYears:base.capYears},
+      forecastBridge:(base.flows||[]).map(x=>({year:x.year,growth:x.growth,margin:x.margin,marginalRoic:x.marginalRoic,growthInvestment:x.growthInvestment,growthReinvestmentRate:x.growthReinvestmentRate,ownerEarnings:x.ownerEarnings})),
+      marketPriceUsed:false};
+  }
+
+  function jukaHistoricalValuationAudit(history=[]){
+    const rows=(history||[]).filter(x=>Number(x.price)>0&&Number(x.base)>0);
+    if(rows.length<20)return {available:false,reason:'insufficient-history',count:rows.length,marketPriceUsedForCalibration:false};
+    const ratios=rows.map(x=>Number(x.price)/Number(x.base)),overBull=rows.filter(x=>Number(x.bull)>0&&Number(x.price)>Number(x.bull)).length/rows.length;
+    const over2=ratios.filter(x=>x>2).length/ratios.length,underHalf=ratios.filter(x=>x<.5).length/ratios.length,med=median(ratios),sorted=[...ratios].sort((a,b)=>a-b);
+    const q=(p)=>sorted[Math.min(sorted.length-1,Math.max(0,Math.floor((sorted.length-1)*p)))];
+    const flags=[];
+    if(rows.length>=120&&over2>.60)flags.push({severity:'high',code:'persistent-market-above-2x-base',text:'Der Marktpreis lag in mehr als 60% der beobachteten Tage über dem Doppelten des Base Fair Value.'});
+    if(rows.length>=120&&overBull>.70)flags.push({severity:'high',code:'persistent-market-above-bull',text:'Der Marktpreis lag in mehr als 70% der beobachteten Tage über dem Bull-Szenario.'});
+    if(rows.length>=120&&underHalf>.60)flags.push({severity:'high',code:'persistent-market-below-half-base',text:'Der Marktpreis lag in mehr als 60% der beobachteten Tage unter der Hälfte des Base Fair Value.'});
+    return {available:true,count:rows.length,medianPriceToBase:med,p10PriceToBase:q(.10),p90PriceToBase:q(.90),sharePriceAbove2xBase:over2,sharePriceAboveBull:overBull,sharePriceBelowHalfBase:underHalf,
+      status:flags.some(x=>x.severity==='high')?'systematischer-bias-verdacht':'unauffällig',flags,marketPriceUsedForCalibration:false,diagnosticOnly:true};
   }
 
   function jukaReleaseGate(result={}){
@@ -1232,7 +1301,7 @@
     const flags=[],metrics={};
     const add=(severity,code,message)=>flags.push({severity,code,message});
     metrics.terminalShare=Number(checks.terminalShare);
-    metrics.crossCheckDispersion=Number(tri.dispersion);
+    metrics.crossCheckDispersion=Number(tri.ownerVsEconomic);
     metrics.growthY1=Number(f.growthY1);
     metrics.growthY5=Number(f.growthY5);
     metrics.marginY5=Number(f.targetEbitMarginY5);
@@ -1263,14 +1332,12 @@
     return {status,score,flags,metrics,marketPriceUsed:false};
   }
 
-  function jukaFairValueTriangulation(primary=null,owner=null,legacy=null){
-    const p=Number(primary?.valuePerShare),o=Number(owner?.valuePerShare),l=Number(legacy?.base);
-    const vals=[p,o,l].filter(x=>Number.isFinite(x)&&x>0);
-    if(!vals.length)return null;
-    const med=median(vals),lo=Math.min(...vals),hi=Math.max(...vals);
-    // Primary economic DCF stays the fair value. Cross-checks determine confidence, not the answer by averaging.
-    return {fairValue:p,medianCrossCheck:med,range:{low:lo,high:hi},dispersion:med>0?(hi-lo)/med:null,
-      values:{economicDcf:p,ownerEarnings:o,legacyDcf:l}};
+  function jukaFairValueTriangulation(owner=null,economic=null,earningsPower=null,legacy=null){
+    const o=Number(owner?.valuePerShare),d=Number(economic?.valuePerShare),e=Number(earningsPower?.valuePerShare),l=Number(legacy?.base);
+    const comparable=[o,d].filter(x=>Number.isFinite(x)&&x>0),med=median(comparable);
+    return {fairValue:o,primaryMethod:'ownerEarnings',medianComparable:med,
+      ownerVsEconomic:o>0&&d>0?Math.abs(o-d)/o:null,earningsPowerFloor:e,legacyDiagnostic:l,
+      values:{ownerEarnings:o,economicDcf:d,earningsPower:e,legacyDcf:l},marketPriceUsed:false};
   }
 
   function jukaFairValue2Operating(stock={},annualFacts=[],price=null,overrides={}){
@@ -1303,56 +1370,39 @@
     // Legacy DCF is retained only as an independent diagnostic.
     const legacy=jukaDcfScenarios(inp);
     const economic=jukaEconomicDcf(inp,adaptive);
-    const owner=jukaOwnerEarningsCrossCheck(inp,adaptive);
-    if(!economic||!(economic.valuePerShare>0))return null;
-
-    // Scenario values rerun the economic engine with internally coherent assumption sets.
-    const runScenario=(kind)=>{
-      const aa={...a};
-      if(kind==='bear'){
-        aa.growthY1+=a.bearGrowthAdj; aa.growthY5+=a.bearGrowthAdj;
-        aa.targetEbitMarginY5+=a.bearMarginAdj; aa.wacc+=a.bearWaccAdj;
-      }else if(kind==='bull'){
-        aa.growthY1+=a.bullGrowthAdj; aa.growthY5+=a.bullGrowthAdj;
-        aa.targetEbitMarginY5+=a.bullMarginAdj; aa.wacc+=a.bullWaccAdj;
-      }
-      aa.growthY5=clamp(aa.growthY5,.01,.14);
-      aa.terminalGrowth=clamp(a.terminalGrowth,.02,.035);
-      if(aa.wacc<=aa.terminalGrowth+.02)aa.wacc=aa.terminalGrowth+.02;
-      return jukaEconomicDcf({...inp,wacc:aa.wacc,terminalGrowth:aa.terminalGrowth}, {...adaptive,assumptions:aa});
-    };
-    const bear=runScenario('bear'),bull=runScenario('bull');
-    const valuation={
-      bear:bear?.valuePerShare??null,base:economic.valuePerShare,bull:bull?.valuePerShare??null,
-      detail:{bear,base:economic,bull}
-    };
+    const owner=jukaOwnerEarningsIntrinsicValue(inp,adaptive,'base');
+    if(!owner||!(owner.valuePerShare>0)||!economic||!(economic.valuePerShare>0))return null;
+    const bear=jukaOwnerEarningsIntrinsicValue(inp,adaptive,'bear'),bull=jukaOwnerEarningsIntrinsicValue(inp,adaptive,'bull');
+    const valuation={bear:bear?.valuePerShare??null,base:owner.valuePerShare,bull:bull?.valuePerShare??null,detail:{bear,base:owner,bull}};
     const sensitivity=jukaSensitivity(inp);
-    const triangulation=jukaFairValueTriangulation(economic,owner,legacy);
+    const earningsPower=jukaEarningsPowerValue(inp,adaptive);
+    const triangulation=jukaFairValueTriangulation(owner,economic,earningsPower,legacy);
     let confidence=jukaFairValueConfidence({annualFacts:rows,valuation,selfCheck:adaptive.selfCheck,dataQuality:adaptive.dataQuality,sensitivity});
     // Independent-model disagreement is a confidence penalty, never an automatic price adjustment.
-    if(Number.isFinite(triangulation?.dispersion)&&triangulation.dispersion>.50){
+    if(Number.isFinite(triangulation?.ownerVsEconomic)&&triangulation.ownerVsEconomic>.50){
       confidence={score:Math.max(0,confidence.score-12),label:confidence.score-12>=80?'hoch':confidence.score-12>=60?'mittel':'niedrig'};
     }
     const reverse=Number(price)>0?jukaReverseDcf(inp,Number(price)):null;
     const result={
-      version:'JUKA Fair Value 5.0 RC',model:'release-candidate+sourced-moat-cap+multi-model-gates',
-      valuation,assumptions:inp,adaptive,fundamentalForecast,rdPolicy,rdAdjustment,reverse,sensitivity,confidence,ownerEarnings:owner,triangulation,
+      version:'JUKA Fair Value 7.0',model:'owner-earnings-primary+economic-dcf-crosscheck+earnings-power-floor',
+      valuation,assumptions:inp,adaptive,fundamentalForecast,rdPolicy,rdAdjustment,reverse,sensitivity,confidence,ownerEarnings:owner,economicDcf:economic,triangulation,
       drivers:jukaFairValueDrivers(adaptive,valuation),
       checks:{
-        walkForward:adaptive.selfCheck,terminalShare:economic.terminalShare,
+        walkForward:adaptive.selfCheck,terminalShare:owner.terminalShare,
         marketPriceUsedForCalibration:false,
         reinvestmentConsistency:{
           terminalGrowth:a.terminalGrowth,terminalRoic:a.terminalRoic,
           impliedReinvestmentRate:a.terminalGrowth/a.terminalRoic,
           valid:a.terminalRoic>a.terminalGrowth
         },
-        crossCheckDispersion:triangulation?.dispersion??null
+        crossCheckDispersion:triangulation?.ownerVsEconomic??null
       }
     };
-    result.excessReturn=jukaExcessReturnValuation(inp,adaptive,valuation?.detail?.base);
-    result.forecastFeasibility=jukaForecastFeasibility(valuation?.detail?.base);
-    result.audit=jukaFairValueAudit(inp,adaptive,valuation,owner,legacy);
-    if(result.audit)result.audit.excessReturn=result.excessReturn;
+    result.excessReturn=jukaExcessReturnValuation(inp,adaptive,economic);
+    result.forecastFeasibility=jukaForecastFeasibility(owner);
+    result.economicAudit=jukaFairValueAudit(inp,adaptive,{...valuation,detail:{...valuation.detail,base:economic}},owner,legacy);
+    result.audit=jukaOwnerEarningsAudit(inp,adaptive,owner);
+    if(result.audit)result.audit.economicDcfAudit=result.economicAudit;
     result.stability=jukaFairValueStability(result.audit);
     result.plausibility=jukaFairValuePlausibilityAudit(result,rows);
     result.releaseGate=jukaReleaseGate(result);
@@ -1685,15 +1735,24 @@
     if(model==='operating-company'){
       if(!readiness.ready){result.diagnostics.push(`Pflichtdaten fehlen: ${readiness.missingRequired.join(', ')}`);return result;}
       const fv2=jukaFairValue2Operating(stock,rows,price,overrides);
-      if(!fv2){result.diagnostics.push('JUKA Fair Value 2.0 konnte aus den verfügbaren Daten nicht vollständig berechnet werden.');return result;}
+      if(!fv2){result.diagnostics.push('JUKA Fair Value 7.0 konnte aus den verfügbaren Daten nicht vollständig berechnet werden.');return result;}
       const a=fv2.adaptive?.assumptions||{};
       result.assumptions={dcf:fv2.assumptions,auto:fv2.adaptive,fairValue2:{version:fv2.version,model:fv2.model,confidence:fv2.confidence,drivers:fv2.drivers,checks:fv2.checks}};
       result.valuation=fv2.valuation;
       result.reverse=fv2.reverse;
       result.sensitivity=fv2.sensitivity;
       result.fairValue2={version:fv2.version,model:fv2.model,confidence:fv2.confidence,drivers:fv2.drivers,checks:fv2.checks};
+      result.valuationMethods={ownerEarnings:fv2.ownerEarnings?.valuePerShare??null,economicDcf:fv2.economicDcf?.valuePerShare??null,
+        earningsPower:fv2.multiMethodGate?.earningsPower?.valuePerShare??null,primaryMethod:'ownerEarnings'};
+      result.stability=fv2.stability||null;
+      result.plausibility=fv2.plausibility||null;
+      result.audit=fv2.audit||null;
+      result.economicAudit=fv2.economicAudit||null;
+      result.forecastFeasibility=fv2.forecastFeasibility||null;
+      result.excessReturn=fv2.excessReturn||null;
       result.release={status:fv2.multiMethodGate?.status||'nicht belastbar',liveReady:fv2.multiMethodGate?.liveReady===true,
-        gate:fv2.multiMethodGate,domains:fv2.releaseGate?.domains||null};
+        gate:fv2.multiMethodGate,domains:fv2.releaseGate?.domains||null,
+        blockers:fv2.multiMethodGate?.blockers||[],warnings:fv2.multiMethodGate?.warnings||[]};
       const forecast=jukaForecast5Y(rows,a);
       result.relative=jukaRelativeByModel(model,{price:Number(price),epsTtm:latest?.eps,epsY5:forecast?.summary?.epsY5,fairValue:result.valuation?.base});
       return result;
@@ -1805,7 +1864,7 @@
     return {
       required:['revenue','operatingIncome','da','capex','shares'],
       recommended:['cash','debt','pretaxIncome','incomeTax','fcf'],
-      valuationEngine:'10J-FCFF-DCF'
+      valuationEngine:'Owner Earnings + Economic DCF'
     };
   }
 
@@ -1966,5 +2025,5 @@
     return {version:'JUKA Fair Value History 1.0',method:'point-in-time-filing-cutoff',model,marketPriceUsedForCalibration:false,points};
   }
 
-  return {n,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,jukaQualityScoreV2,jukaPerformanceWindows,jukaChartSlice,jukaInvestorFundamentals,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaDataQuality,jukaCompanyProfile,jukaAutoAssumptions,jukaOperatingRawAssumptions,jukaOperatingSelfCheck,jukaAdaptiveOperatingAssumptions,jukaFairValueConfidence,jukaFairValueDrivers,jukaAsOfRows,jukaPointInTimeFairValue,jukaMoatEvidencePolicy,jukaCompetitiveAdvantagePeriod,jukaEarningsPowerValue,jukaMultiMethodReleaseGate,jukaReleaseMatrixCase,jukaValidateReleaseMatrix,jukaModelStability,jukaForecastFeasibility,jukaReleaseGate,jukaExcessReturnValuation,jukaNormalizedInvestedCapital,jukaReinvestmentEfficiency,jukaWaccPolicy,jukaMatureTerminalPolicy,jukaFairValueAudit,jukaFairValueStability,jukaFairValuePlausibilityAudit,jukaRdPolicy,jukaRdCapitalization,jukaFundamentalForecastEngine,jukaEconomicDcf,jukaOwnerEarningsCrossCheck,jukaFairValueTriangulation,jukaFairValue2Operating,jukaForecast5Y,jukaForecastScenarios,jukaExpectedReturnMatrix,jukaReturnBridge,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,deriveBankInsuranceMetrics,deriveReitMetrics,jukaBankAutoAssumptions,jukaReitAutoAssumptions,jukaValuationEngine,jukaRiskAudit,modelDataRequirements,jukaModelReadiness,jukaRelativeByModel,peerMetricSet,jukaPeerComparison,valuationMultiplesFromSnapshot,jukaRealityCheck,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,buildHistoricalJukaFairSeries,buildHistoricalValuationSeries,filterPeriod,dataRoute,buildFairSeries};
+  return {n,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,jukaQualityScoreV2,jukaPerformanceWindows,jukaChartSlice,jukaInvestorFundamentals,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaDataQuality,jukaCompanyProfile,jukaAutoAssumptions,jukaOperatingRawAssumptions,jukaOperatingSelfCheck,jukaAdaptiveOperatingAssumptions,jukaFairValueConfidence,jukaFairValueDrivers,jukaAsOfRows,jukaPointInTimeFairValue,jukaMoatEvidencePolicy,jukaCompetitiveAdvantagePeriod,jukaEarningsPowerValue,jukaMultiMethodReleaseGate,jukaReleaseMatrixCase,jukaValidateReleaseMatrix,jukaModelStability,jukaForecastFeasibility,jukaReleaseGate,jukaExcessReturnValuation,jukaNormalizedInvestedCapital,jukaReinvestmentEfficiency,jukaWaccPolicy,jukaMatureTerminalPolicy,jukaFairValueAudit,jukaFairValueStability,jukaFairValuePlausibilityAudit,jukaRdPolicy,jukaRdCapitalization,jukaFundamentalForecastEngine,jukaEconomicDcf,jukaOwnerEarningsIntrinsicValue,jukaOwnerEarningsCrossCheck,jukaOwnerEarningsAudit,jukaHistoricalValuationAudit,jukaFairValueTriangulation,jukaFairValue2Operating,jukaForecast5Y,jukaForecastScenarios,jukaExpectedReturnMatrix,jukaReturnBridge,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,deriveBankInsuranceMetrics,deriveReitMetrics,jukaBankAutoAssumptions,jukaReitAutoAssumptions,jukaValuationEngine,jukaRiskAudit,modelDataRequirements,jukaModelReadiness,jukaRelativeByModel,peerMetricSet,jukaPeerComparison,valuationMultiplesFromSnapshot,jukaRealityCheck,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,buildHistoricalJukaFairSeries,buildHistoricalValuationSeries,filterPeriod,dataRoute,buildFairSeries};
 });
