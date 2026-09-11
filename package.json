@@ -1,6 +1,6 @@
 {
   "name": "juka-research",
-  "version": "4.9.1",
+  "version": "10.6.0",
   "private": true,
   "engines": {
     "node": ">=18"
