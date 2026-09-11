@@ -52,8 +52,9 @@ async function alphaFetch(fn,resolved,key,extra={}){
 async function alphaDaily(resolved){
   const key=process.env.ALPHA_VANTAGE_API_KEY;
   if(!key)throw Object.assign(new Error('ALPHA_VANTAGE_API_KEY fehlt'),{code:'NO_ALPHA_KEY'});
-  if(!resolved.alphaVantageSymbol)throw new Error('Kein Alpha-Vantage-Symbol für diesen Markt');
-  let rResolved=resolved,daily,weekly;
+  const alphaSymbol=resolved.alphaVantageSymbol||resolved.displaySymbol||resolved.marketSymbol;
+  if(!alphaSymbol)throw new Error('Kein Alpha-Vantage-Symbol für diesen Markt');
+  let rResolved={...resolved,alphaVantageSymbol:alphaSymbol},daily,weekly;
   try{
     [daily,weekly]=await Promise.all([
       alphaFetch('TIME_SERIES_DAILY',rResolved,key,{outputsize:'compact'}),
@@ -121,12 +122,22 @@ module.exports = async function handler(req,res){
     }
 
     const key=process.env.TWELVE_DATA_API_KEY;
-    if(!key)return res.status(503).json({error:'TWELVE_DATA_API_KEY fehlt',code:'NO_MARKET_KEY'});
     try{
-      const data=await twelveDaily(resolved,key,start_date,end_date);
-      return res.status(200).json(data);
+      if(key){
+        const data=await twelveDaily(resolved,key,start_date,end_date);
+        return res.status(200).json(data);
+      }
+      throw Object.assign(new Error('TWELVE_DATA_API_KEY fehlt'),{code:'NO_MARKET_KEY',status:503});
     }catch(e){
-      return res.status(e.status||502).json({error:e.message,code:'MARKET_PROVIDER_ERROR',provider:'Twelve Data'});
+      if(process.env.ALPHA_VANTAGE_API_KEY){
+        try{
+          const fallback=await alphaDaily({...resolved,alphaVantageSymbol:resolved.displaySymbol||resolved.marketSymbol});
+          return res.status(200).json({...fallback,provider:'Alpha Vantage',source:'Alpha Vantage (Fallback)',warning:`Twelve Data nicht verfügbar: ${e.message}`});
+        }catch(ae){
+          return res.status(502).json({error:`Twelve Data: ${e.message}; Alpha Vantage: ${ae.message}`,code:'MARKET_PROVIDERS_UNAVAILABLE',provider:'Twelve Data + Alpha Vantage'});
+        }
+      }
+      return res.status(e.status||502).json({error:e.message,code:e.code||'MARKET_PROVIDER_ERROR',provider:'Twelve Data'});
     }
   }catch(e){
     return res.status(500).json({error:e.message,code:'MARKET_PROXY_ERROR'});

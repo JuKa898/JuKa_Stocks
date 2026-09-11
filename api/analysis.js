@@ -230,13 +230,15 @@ async function alphaRequest(fn,resolved,key,extra={}){
 async function alphaWeeklyAnalysis(resolved){
   const key=process.env.ALPHA_VANTAGE_API_KEY;
   if(!key){const e=new Error('ALPHA_VANTAGE_API_KEY fehlt');e.code='NO_ALPHA_KEY';throw e}
-  if(!resolved.alphaVantageSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen EU-Markt');e.code='EU_SYMBOL_UNMAPPED';throw e}
+  const alphaSymbol=resolved.alphaVantageSymbol||resolved.displaySymbol||resolved.marketSymbol;
+  if(!alphaSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen Markt');e.code='ALPHA_SYMBOL_UNMAPPED';throw e}
+  resolved={...resolved,alphaVantageSymbol:alphaSymbol};
   // One call gives long history and a recent weekly close. This cuts a cold EU
   // analysis from 5-6 Alpha calls to 4 (market + 3 statements).
   let weeklyJson,usedSymbol=resolved.alphaVantageSymbol;
   try{weeklyJson=await alphaRequest('TIME_SERIES_WEEKLY',resolved,key);}
   catch(err){
-    if(err?.code!=='EU_MARKET_PROVIDER_ERROR')throw err;
+    if(err?.code!=='EU_MARKET_PROVIDER_ERROR'||resolved.region!=='EU')throw err;
     const fallback=await alphaResolvedSymbol(resolved,key);
     if(!fallback||fallback===resolved.alphaVantageSymbol)throw err;
     usedSymbol=fallback;
@@ -252,14 +254,30 @@ async function marketAdapter(stock){
   // EU is deliberately routed to Alpha Vantage here as well as in /api/market.
   // This fixes the previous split-brain bug where the chart endpoint worked but full analysis still called Twelve Data.
   if(resolved.region==='EU')return alphaWeeklyAnalysis(resolved);
-  const key=process.env.TWELVE_DATA_API_KEY;if(!key){const e=new Error('TWELVE_DATA_API_KEY fehlt');e.code='NO_MARKET_KEY';throw e;}
+  const key=process.env.TWELVE_DATA_API_KEY;
+  const tryAlphaFallback=async(primaryError)=>{
+    if(!process.env.ALPHA_VANTAGE_API_KEY)throw primaryError;
+    try{
+      const fallback=await alphaWeeklyAnalysis({...resolved,alphaVantageSymbol:resolved.displaySymbol||resolved.marketSymbol});
+      return {...fallback,source:'Alpha Vantage (Fallback)',warning:`Twelve Data nicht verfügbar: ${primaryError?.message||primaryError}`};
+    }catch(alphaError){
+      const e=new Error(`Marktdaten nicht verfügbar. Twelve Data: ${primaryError?.message||primaryError}; Alpha Vantage: ${alphaError?.message||alphaError}`);
+      e.code='MARKET_PROVIDERS_UNAVAILABLE';e.httpStatus=502;throw e;
+    }
+  };
+  if(!key){
+    const e=new Error('TWELVE_DATA_API_KEY fehlt');e.code='NO_MARKET_KEY';e.httpStatus=503;
+    return tryAlphaFallback(e);
+  }
   const start=new Date();start.setFullYear(start.getFullYear()-10);
   const u=new URL('https://api.twelvedata.com/time_series');
   u.searchParams.set('symbol',resolved.marketSymbol);u.searchParams.set('interval','1day');u.searchParams.set('adjust','all');u.searchParams.set('outputsize','5000');u.searchParams.set('start_date',start.toISOString().slice(0,10));
-  const r=await fetchWithTimeout(u,{headers:{Authorization:`apikey ${key}`}},9000,'TWELVE_TIMEOUT'),j=await r.json();
-  if(!r.ok||j.status==='error'){const e=new Error(j.message||'Marktdatenfehler');e.code='MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e;}
-  if(!Array.isArray(j.values)||!j.values.length){const e=new Error('Keine Kursdaten vom Marktprovider');e.code='NO_MARKET_DATA';e.httpStatus=404;throw e;}
-  return {...j,source:'Twelve Data',status:'ok',resolvedSymbol:resolved.marketSymbol};
+  try{
+    const r=await fetchWithTimeout(u,{headers:{Authorization:`apikey ${key}`}},6500,'TWELVE_TIMEOUT'),j=await r.json();
+    if(!r.ok||j.status==='error'){const e=new Error(j.message||'Marktdatenfehler');e.code='MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e;}
+    if(!Array.isArray(j.values)||!j.values.length){const e=new Error('Keine Kursdaten vom Marktprovider');e.code='NO_MARKET_DATA';e.httpStatus=404;throw e;}
+    return {...j,source:'Twelve Data',status:'ok',resolvedSymbol:resolved.marketSymbol};
+  }catch(e){return tryAlphaFallback(e);}
 }
 
 module.exports=async function handler(req,res){
@@ -269,7 +287,7 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-4.9.0 · Fair Value 9.0';
+    out.engineVersion='JUKA-4.9.1 · Fair Value 9.0';
     res.setHeader('Cache-Control',resolved.region==='EU'?'s-maxage=86400, stale-while-revalidate=604800':'s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.history||'')==='1'){
       const rows=out.fundamentals?.annual||out.derived||[];
