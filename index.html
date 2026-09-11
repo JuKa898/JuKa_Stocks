@@ -166,11 +166,46 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
 .scenarioCardMetrics b{font-size:11px;color:#26342d}
 .scenarioBear .scenarioCardHead b{color:#9b514b}.scenarioBase .scenarioCardHead b{color:#2f6d50}.scenarioBull .scenarioCardHead b{color:#8a6f2e}
 @media(max-width:850px){.scenarioCards{grid-template-columns:1fr}}
+
+/* JUKA 14.2 — Start & Tools */
+.productNav{display:flex;gap:4px;align-items:center;border-bottom:1px solid #dfe4e1;padding:0 0 10px;margin-bottom:14px}
+.productNav button{border:0;background:transparent;padding:8px 12px;color:#5f6b65;font:600 12px Arial;cursor:pointer}
+.productNav button.active{color:#16251e;border-bottom:2px solid #365846}
+.homeScreen,.toolsScreen{display:none}.homeScreen.active,.toolsScreen.active{display:block}.analysisShell.hidden{display:none}
+.homeHero{padding:54px 0 34px;border-bottom:1px solid #dfe4e1}.homeEyebrow{font:600 10px Arial;text-transform:uppercase;letter-spacing:.12em;color:#718078}
+.homeHero h1{font:600 38px Georgia,serif;margin:9px 0;color:#12251c}.homeHero p{max-width:720px;color:#5c6962;font-size:15px}
+.homeSearch{max-width:820px;margin-top:24px}.homeSearch input{width:100%;box-sizing:border-box;padding:14px 15px;border:1px solid #cbd3ce;background:white;font-size:15px}
+.homeSection{padding:30px 0}.homeSection h2{font:600 22px Georgia,serif;margin:0 0 7px}.homeSectionLead{color:#718078;margin-bottom:18px}
+.toolGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.toolCard{background:#fff;border:1px solid #dce2de;padding:20px;min-height:130px;cursor:pointer}
+.toolCard:hover{border-color:#82968b}.toolIcon{font-size:19px;margin-bottom:18px}.toolCard b{display:block;font:600 16px Georgia,serif;color:#1b2d24}.toolCard span{display:block;color:#718078;font-size:12px;line-height:1.5;margin-top:7px}
+.toolCard.primary{border-color:#8fa397}.calcPanel{background:#fff;border:1px solid #dce2de;padding:22px;max-width:760px}.calcGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.calcGrid label{font-size:11px;color:#66736c}.calcGrid input{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:10px;border:1px solid #cfd6d1}
+.calcResult{margin-top:18px;padding-top:16px;border-top:1px solid #e1e5e2;font:600 28px Georgia,serif}
+@media(max-width:800px){.toolGrid{grid-template-columns:1fr}.calcGrid{grid-template-columns:1fr}.homeHero{padding-top:30px}}
 </style>
 <!-- Legacy regression marker: MVP 1.4 -->
 </head>
 <body>
 <div class="wrap">
+  <nav class="productNav">
+    <button id="navHome" class="active">Start</button><button id="navStocks">Aktien</button><button id="navTools">Tools</button>
+  </nav>
+  <section id="homeScreen" class="homeScreen active">
+    <div class="homeHero"><div class="homeEyebrow">JUKA · Invest with clarity.</div><h1>Unternehmen verstehen. Wert erkennen.</h1>
+      <p>Aktien analysieren, fundamentale Qualität prüfen und den inneren Wert eines Unternehmens nachvollziehbar einschätzen.</p>
+      <div class="homeSearch"><input id="homeSearchInput" placeholder="Aktie suchen, z. B. Microsoft, Apple, SAP"></div></div>
+    <div class="homeSection"><h2>Research & Tools</h2><div class="homeSectionLead">Die wichtigsten Werkzeuge für deine Aktienanalyse an einem Ort.</div>
+      <div class="toolGrid">
+        <div class="toolCard primary" data-tool="stocks"><div class="toolIcon">⌕</div><b>Aktienfinder & Analyse</b><span>Fundamentals, JUKA Quality Score und Fair Value.</span></div>
+        <div class="toolCard" data-tool="fairvalue"><div class="toolIcon">◇</div><b>Fair-Value-Rechner</b><span>Eigene Cashflow-, Wachstums- und Renditeannahmen.</span></div>
+        <div class="toolCard" data-tool="compound"><div class="toolIcon">↗</div><b>Zinseszins-Rechner</b><span>Endwert einer Einmalanlage berechnen.</span></div>
+        <div class="toolCard" data-tool="cagr"><div class="toolIcon">%</div><b>CAGR-Rechner</b><span>Jährliche Wachstumsrate bestimmen.</span></div>
+        <div class="toolCard" data-tool="mos"><div class="toolIcon">▱</div><b>Margin of Safety</b><span>Sicherheitsmarge zum Fair Value.</span></div>
+        <div class="toolCard" data-tool="dividend"><div class="toolIcon">＋</div><b>Dividendenrendite</b><span>Rendite aus Dividende und Kurs.</span></div>
+      </div></div>
+  </section>
+  <section id="toolsScreen" class="toolsScreen"><div class="homeSection"><div class="homeEyebrow">JUKA Tools</div><h2 id="toolTitle">Rechner</h2><div id="toolBody"></div></div></section>
+  <div id="analysisShell" class="analysisShell hidden">
   <header class="jukaHeader">
     <div class="brandBlock">
       <div class="brand">JUKA</div>
@@ -260,7 +295,7 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
       <div class="sectionTitleRow"><h3>JUKA Quality Score</h3><span>Fundamentale Qualität · transparent bewertet</span></div>
       <div class="qualityGrid">
         <div>
-          <div class="scoreBig"><span id="qualityScore">—</span> <span class="scoreDenom">/ 100</span></div>
+          <div class="scoreBig"><span id="qualityScore">—</span> <span class="scoreDenom">/ 10</span></div>
           <div class="bar"><div></div></div>
           <p><strong id="qualityGrade">Wird geladen …</strong></p>
           <div class="scoreMeta">Eigenständiger, modellabhängiger JUKA Score. Fehlende Daten senken die Konfidenz und werden nicht automatisch als null Qualität gewertet.</div>
@@ -390,6 +425,7 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
   <span id="realityLabel"></span><span id="realityScore"></span><span id="realityConfidence"></span><div id="realityDrivers"></div><span id="realityBreaker"></span>
 </div>
   <div class="footer">JUKA · Private Equity Research · keine Anlageberatung</div>
+  </div>
 </div>
 <script src="./core.js?v=3.0.7.1"></script>
 <script>
@@ -603,11 +639,11 @@ function updateFromLive(symbol,marketData,secData){
     document.getElementById('peMetric').textContent=eps>0?(last.price/eps).toFixed(1)+'×':'—'; document.getElementById('forwardPeMetric').textContent=eps5>0?(last.price/eps5).toFixed(1)+'×':'—';
     document.getElementById('revenueMetric').textContent=fmtBig(fact.revenue); document.getElementById('ebitMetric').textContent=fmtBig(fact.operatingIncome); document.getElementById('marginMetric').textContent=fmtPctMaybe(fact.operatingMargin); document.getElementById('epsMetric').textContent=Number.isFinite(eps)?money(eps):'—'; document.getElementById('fcfMetric').textContent=fmtBig(fact.fcf); document.getElementById('netCashMetric').textContent=fmtBig(fact.netCash);
     const qi=JuKaCore.qualityInputFromAnnual(annual), available=qi?Object.values(qi).filter(Number.isFinite).length:0;
-    if(qi&&available>=6){const qs=JuKaCore.jukaQualityScore(qi);document.getElementById('qualityScore').textContent=Number.isInteger(qs.score)?qs.score:qs.score.toFixed(1);document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+` · ${available}/10 Faktoren`;document.querySelector('.bar>div').style.width=qs.score+'%';document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label} · ${(p.weight*100).toFixed(0)}%</span><strong>${p.value==null?'n/v':p.rawScore+'/10 → '+p.weightedScore.toFixed(1)+' Pkt. · '+p.reason}</strong></div>`).join('');}
+    if(qi&&available>=6){const qs=JuKaCore.jukaQualityScore(qi);document.getElementById('qualityScore').textContent=(Number(qs.score)/10).toFixed(1);document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+` · ${available}/10 Faktoren`;document.querySelector('.bar>div').style.width=qs.score+'%';document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label} · ${(p.weight*100).toFixed(0)}%</span><strong>${p.value==null?'n/v':p.rawScore+'/10 → '+p.weightedScore.toFixed(1)+' Pkt. · '+p.reason}</strong></div>`).join('');}
     else{const qs=JuKaCore.qualityScore({roic:fact.roic,operatingMargin:fact.operatingMargin,revenueCagr3y:fact.revenueCagr3y,epsCagr3y:fact.epsCagr3y,fcfMargin:fact.fcfMargin,netDebtToEbit:fact.operatingIncome?fact.netDebt/fact.operatingIncome:null,shareCagr3y:fact.dilutionPa});document.getElementById('qualityScore').textContent=qs.score;document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+' · Daten-Fallback';document.querySelector('.bar>div').style.width=qs.score+'%';document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${p.points}/${p.max} · ${p.reason}</strong></div>`).join('');}
   }
   renderFundamentalHistory(annual,secData?.source||'SEC Company Facts');
-  const modelName=last?.valuationEngine||last?.model||'JUKA Fair Value'; document.getElementById('fundNote').textContent=`Fundamentaldaten: SEC Company Facts · Bewertungsengine: ${modelName}.`; document.getElementById('chartNote').textContent='Echte Tageskurse. Historische Fair Values werden nur mit Fundamentaldaten berechnet, deren Filing-Datum am jeweiligen Kurstag bereits bekannt war.'; setStatus('LIVE · JUKA Fair Value 8.0',true); draw();
+  const modelName=last?.valuationEngine||last?.model||'JUKA Fair Value'; document.getElementById('fundNote').textContent=`Fundamentaldaten: SEC Company Facts · Bewertungsengine: ${modelName}.`; document.getElementById('chartNote').textContent='Echte Tageskurse. Historische Fair Values werden nur mit Fundamentaldaten berechnet, deren Filing-Datum am jeweiligen Kurstag bereits bekannt war.'; setStatus('LIVE · JUKA Fair Value 8.1',true); draw();
 }
 function updateFromSnapshot(symbol,snap){
   const z=stocks.find(x=>x.s===symbol)||{s:symbol,n:snap?.fundamentals?.name||symbol};
@@ -625,7 +661,7 @@ function updateFromSnapshot(symbol,snap){
     document.getElementById('epsMetric').textContent=Number.isFinite(Number(fact.eps))?money(fact.eps):'—';document.getElementById('fcfMetric').textContent=fmtBig(fact.fcf);document.getElementById('netCashMetric').textContent=fmtBig(fact.netCash);
     document.getElementById('peMetric').textContent=Number.isFinite(snap.multiples?.pe)?snap.multiples.pe.toFixed(1)+'×':'—';document.getElementById('forwardPeMetric').textContent=Number.isFinite(snap.relative?.peY5)?snap.relative.peY5.toFixed(1)+'×':'—';
   }
-  if(snap.quality){const qs=snap.quality;document.getElementById('qualityScore').textContent=Number.isFinite(Number(qs.score))?(Number.isInteger(qs.score)?qs.score:Number(qs.score).toFixed(1)):'—';document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+(qs.confidence?' · Konfidenz '+qs.confidence:'');document.querySelector('.bar>div').style.width=(Number(qs.score)||0)+'%';const qv=document.getElementById('qualityVerdict');if(qv)qv.textContent=qs.verdict||qs.interpretation||'';const qr=document.getElementById('qualityRecommendation');if(qr)qr.textContent=qs.recommendation||'';document.getElementById('scoreBreakdown').innerHTML=(qs.parts||[]).map(p=>`<div class="scoreItem"><span>${p.label}${p.group?' · '+p.group:''}</span><strong>${Number.isFinite(Number(p.score))?Number(p.score).toFixed(0)+'/100 · ':''}${p.reason||''}</strong></div>`).join('');renderJukaQualityDetail(qs);}
+  if(snap.quality){const qs=snap.quality;document.getElementById('qualityScore').textContent=Number.isFinite(Number(qs.score))?(Number.isInteger(qs.score)?qs.score:Number(qs.score).toFixed(1)):'—';document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+(qs.confidence?' · Konfidenz '+qs.confidence:'');document.querySelector('.bar>div').style.width=(Number(qs.score)||0)+'%';const qv=document.getElementById('qualityVerdict');if(qv)qv.textContent=qs.verdict||qs.interpretation||'';const qr=document.getElementById('qualityRecommendation');if(qr)qr.textContent=qs.recommendation||'';document.getElementById('scoreBreakdown').innerHTML=(qs.parts||[]).map(p=>`<div class="scoreItem"><span>${p.label}${p.group?' · '+p.group:''}</span><strong>${Number.isFinite(Number(p.score))?(Number(p.score)/10).toFixed(1)+'/10 · ':''}${p.reason||''}</strong></div>`).join('');renderJukaQualityDetail(qs);}
   renderFundamentalHistory(snap.fundamentals?.annual||[],snap.fundamentals?.source||'Pipeline');
   renderMotorAudit(snap);
   renderAutoAssumptions(snap.autoAssumptions||null);
@@ -637,7 +673,7 @@ function updateFromSnapshot(symbol,snap){
   const releaseText=snap.release?.status?` · Fair-Value-Status: ${snap.release.status}`:'';
   document.getElementById('fundNote').textContent=`Datenpipeline: ${snap.market?.source||'Marktdaten'} + ${snap.fundamentals?.source||'Fundamentaldaten'} · Status: ${snap.analysisStatus||'—'} · Modell: ${snap.model}${readyText}${releaseText}.${warningText}`;
   document.getElementById('chartNote').textContent='Historische Fair Values respektieren das jeweilige Filing-Datum. EU-Fundamentals laufen über Alpha Vantage, sofern ein serverseitiger API-Key gesetzt ist. Fehlen Daten oder Key, bleibt JUKA bewusst im Market-only-Modus.';
-  setStatus('LIVE · JUKA Fair Value 8.0',true);draw();renderPerformanceFromChart();
+  setStatus('LIVE · JUKA Fair Value 8.1',true);draw();renderPerformanceFromChart();
 }
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
@@ -696,7 +732,7 @@ function applySummaryNumbers(symbol,summary){
     const qs=summary.quality;
     document.getElementById('qualityScore').textContent=Number.isInteger(qs.score)?qs.score:Number(qs.score).toFixed(1);
     document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label;
-    document.querySelector('.bar>div').style.width=Number(qs.score)+'%';
+    document.querySelector('.bar>div').style.width=(Number(qs.score)*10)+'%';
     document.getElementById('scoreBreakdown').innerHTML=(qs.parts||[]).map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${Number.isFinite(Number(p.score))?Number(p.score).toFixed(0)+'/100 · ':''}${p.reason||''}</strong></div>`).join('');renderJukaQualityDetail(qs);
   }
 
@@ -782,7 +818,7 @@ async function fetchJson(url,label,timeoutMs=25000){
 function jukaCacheKey(symbol,kind){
   const z=stocks.find(x=>x.s===symbol)||{};
   const listing=[String(z.region||'US').toUpperCase(),String(z.marketSymbol||symbol).toUpperCase(),String(z.currency||'USD').toUpperCase()].join('|');
-  return 'juka-live-v11:'+kind+':'+String(symbol).toUpperCase()+':'+listing
+  return 'juka-live-v12:'+kind+':'+String(symbol).toUpperCase()+':'+listing
 }
 function jukaCacheSet(symbol,kind,data){try{localStorage.setItem(jukaCacheKey(symbol,kind),JSON.stringify({savedAt:Date.now(),data}))}catch{}}
 function jukaCacheGet(symbol,kind,maxAgeMs=86400000){
@@ -923,7 +959,7 @@ const META_PRICE=616.77, META_EPS=26.53, META_EPS_Y5=45;
 let metaChartReference=null;
 function renderExactQuality(){
   const qs=JuKaCore.jukaQualityScore(META_QUALITY_INPUT);
-  document.getElementById('qualityScore').textContent=Number.isInteger(qs.score)?qs.score:qs.score.toFixed(1);
+  document.getElementById('qualityScore').textContent=(Number(qs.score)/10).toFixed(1);
   document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label;
   document.querySelector('.bar>div').style.width=qs.score+'%';
   document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label} · ${(p.weight*100).toFixed(0)}%</span><strong>${p.rawScore}/10 → ${p.weightedScore.toFixed(1)} Pkt. · ${p.reason}</strong></div>`).join('');
@@ -1083,8 +1119,8 @@ function loadMetaDemo(){
   document.getElementById('modelBox').style.display='block'; renderExactQuality();
   document.getElementById('fundamentalHistory').innerHTML='<tr><td>TTM</td><td>$228,25 Mrd.</td><td>38,1%</td><td>$5,41 Mrd.</td><td>$26,53</td><td>32,6%</td><td>—</td><td>Excel-Referenz</td></tr>'; document.getElementById('historySource').textContent='Quelle: Excel-Referenz'; document.getElementById('historyAvailability').textContent='Historischer Fair Value: Demo-Reihe'; document.getElementById('historyCoverage').textContent='Datenabdeckung: Referenzmodell';
   if(metaChartReference) chartData=metaChartReference.map(x=>({...x})); applyMetaModel(true);
-  document.getElementById('fundNote').textContent='Demo-/Referenzwerte dienen nur als technische Referenz. JUKA Fair Value 8.0 berechnet den inneren Wert aus normalisierten Owner Earnings; Marktpreise sind nur Vergleichsgröße.';
-  document.getElementById('chartNote').textContent='Demo-Historie; Bear/Base/Bull stammen aus JUKA Fair Value 8.0. Der Marktpreis wird nicht zur Kalibrierung des Fair Value verwendet.';
+  document.getElementById('fundNote').textContent='Demo-/Referenzwerte dienen nur als technische Referenz. JUKA Fair Value 8.1 berechnet den inneren Wert aus normalisierten Owner Earnings; Marktpreise sind nur Vergleichsgröße.';
+  document.getElementById('chartNote').textContent='Demo-Historie; Bear/Base/Bull stammen aus JUKA Fair Value 8.1. Der Marktpreis wird nicht zur Kalibrierung des Fair Value verwendet.';
   setStatus('Excel-Parität · META'); draw();
 }
 ['dcfG1','dcfG5','dcfMargin5','dcfWacc','dcfTg'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{if(document.getElementById('symbol').textContent==='META')applyMetaModel(true);}));
@@ -1495,5 +1531,26 @@ async function jukaLoadFairValueHistory(symbol, stockMeta={}){
     date:x.date,price:x.price,bear:x.bear,base:x.base,bull:x.bull,status:x.status,confidence:x.confidence,sourceCutoff:x.sourceCutoff
   }));
 }
+
+// JUKA product navigation / start screen / calculators
+(function(){
+ const home=document.getElementById('homeScreen'),tools=document.getElementById('toolsScreen'),analysis=document.getElementById('analysisShell');
+ const buttons={home:document.getElementById('navHome'),stocks:document.getElementById('navStocks'),tools:document.getElementById('navTools')};
+ function show(view){home.classList.toggle('active',view==='home');tools.classList.toggle('active',view==='tools');analysis.classList.toggle('hidden',view!=='stocks');Object.entries(buttons).forEach(([k,b])=>b&&b.classList.toggle('active',k===view));window.scrollTo({top:0,behavior:'smooth'});}
+ buttons.home.onclick=()=>show('home');buttons.stocks.onclick=()=>show('stocks');buttons.tools.onclick=()=>openTool('fairvalue');
+ document.querySelectorAll('.toolCard').forEach(c=>c.onclick=()=>c.dataset.tool==='stocks'?show('stocks'):openTool(c.dataset.tool));
+ const hs=document.getElementById('homeSearchInput');hs.addEventListener('keydown',e=>{if(e.key==='Enter'){show('stocks');const q=document.getElementById('search');q.value=hs.value;q.dispatchEvent(new Event('input',{bubbles:true}));q.focus();}});
+ function openTool(kind){show('tools');const title=document.getElementById('toolTitle'),body=document.getElementById('toolBody');
+ const specs={
+ compound:['Zinseszins-Rechner',[['Startkapital','a',10000],['Rendite p.a. (%)','b',8],['Jahre','c',10]],v=>v.a*Math.pow(1+v.b/100,v.c),'Endwert'],
+ cagr:['CAGR-Rechner',[['Anfangswert','a',100],['Endwert','b',200],['Jahre','c',5]],v=>(Math.pow(v.b/v.a,1/v.c)-1)*100,'CAGR %'],
+ mos:['Margin of Safety',[['Aktienkurs','a',80],['Fair Value','b',100]],v=>(1-v.a/v.b)*100,'Sicherheitsmarge %'],
+ dividend:['Dividendenrendite',[['Jahresdividende je Aktie','a',3],['Aktienkurs','b',100]],v=>v.a/v.b*100,'Dividendenrendite %'],
+ fairvalue:['Fair-Value-Rechner',[['Owner Earnings / FCF','a',100],['Wachstum p.a. (%)','b',5],['Diskontsatz (%)','c',9],['Terminalwachstum (%)','d',2.5],['Netto-Schulden','e',0],['Aktienanzahl','f',10]],v=>{if(v.c<=v.d||v.f<=0)return NaN;let pv=0,cf=v.a;for(let y=1;y<=10;y++){const g=(v.b/100)*(1-(y-1)/12);cf*=1+g;pv+=cf/Math.pow(1+v.c/100,y)}const tv=cf*(1+v.d/100)/(v.c/100-v.d/100);return (pv+tv/Math.pow(1+v.c/100,10)-v.e)/v.f},'Fair Value je Aktie']};
+ const sp=specs[kind]||specs.fairvalue;title.textContent=sp[0];body.innerHTML='<div class="calcPanel"><div class="calcGrid">'+sp[1].map(x=>`<label>${x[0]}<input data-k="${x[1]}" type="number" step="any" value="${x[2]}"></label>`).join('')+'</div><div class="calcResult"><span id="calcLabel"></span><br><strong id="calcValue">—</strong></div></div>';
+ const calc=()=>{const v={};body.querySelectorAll('input').forEach(i=>v[i.dataset.k]=Number(i.value));const x=sp[2](v);document.getElementById('calcLabel').textContent=sp[3];document.getElementById('calcValue').textContent=Number.isFinite(x)?x.toLocaleString('de-DE',{maximumFractionDigits:2}):'—'};body.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));calc();}
+ window.jukaShowAnalysis=()=>show('stocks');
+})();
+
 </script>
 <div class="toast" id="productToast"></div></body></html>

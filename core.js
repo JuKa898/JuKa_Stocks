@@ -20,7 +20,7 @@
     add('Cashflow-Qualität',Number.isFinite(fcfm)?(fcfm>=.20?15:fcfm>=.12?12:fcfm>=.06?9:fcfm>0?6:1):7,15,Number.isFinite(fcfm)?`${(fcfm*100).toFixed(1)}% FCF-Marge`:'nicht verfügbar');
     add('Bilanzqualität',Number.isFinite(nde)?(nde<=0?10:nde<=1?9:nde<=2?7:nde<=3?5:2):5,10,Number.isFinite(nde)?`${nde.toFixed(1)}× Net Debt / EBIT`:'nicht verfügbar');
     add('Verwässerung',Number.isFinite(dilution)?(dilution<=0?10:dilution<=.01?8:dilution<=.03?5:2):5,10,Number.isFinite(dilution)?`${(dilution*100).toFixed(1)}% Aktien-CAGR`:'nicht verfügbar');
-    const grade=score>=85?'A':score>=70?'B':score>=55?'C':score>=40?'D':'E';
+    const grade=score>=8.5?'A':score>=70?'B':score>=55?'C':score>=40?'D':'E';
     const label=score>=85?'Exzellent':score>=70?'Stark':score>=55?'Solide':score>=40?'Durchschnittlich':'Schwach';
     return {score:Math.round(score),grade,label,parts};
   }
@@ -211,23 +211,24 @@
 
     const totalWeight=factors.reduce((s,x)=>s+x.weight,0);
     const weighted=factors.reduce((s,x)=>s+x.score*x.weight,0);
-    const score=totalWeight?Math.round((weighted/totalWeight)*10)/10:null;
+    const score100=totalWeight?weighted/totalWeight:null;
+    const score=score100==null?null:Math.round(score100)/10;
     const coverage=Math.min(1,totalWeight/100);
     const confidence=coverage>=.82&&rows.length>=5?'hoch':coverage>=.60&&rows.length>=4?'mittel':'niedrig';
-    const grade=score==null?'—':score>=85?'A':score>=72?'B':score>=58?'C':score>=45?'D':'E';
-    const label=score==null?'Nicht bewertbar':score>=85?'Exzellent':score>=72?'Sehr gut':score>=58?'Gut / solide':score>=45?'Durchschnittlich':'Schwach';
+    const grade=score==null?'—':score>=8.5?'A':score>=7.2?'B':score>=5.8?'C':score>=4.5?'D':'E';
+    const label=score==null?'Nicht bewertbar':score>=8.5?'Exzellent':score>=7.2?'Sehr gut':score>=5.8?'Gut / solide':score>=4.5?'Durchschnittlich':'Schwach';
     const strengths=factors.slice().sort((a,b)=>b.score-a.score).slice(0,2).map(x=>x.label);
     const weaknesses=factors.slice().sort((a,b)=>a.score-b.score).slice(0,2).map(x=>x.label);
     let verdict='Datenlage für ein belastbares Qualitätsurteil noch zu dünn.';
     let recommendation='Weitere Fundamentaldaten abwarten.';
     if(score!=null){
       if(score>=85){verdict='Außergewöhnlich hohe fundamentale Qualität mit mehreren robusten Stärken.';recommendation='Qualitativ klar investierbar; Bewertung und Risiken entscheiden über den Einstieg.';}
-      else if(score>=72){verdict='Überdurchschnittlich gutes Qualitätsprofil mit überwiegend starken Fundamentaldaten.';recommendation='Attraktiver Qualitätskandidat; Schwachstellen und Bewertung gezielt prüfen.';}
-      else if(score>=58){verdict='Solides Unternehmen, aber die Qualität ist nicht in allen Bereichen überdurchschnittlich.';recommendation='Selektiv interessant; nur bei passender Bewertung und verständlichen Schwächen.';}
-      else if(score>=45){verdict='Gemischtes Qualitätsprofil mit mehreren Punkten, die genauer geprüft werden sollten.';recommendation='Eher Watchlist als Qualitätskauf; erst Schwächen und Bewertung klären.';}
+      else if(score>=7.2){verdict='Überdurchschnittlich gutes Qualitätsprofil mit überwiegend starken Fundamentaldaten.';recommendation='Attraktiver Qualitätskandidat; Schwachstellen und Bewertung gezielt prüfen.';}
+      else if(score>=5.8){verdict='Solides Unternehmen, aber die Qualität ist nicht in allen Bereichen überdurchschnittlich.';recommendation='Selektiv interessant; nur bei passender Bewertung und verständlichen Schwächen.';}
+      else if(score>=4.5){verdict='Gemischtes Qualitätsprofil mit mehreren Punkten, die genauer geprüft werden sollten.';recommendation='Eher Watchlist als Qualitätskauf; erst Schwächen und Bewertung klären.';}
       else {verdict='Fundamentale Qualität ist aktuell schwach oder sehr uneinheitlich.';recommendation='Vorsicht: nur mit klarer Sondersituation oder deutlicher Sicherheitsmarge näher prüfen.';}
     }
-    return {version:'JUKA Quality Score 2.0',model,score,grade,label,coverage,confidence,years:rows.length,verdict,recommendation,strengths,weaknesses,parts:factors};
+    return {version:'JUKA Quality Score 3.0',model,score,score100:score100==null?null:Math.round(score100*10)/10,grade,label,coverage,confidence,years:rows.length,verdict,recommendation,strengths,weaknesses,parts:factors};
   }
 
   // Legacy simplified FCFF DCF kept for partial live datasets.
@@ -978,7 +979,7 @@
     const histGrowth=median([revCagr,ownerCagr].filter(Number.isFinite));
     const roics=recent.map(x=>Number(x.roic)).filter(Number.isFinite);
     const histRoic=roics.length?median(roics):null;
-    const wacc0=clamp(Number(adaptive?.assumptions?.wacc)||.09,.055,.14);
+    const wacc0=clamp(Number(adaptive?.assumptions?.wacc)||.09,.07,.14);
     const terminalGrowth=clamp(Number(adaptive?.assumptions?.terminalGrowth)||.025,.015,.035);
     const terminalRoic=clamp(Number(adaptive?.assumptions?.terminalRoic)||Number(histRoic)||.12,Math.max(terminalGrowth+.01,.06),.30);
 
@@ -989,11 +990,12 @@
     // must be affordable through reinvestment at the company's observed economics.
     const rawGrowth=Number.isFinite(histGrowth)?histGrowth:.04;
     const economicRoic=clamp((Number.isFinite(histRoic)?histRoic:terminalRoic)*cfg.roic,.06,.45);
-    const affordableGrowth=Math.max(0,economicRoic*.65); // never assume >65% reinvestment indefinitely
-    const startGrowth=clamp(Math.min(rawGrowth+cfg.growth,affordableGrowth),-.03,.18);
+    const affordableGrowth=Math.max(0,economicRoic*.55);
+    const evidenceGrowth=clamp(rawGrowth,-.03,.12);
+    const startGrowth=clamp(Math.min(evidenceGrowth+cfg.growth,affordableGrowth),-.03,.14);
     const excessReturn=Number.isFinite(histRoic)?histRoic-wacc0:0;
-    const durability=excessReturn>.12?10:excessReturn>.07?8:excessReturn>.03?7:5;
-    const years=clamp(durability+cfg.years,4,11);
+    const durability=excessReturn>.12?8:excessReturn>.07?7:excessReturn>.03?6:5;
+    const years=clamp(durability+cfg.years,4,9);
     const wacc=clamp(wacc0+cfg.wacc,.05,.16);
 
     let owner=owner0,pv=0,flows=[];
@@ -1135,7 +1137,7 @@
     const dcfDispersion=primary>0&&economic>0?Math.abs(economic-primary)/primary:null;
     const epvPremium=primary>0&&ep>0?ep/primary-1:null;
     if(!(primary>0))blockers.push('primary-owner-earnings-unavailable');
-    if(!(economic>0))blockers.push('economic-dcf-unavailable');
+    if(!(economic>0))warnings.push('economic-dcf-unavailable');
     else if(dcfDispersion>.60)blockers.push('economic-dcf-dispersion-high');
     else if(dcfDispersion>.35)warnings.push('economic-dcf-dispersion');
     // Earnings Power deliberately assumes no growth. A low EPV is therefore not a reason to reject a growth-company value.
@@ -1481,7 +1483,10 @@
       latest=rows.at(-1);
     }
     let adaptive=jukaAdaptiveOperatingAssumptions(rows,overrides);
-    if(!adaptive||!latest)return null;
+    if(!latest)return null;
+    if(!adaptive){
+      adaptive={assumptions:{wacc:.09,terminalGrowth:.025,terminalRoic:.12},dataQuality:jukaDataQuality(rows),selfCheck:null,fallback:true};
+    }
     adaptive={...adaptive,moatEvidence:jukaMoatEvidencePolicy(stock)};
     const fundamentalForecast=jukaFundamentalForecastEngine(rows,adaptive);
     if(fundamentalForecast){
@@ -1491,28 +1496,26 @@
         targetEbitMarginY5:overrides.targetEbitMarginY5??fundamentalForecast.targetEbitMarginY5
       },fundamentalForecast};
     }
-    const a=adaptive.assumptions;
+    const a=adaptive.assumptions||{};
     const inp=dcfInputFromAnnual(rows,rows.length-1,a); if(inp)inp.annualFacts=rows;
-    if(!inp)return null;
 
-    // Legacy DCF is retained only as an independent diagnostic.
-    const legacy=jukaDcfScenarios(inp);
-    const economic=jukaEconomicDcf(inp,adaptive);
+    const legacy=inp?jukaDcfScenarios(inp):null;
+    const economic=inp?jukaEconomicDcf(inp,adaptive):null;
     const owner=jukaSimpleIntrinsicOperating(rows,adaptive,'base');
     if(!owner||!(owner.valuePerShare>0))return null;
     const bear=jukaSimpleIntrinsicOperating(rows,adaptive,'bear'),bull=jukaSimpleIntrinsicOperating(rows,adaptive,'bull');
     const valuation={bear:bear?.valuePerShare??null,base:owner.valuePerShare,bull:bull?.valuePerShare??null,detail:{bear,base:owner,bull}};
-    const sensitivity=jukaSensitivity(inp);
-    const earningsPower=jukaEarningsPowerValue(inp,adaptive);
+    const sensitivity=inp?jukaSensitivity(inp):null;
+    const earningsPower=inp?jukaEarningsPowerValue(inp,adaptive):{valuePerShare:null};
     const triangulation=jukaFairValueTriangulation(owner,economic,earningsPower,legacy);
     let confidence=jukaFairValueConfidence({annualFacts:rows,valuation,selfCheck:adaptive.selfCheck,dataQuality:adaptive.dataQuality,sensitivity});
     // Independent-model disagreement is a confidence penalty, never an automatic price adjustment.
     if(Number.isFinite(triangulation?.ownerVsEconomic)&&triangulation.ownerVsEconomic>.50){
       confidence={score:Math.max(0,confidence.score-12),label:confidence.score-12>=80?'hoch':confidence.score-12>=60?'mittel':'niedrig'};
     }
-    const reverse=Number(price)>0?jukaReverseDcf(inp,Number(price)):null;
+    const reverse=inp&&Number(price)>0?jukaReverseDcf(inp,Number(price)):null;
     const result={
-      version:'JUKA Fair Value 8.0',model:'normalized-owner-earnings-intrinsic-value',
+      version:'JUKA Fair Value 8.1',model:'normalized-owner-earnings-intrinsic-value',
       valuation,assumptions:inp,adaptive,fundamentalForecast,rdPolicy,rdAdjustment,reverse,sensitivity,confidence,ownerEarnings:owner,economicDcf:economic,triangulation,
       drivers:jukaFairValueDrivers(adaptive,valuation),
       checks:{
@@ -1526,10 +1529,10 @@
         crossCheckDispersion:triangulation?.ownerVsEconomic??null
       }
     };
-    result.excessReturn=jukaExcessReturnValuation(inp,adaptive,economic);
+    result.excessReturn=inp&&economic?jukaExcessReturnValuation(inp,adaptive,economic):null;
     result.forecastFeasibility=jukaForecastFeasibility(owner);
-    result.economicAudit=jukaFairValueAudit(inp,adaptive,{...valuation,detail:{...valuation.detail,base:economic}},owner,legacy);
-    result.audit=jukaOwnerEarningsAudit(inp,adaptive,owner);
+    result.economicAudit=inp&&economic?jukaFairValueAudit(inp,adaptive,{...valuation,detail:{...valuation.detail,base:economic}},owner,legacy):null;
+    result.audit=inp?jukaOwnerEarningsAudit(inp,adaptive,owner):{status:'review',flags:['secondary-dcf-input-unavailable'],marketPriceUsed:false};
     if(result.audit)result.audit.economicDcfAudit=result.economicAudit;
     result.stability=jukaFairValueStability(result.audit);
     result.plausibility=jukaFairValuePlausibilityAudit(result,rows);
