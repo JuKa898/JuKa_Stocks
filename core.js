@@ -1600,6 +1600,61 @@
     return clamp(mos,.15,.40);
   }
 
+  function jukaHistoricalMultipleFairValue(priceRows=[],annualFacts=[],asOfDate=null,options={}){
+    const rows=deriveFundamentals(annualFacts),prices=(priceRows||[]).map(p=>({date:String(p?.date||p?.datetime||'').slice(0,10),price:finiteNumber(p?.price??p?.close)}))
+      .filter(p=>p.date&&p.price!==null&&p.price>0).sort((a,b)=>a.date.localeCompare(b.date));
+    if(rows.length<4||prices.length<20)return {available:false,reason:'insufficient-history',method:'historical-normalized-multiples',marketPriceUsedForCalibration:true};
+    const cutoff=String(asOfDate||prices.at(-1)?.date||'').slice(0,10);
+    if(!cutoff)return {available:false,reason:'missing-asof',method:'historical-normalized-multiples',marketPriceUsedForCalibration:true};
+    const basis=jukaHistoricalShareBasis(rows);
+    const availableDate=r=>String(r?.accepted||r?.filed||r?.filedDate||r?.publishedDate||r?.availableFrom||'').slice(0,10);
+    const known=[];
+    for(let i=0;i<rows.length;i++){const a=availableDate(rows[i]);if(a&&a<=cutoff)known.push({row:rows[i],i,available:a});}
+    if(known.length<4)return {available:false,reason:'insufficient-public-filings',method:'historical-normalized-multiples',marketPriceUsedForCalibration:true};
+    const target=known.at(-1);
+    const priceAtOrBefore=(date)=>{let out=null;for(const p of prices){if(p.date<=date)out=p.price;else break;}return out;};
+    const perShare=(r,i,key)=>{
+      const shares=finiteNumber(r?.shares),factor=Number(basis.factors?.[i])||1;
+      if(!(shares>0&&factor>0))return null;
+      if(key==='earnings'){
+        const ni=finiteNumber(r?.netIncome); if(ni!==null)return (ni/shares)/factor;
+        const eps=finiteNumber(r?.eps); return eps!==null?eps/factor:null;
+      }
+      const fcf=finiteNumber(r?.fcf); return fcf!==null?(fcf/shares)/factor:null;
+    };
+    const samples=[];
+    for(const k of known.slice(0,-1)){
+      if(k.row?.isTTM)continue;
+      const px=priceAtOrBefore(k.available); if(!(px>0))continue;
+      const eps=perShare(k.row,k.i,'earnings'),fcfps=perShare(k.row,k.i,'fcf');
+      if(eps!==null&&eps>0){const m=px/eps;if(m>=4&&m<=100)samples.push({type:'pe',multiple:m,date:k.available});}
+      if(fcfps!==null&&fcfps>0){const m=px/fcfps;if(m>=4&&m<=100)samples.push({type:'pfcf',multiple:m,date:k.available});}
+    }
+    const stats=(type)=>{
+      let xs=samples.filter(x=>x.type===type).slice(-8).map(x=>x.multiple).sort((a,b)=>a-b);
+      if(xs.length<3)return null;
+      const med=median(xs),dev=xs.map(x=>Math.abs(x-med)).sort((a,b)=>a-b),mad=median(dev);
+      if(Number.isFinite(mad)&&mad>0){const lo=med-3.5*mad,hi=med+3.5*mad;const trimmed=xs.filter(x=>x>=lo&&x<=hi);if(trimmed.length>=3)xs=trimmed;}
+      const q=(p)=>{if(!xs.length)return null;const pos=(xs.length-1)*p,lo=Math.floor(pos),hi=Math.ceil(pos);return lo===hi?xs[lo]:xs[lo]+(xs[hi]-xs[lo])*(pos-lo);};
+      return {median:median(xs),q25:q(.25),q75:q(.75),count:xs.length,min:xs[0],max:xs.at(-1)};
+    };
+    const pe=stats('pe'),pfcf=stats('pfcf'),eps=perShare(target.row,target.i,'earnings'),fcfps=perShare(target.row,target.i,'fcf');
+    const methods=[];
+    if(pe&&eps!==null&&eps>0)methods.push({type:'earnings',base:eps*pe.median,bear:eps*pe.q25,bull:eps*pe.q75,weight:.65,multiple:pe,perShare:eps});
+    if(pfcf&&fcfps!==null&&fcfps>0)methods.push({type:'fcf',base:fcfps*pfcf.median,bear:fcfps*pfcf.q25,bull:fcfps*pfcf.q75,weight:.35,multiple:pfcf,perShare:fcfps});
+    if(!methods.length)return {available:false,reason:'no-valid-multiple-series',method:'historical-normalized-multiples',marketPriceUsedForCalibration:true};
+    const blend=(key)=>{let s=0,w=0;for(const m of methods){const v=finiteNumber(m[key]);if(v!==null&&v>0){s+=v*m.weight;w+=m.weight;}}return w?s/w:null;};
+    const base=blend('base');let bear=blend('bear'),bull=blend('bull');
+    if(!(base>0))return {available:false,reason:'invalid-base',method:'historical-normalized-multiples',marketPriceUsedForCalibration:true};
+    if(!(bear>0))bear=base*.82;if(!(bull>0))bull=base*1.18;
+    // Historical valuation bands must remain ordered even with sparse/noisy samples.
+    bear=Math.min(bear,base*.97);bull=Math.max(bull,base*1.03);
+    return {available:true,bear,base,bull,methods,pe,pfcf,targetFy:target.row?.fy,targetDate:target.row?.date,availableFrom:target.available,
+      sampleCount:Math.max(pe?.count||0,pfcf?.count||0),method:'eulerpool-style-historical-normalized-multiples',
+      philosophy:'current per-share fundamentals multiplied by robust prior public valuation multiples; current price excluded from target multiple',
+      marketPriceUsedForCalibration:true,currentPriceUsedForCalibration:false,pointInTimeSafe:true};
+  }
+
   function jukaHistoricalMultipleCheck(annualFacts=[],owner=null){
     const rows=deriveFundamentals(annualFacts).filter(x=>!x.isTTM);
     const samples=[];
@@ -1682,7 +1737,7 @@
     const livePrice=finiteNumber(price);
     const reverse=inp&&livePrice!==null&&livePrice>0?jukaReverseDcf(inp,livePrice):null;
     const result={
-      version:'JUKA Fair Value 8.3.2',model:'buffett-owner-earnings-intrinsic-value',
+      version:'JUKA Buffett Intrinsic 8.3.2',model:'buffett-owner-earnings-intrinsic-value',
       framework:{primary:'buffett-owner-earnings',historicalAnchor:'eulerpool-style-multiple-check',
         philosophy:'intrinsic-value-first; historical multiples are diagnostics only',marginOfSafety,buyBelow,historicalMultipleCheck},
       valuation,assumptions:inp,adaptive,fundamentalForecast,rdPolicy,rdAdjustment,reverse,sensitivity,confidence,ownerEarnings:owner,economicDcf:economic,triangulation,
@@ -2066,7 +2121,7 @@
     if(model==='operating-company'){
       if(!readiness.ready){result.diagnostics.push(`Pflichtdaten fehlen: ${readiness.missingRequired.join(', ')}`);return result;}
       const fv2=jukaFairValue2Operating(stock,rows,price,overrides);
-      if(!fv2){result.diagnostics.push('JUKA Fair Value 8.3.2 konnte aus den verfügbaren Daten nicht vollständig berechnet werden.');return result;}
+      if(!fv2){result.diagnostics.push('JUKA Buffett Intrinsic 8.3.2 konnte aus den verfügbaren Daten nicht vollständig berechnet werden.');return result;}
       const a=fv2.adaptive?.assumptions||{};
       result.assumptions={dcf:fv2.assumptions,auto:fv2.adaptive,fairValue2:{version:fv2.version,model:fv2.model,confidence:fv2.confidence,drivers:fv2.drivers,checks:fv2.checks}};
       result.valuation=fv2.valuation;
@@ -2172,18 +2227,24 @@
       if(!chosen)return {...p,bear:null,base:null,bull:null,model,sourceFy:null,availableFrom:null};
       if(!cache.has(chosen.i)){
         const slice=rows.slice(0,chosen.i+1),engine=jukaValuationEngine(stock,slice,null,overrides);
-        cache.set(chosen.i,engine);
+        const marketFair=model==='operating-company'?jukaHistoricalMultipleFairValue(priceRows,slice,chosen.available,overrides):null;
+        cache.set(chosen.i,{engine,marketFair});
       }
-      const engine=cache.get(chosen.i),v=engine?.valuation;
+      const cached=cache.get(chosen.i),engine=cached?.engine,marketFair=cached?.marketFair;
+      const v=marketFair?.available?marketFair:engine?.valuation;
       if(!v||finiteNumber(v.base)===null)return {...p,bear:null,base:null,bull:null,model,sourceFy:chosen.x.fy,availableFrom:chosen.available};
-      const factor=Number(shareBasis.factors[chosen.i])||1;
-      // No synthetic WACC roll-forward between filings. With no new public
-      // information, the historical intrinsic-value estimate stays unchanged.
+      const useMarket=marketFair?.available===true;
+      const factor=useMarket?1:(Number(shareBasis.factors[chosen.i])||1);
+      // Eulerpool-style fair value uses only valuation multiples observed before the
+      // target filing. Buffett intrinsic value remains available as an independent
+      // price-free cross-check in the engine output.
       return {...p,
         bear:Number(v.bear)/factor,base:Number(v.base)/factor,bull:Number(v.bull)/factor,
         model,sourceFy:chosen.x.fy,availableFrom:chosen.available,
         shareBasisFactor:factor,shareBasisAdjusted:factor!==1,
-        valuationEngine:engine?.readiness?.valuationEngine||null,
+        valuationEngine:useMarket?'historical-normalized-multiples':(engine?.readiness?.valuationEngine||null),
+        fairValueMethod:useMarket?marketFair.method:'buffett-intrinsic-fallback',
+        intrinsicBase:finiteNumber(engine?.valuation?.base),
         confidence:engine?.fairValue2?.confidence??engine?.readiness?.confidence??null,
         releaseStatus:engine?.release?.status||null,liveReady:engine?.release?.liveReady===true
       };
@@ -2391,19 +2452,23 @@
       const prices=(priceHistory||[]).filter(p=>new Date(p.date).getTime()<=new Date(asOf).getTime()).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
       const lastPrice=prices.length?Number(prices.at(-1).close??prices.at(-1).price):null;
       const out=jukaValuationEngine(stock,knownRows,lastPrice,{...options,asOfDate:asOf,pointInTime:true,model});
-      if(!out?.valuation){points.push({date:asOf,available:false,reason:'valuation-unavailable'});continue;}
+      const marketFair=model==='operating-company'?jukaHistoricalMultipleFairValue(prices,knownRows,asOf,options):null;
+      const selected=marketFair?.available?marketFair:out?.valuation;
+      if(!selected){points.push({date:asOf,available:false,reason:'valuation-unavailable'});continue;}
       const fullDerived=deriveFundamentals(rows),basis=jukaHistoricalShareBasis(fullDerived);
       const sourceRow=knownRows.at(-1),sourceIndex=fullDerived.findIndex(x=>String(x.date)===String(sourceRow?.date));
-      const factor=sourceIndex>=0?(Number(basis.factors[sourceIndex])||1):1;
+      const factor=marketFair?.available?1:(sourceIndex>=0?(Number(basis.factors[sourceIndex])||1):1);
       points.push({date:asOf,available:true,price:Number.isFinite(lastPrice)?lastPrice:null,
-        bear:Number(out.valuation.bear)/factor,base:Number(out.valuation.base)/factor,bull:Number(out.valuation.bull)/factor,
+        bear:Number(selected.bear)/factor,base:Number(selected.base)/factor,bull:Number(selected.bull)/factor,
         shareBasisFactor:factor,shareBasisAdjusted:factor!==1,
-        status:out.release?.status||null,liveReady:out.release?.liveReady===true,confidence:out.fairValue2?.confidence??null,
+        fairValueMethod:marketFair?.available?marketFair.method:'buffett-intrinsic-fallback',
+        intrinsicBase:finiteNumber(out?.valuation?.base),
+        status:out?.release?.status||null,liveReady:out?.release?.liveReady===true,confidence:out?.fairValue2?.confidence??null,
         sourceCutoff:knownRows.at(-1)?.accepted||knownRows.at(-1)?.filed||knownRows.at(-1)?.filedDate||knownRows.at(-1)?.publishedDate||knownRows.at(-1)?.availableFrom||null,
-        model:out.model||model});
+        model:out?.model||model});
     }
-    return {version:'JUKA Fair Value History 1.0',method:'point-in-time-filing-cutoff',model,marketPriceUsedForCalibration:false,points};
+    return {version:'JUKA Fair Value History 2.0',method:'point-in-time-eulerpool-style-multiples-with-buffett-fallback',model,marketPriceUsedForCalibration:model==='operating-company',currentPriceUsedForCalibration:false,points};
   }
 
-  return {n,finiteNumber,inputNetDebt,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,jukaQualityScoreV2,jukaPerformanceWindows,jukaChartSlice,jukaInvestorFundamentals,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaDataQuality,jukaCompanyProfile,jukaAutoAssumptions,jukaOperatingRawAssumptions,jukaOperatingSelfCheck,jukaAdaptiveOperatingAssumptions,jukaFairValueConfidence,jukaFairValueDrivers,jukaAsOfRows,jukaPointInTimeFairValue,jukaMoatEvidencePolicy,jukaCompetitiveAdvantagePeriod,jukaEarningsPowerValue,jukaMultiMethodReleaseGate,jukaReleaseMatrixCase,jukaValidateReleaseMatrix,jukaModelStability,jukaForecastFeasibility,jukaReleaseGate,jukaExcessReturnValuation,jukaNormalizedInvestedCapital,jukaReinvestmentEfficiency,jukaWaccPolicy,jukaMatureTerminalPolicy,jukaFairValueAudit,jukaFairValueStability,jukaFairValuePlausibilityAudit,jukaRdPolicy,jukaRdCapitalization,jukaFundamentalForecastEngine,jukaEconomicDcf,jukaSimpleIntrinsicOperating,jukaSimpleIntrinsicAudit,jukaOwnerEarningsIntrinsicValue,jukaOwnerEarningsCrossCheck,jukaOwnerEarningsAudit,jukaHistoricalValuationAudit,jukaHistoricalIntegrityAudit,jukaBuffettMarginOfSafety,jukaHistoricalMultipleCheck,jukaFairValueTriangulation,jukaFairValue2Operating,jukaForecast5Y,jukaForecastScenarios,jukaExpectedReturnMatrix,jukaReturnBridge,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,deriveBankInsuranceMetrics,deriveReitMetrics,jukaBankAutoAssumptions,jukaReitAutoAssumptions,jukaValuationEngine,jukaRiskAudit,modelDataRequirements,jukaModelReadiness,jukaRelativeByModel,peerMetricSet,jukaPeerComparison,valuationMultiplesFromSnapshot,jukaRealityCheck,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,jukaHistoricalShareBasis,buildHistoricalJukaFairSeries,buildHistoricalValuationSeries,filterPeriod,dataRoute,buildFairSeries};
+  return {n,finiteNumber,inputNetDebt,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,jukaQualityScoreV2,jukaPerformanceWindows,jukaChartSlice,jukaInvestorFundamentals,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaDataQuality,jukaCompanyProfile,jukaAutoAssumptions,jukaOperatingRawAssumptions,jukaOperatingSelfCheck,jukaAdaptiveOperatingAssumptions,jukaFairValueConfidence,jukaFairValueDrivers,jukaAsOfRows,jukaPointInTimeFairValue,jukaMoatEvidencePolicy,jukaCompetitiveAdvantagePeriod,jukaEarningsPowerValue,jukaMultiMethodReleaseGate,jukaReleaseMatrixCase,jukaValidateReleaseMatrix,jukaModelStability,jukaForecastFeasibility,jukaReleaseGate,jukaExcessReturnValuation,jukaNormalizedInvestedCapital,jukaReinvestmentEfficiency,jukaWaccPolicy,jukaMatureTerminalPolicy,jukaFairValueAudit,jukaFairValueStability,jukaFairValuePlausibilityAudit,jukaRdPolicy,jukaRdCapitalization,jukaFundamentalForecastEngine,jukaEconomicDcf,jukaSimpleIntrinsicOperating,jukaSimpleIntrinsicAudit,jukaOwnerEarningsIntrinsicValue,jukaOwnerEarningsCrossCheck,jukaOwnerEarningsAudit,jukaHistoricalValuationAudit,jukaHistoricalIntegrityAudit,jukaBuffettMarginOfSafety,jukaHistoricalMultipleFairValue,jukaHistoricalMultipleCheck,jukaFairValueTriangulation,jukaFairValue2Operating,jukaForecast5Y,jukaForecastScenarios,jukaExpectedReturnMatrix,jukaReturnBridge,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,deriveBankInsuranceMetrics,deriveReitMetrics,jukaBankAutoAssumptions,jukaReitAutoAssumptions,jukaValuationEngine,jukaRiskAudit,modelDataRequirements,jukaModelReadiness,jukaRelativeByModel,peerMetricSet,jukaPeerComparison,valuationMultiplesFromSnapshot,jukaRealityCheck,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,jukaHistoricalShareBasis,buildHistoricalJukaFairSeries,buildHistoricalValuationSeries,filterPeriod,dataRoute,buildFairSeries};
 });
