@@ -107,33 +107,27 @@ function secTtmRow(facts,annual){
   const C=M(['NetCashProvidedByUsedInOperatingActivities']);
   const X=M(['PaymentsToAcquirePropertyPlantAndEquipment','PaymentsForAdditionsToPropertyPlantAndEquipment']);
   const anchor=R||N||C||O;if(!anchor)return null;
-  const end=anchor.end;
-  const cashFact=instantCandidate(facts,['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'],'USD',end);
-  const cash=cashFact?.val??null;
-  const dcFact=instantCandidate(facts,['LongTermDebtCurrent','LongTermDebtAndFinanceLeaseObligationsCurrent','ShortTermBorrowings'],'USD',end);
-  const dnFact=instantCandidate(facts,['LongTermDebtNoncurrent','LongTermDebtAndFinanceLeaseObligationsNoncurrent'],'USD',end);
-  const dc=dcFact?.val??null,dn=dnFact?.val??null;
-  let sharesFact=instantCandidate(facts,['CommonStockSharesOutstanding','EntityCommonStockSharesOutstanding'],'shares',end);
-  let shares=sharesFact?.val??null;
+  const end=anchor.end,filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
+  const cash=instantCandidate(facts,['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'],'USD',end)?.val??null;
+  const dc=instantCandidate(facts,['LongTermDebtCurrent','LongTermDebtAndFinanceLeaseObligationsCurrent','ShortTermBorrowings'],'USD',end)?.val??0;
+  const dn=instantCandidate(facts,['LongTermDebtNoncurrent','LongTermDebtAndFinanceLeaseObligationsNoncurrent'],'USD',end)?.val??0;
+  let shares=instantCandidate(facts,['CommonStockSharesOutstanding','EntityCommonStockSharesOutstanding'],'shares',end)?.val??null;
   if(!(Number.isFinite(shares)&&shares>0)){
     const qshares=ytdRows(rawUnits(facts,'WeightedAverageNumberOfDilutedSharesOutstanding','shares'));
-    sharesFact=latestOnOrBefore(qshares,end);
-    shares=sharesFact?.val??annual.at(-1)?.shares??null;
+    shares=latestOnOrBefore(qshares,end)?.val??annual.at(-1)?.shares??null;
   }
-  const revenue=R?.val??null,operatingIncome=O?.val??null,netIncome=N?.val??null,cfo=C?.val??null,capex=X?.val??null,debt=(dcFact||dnFact)?(dc??0)+(dn??0):null;
+  const revenue=R?.val??null,operatingIncome=O?.val??null,netIncome=N?.val??null,cfo=C?.val??null,capex=X?.val??null,debt=dc+dn;
   const D=M(['DepreciationDepletionAndAmortization','DepreciationDepletionAndAmortizationPropertyPlantAndEquipment']);
   const Sb=M(['ShareBasedCompensation']);
   const Rd=M(['ResearchAndDevelopmentExpense','ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost','ResearchAndDevelopmentExpenseSoftwareExcludingAcquiredInProcessCost']);
   const I=M(['InterestExpenseNonOperating','InterestAndDebtExpense']);
   const P=M(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments']);
   const T=M(['IncomeTaxExpenseBenefit']);
-  const equityFact=instantCandidate(facts,['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],'USD',end);
-  const filed=[R,O,N,C,X,cashFact,dcFact,dnFact,sharesFact,D,Sb,Rd,I,P,T,equityFact].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
   return {fy:Number(String(end).slice(0,4)),date:end,filed,availableFrom:filed,isTTM:true,ttmSource:'SEC FY + current YTD − prior-year YTD',
     revenue,operatingIncome,netIncome,eps:netIncome!=null&&shares>0?netIncome/shares:null,cfo,capex,fcf:cfo!=null&&capex!=null?cfo-capex:null,
-    cash,debt,netCash:cash!=null&&debt!=null?cash-debt:null,shares,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,
+    cash,debt,netCash:cash!=null?cash-debt:null,shares,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,
     interestExpense:I?.val??null,pretaxIncome:P?.val??null,incomeTax:T?.val??null,
-    equity:equityFact?.val??null,
+    equity:instantCandidate(facts,['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],'USD',end)?.val??null,
     ffo:null,nwc:null,deltaNwc:null};
 }
 
@@ -176,16 +170,16 @@ async function secAdapter(stock){
     const g=k=>closest(sets[k],date);
     const R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),Rd=g('rd'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ffo=g('ffo'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
     const revenue=R?.val??null,operatingIncome=O?.val??null,cfo=C?.val??null,capex=X?.val??null;
-    const cash=Ca?.val??null,debt=(Dc||Dn)?(Dc?.val??0)+(Dn?.val??0):null;
-    const nwc=(Ar&&Ap)?Ar.val+(Inv?.val??0)-Ap.val:null;
+    const cash=Ca?.val??null,debt=(Dc?.val??0)+(Dn?.val??0);
+    const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null;
     const deltaNwc=nwc!=null&&priorNwc!=null?nwc-priorNwc:null;
     if(nwc!=null)priorNwc=nwc;
-    const filed=[R,O,N,E,C,X,Ca,Dc,Dn,S,D,Sb,Rd,I,P,T,Eq,Ffo,Ar,Inv,Ap].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
+    const filed=[R,O,N,C,X].filter(Boolean).map(x=>x.filed).filter(Boolean).sort().at(-1)||null;
     const periodDate=R?.end||O?.end||N?.end||date;
     return {
       fy:Number(String(periodDate).slice(0,4)),date:periodDate,filed,
       revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo,capex,
-      fcf:cfo!=null&&capex!=null?cfo-capex:null,cash,debt,netCash:cash!=null&&debt!=null?cash-debt:null,
+      fcf:cfo!=null&&capex!=null?cfo-capex:null,cash,debt,netCash:cash!=null?cash-debt:null,
       shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,interestExpense:I?.val??null,
       pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,ffo:Ffo?.val??null,nwc,deltaNwc
     };
@@ -230,15 +224,13 @@ async function alphaRequest(fn,resolved,key,extra={}){
 async function alphaWeeklyAnalysis(resolved){
   const key=process.env.ALPHA_VANTAGE_API_KEY;
   if(!key){const e=new Error('ALPHA_VANTAGE_API_KEY fehlt');e.code='NO_ALPHA_KEY';throw e}
-  const alphaSymbol=resolved.alphaVantageSymbol||resolved.displaySymbol||resolved.marketSymbol;
-  if(!alphaSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen Markt');e.code='ALPHA_SYMBOL_UNMAPPED';throw e}
-  resolved={...resolved,alphaVantageSymbol:alphaSymbol};
+  if(!resolved.alphaVantageSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen EU-Markt');e.code='EU_SYMBOL_UNMAPPED';throw e}
   // One call gives long history and a recent weekly close. This cuts a cold EU
   // analysis from 5-6 Alpha calls to 4 (market + 3 statements).
   let weeklyJson,usedSymbol=resolved.alphaVantageSymbol;
   try{weeklyJson=await alphaRequest('TIME_SERIES_WEEKLY',resolved,key);}
   catch(err){
-    if(err?.code!=='EU_MARKET_PROVIDER_ERROR'||resolved.region!=='EU')throw err;
+    if(err?.code!=='EU_MARKET_PROVIDER_ERROR')throw err;
     const fallback=await alphaResolvedSymbol(resolved,key);
     if(!fallback||fallback===resolved.alphaVantageSymbol)throw err;
     usedSymbol=fallback;
@@ -254,30 +246,14 @@ async function marketAdapter(stock){
   // EU is deliberately routed to Alpha Vantage here as well as in /api/market.
   // This fixes the previous split-brain bug where the chart endpoint worked but full analysis still called Twelve Data.
   if(resolved.region==='EU')return alphaWeeklyAnalysis(resolved);
-  const key=process.env.TWELVE_DATA_API_KEY;
-  const tryAlphaFallback=async(primaryError)=>{
-    if(!process.env.ALPHA_VANTAGE_API_KEY)throw primaryError;
-    try{
-      const fallback=await alphaWeeklyAnalysis({...resolved,alphaVantageSymbol:resolved.displaySymbol||resolved.marketSymbol});
-      return {...fallback,source:'Alpha Vantage (Fallback)',warning:`Twelve Data nicht verfügbar: ${primaryError?.message||primaryError}`};
-    }catch(alphaError){
-      const e=new Error(`Marktdaten nicht verfügbar. Twelve Data: ${primaryError?.message||primaryError}; Alpha Vantage: ${alphaError?.message||alphaError}`);
-      e.code='MARKET_PROVIDERS_UNAVAILABLE';e.httpStatus=502;throw e;
-    }
-  };
-  if(!key){
-    const e=new Error('TWELVE_DATA_API_KEY fehlt');e.code='NO_MARKET_KEY';e.httpStatus=503;
-    return tryAlphaFallback(e);
-  }
+  const key=process.env.TWELVE_DATA_API_KEY;if(!key){const e=new Error('TWELVE_DATA_API_KEY fehlt');e.code='NO_MARKET_KEY';throw e;}
   const start=new Date();start.setFullYear(start.getFullYear()-10);
   const u=new URL('https://api.twelvedata.com/time_series');
   u.searchParams.set('symbol',resolved.marketSymbol);u.searchParams.set('interval','1day');u.searchParams.set('adjust','all');u.searchParams.set('outputsize','5000');u.searchParams.set('start_date',start.toISOString().slice(0,10));
-  try{
-    const r=await fetchWithTimeout(u,{headers:{Authorization:`apikey ${key}`}},6500,'TWELVE_TIMEOUT'),j=await r.json();
-    if(!r.ok||j.status==='error'){const e=new Error(j.message||'Marktdatenfehler');e.code='MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e;}
-    if(!Array.isArray(j.values)||!j.values.length){const e=new Error('Keine Kursdaten vom Marktprovider');e.code='NO_MARKET_DATA';e.httpStatus=404;throw e;}
-    return {...j,source:'Twelve Data',status:'ok',resolvedSymbol:resolved.marketSymbol};
-  }catch(e){return tryAlphaFallback(e);}
+  const r=await fetchWithTimeout(u,{headers:{Authorization:`apikey ${key}`}},9000,'TWELVE_TIMEOUT'),j=await r.json();
+  if(!r.ok||j.status==='error'){const e=new Error(j.message||'Marktdatenfehler');e.code='MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e;}
+  if(!Array.isArray(j.values)||!j.values.length){const e=new Error('Keine Kursdaten vom Marktprovider');e.code='NO_MARKET_DATA';e.httpStatus=404;throw e;}
+  return {...j,source:'Twelve Data',status:'ok',resolvedSymbol:resolved.marketSymbol};
 }
 
 module.exports=async function handler(req,res){
@@ -287,7 +263,7 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-4.9.1 · Fair Value 9.0';
+    out.engineVersion='JUKA-10.1.0-product-fv-hardened';
     res.setHeader('Cache-Control',resolved.region==='EU'?'s-maxage=86400, stale-while-revalidate=604800':'s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.history||'')==='1'){
       const rows=out.fundamentals?.annual||out.derived||[];
@@ -320,8 +296,6 @@ module.exports=async function handler(req,res){
         stability:out.stability||null,
         fairValue2:out.fairValue2?{version:out.fairValue2.version,model:out.fairValue2.model,confidence:out.fairValue2.confidence,checks:out.fairValue2.checks}:null,
         valuationMethods:out.valuationMethods||null,
-        intrinsicValuation:out.intrinsicValuation||null,
-        marketNormalizedFairValue:out.marketNormalizedFairValue||null,
         historicalPlausibility:out.historicalPlausibility||null,
         historicalIntegrity:out.historicalIntegrity||null,
         fairValueIntegrity:out.fairValueIntegrity||null,

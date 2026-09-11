@@ -17,22 +17,16 @@ module.exports=async function handler(req,res){
     ALPHA_VANTAGE_API_KEY:Boolean(process.env.ALPHA_VANTAGE_API_KEY),
     SEC_USER_AGENT:Boolean(process.env.SEC_USER_AGENT)
   };
-  const filesOk=Object.values(files).every(Boolean);
-  const fullProviderCoverage=Object.values(env).every(Boolean);
-  const anyProviderReady=env.TWELVE_DATA_API_KEY||env.ALPHA_VANTAGE_API_KEY||env.SEC_USER_AGENT;
-  const ok=filesOk;
+  const ok=Object.values(files).every(Boolean)&&Object.values(env).every(Boolean);
   res.setHeader('Cache-Control','no-store');
-  return res.status(filesOk?200:503).json({
+  return res.status(ok?200:503).json({
     ok,
     service:'JUKA',
-    version:'4.9.1',
-    fairValueEngine:'JUKA Fair Value 9.0 · Eulerpool-style + Buffett intrinsic cross-check',
+    version:'10.6.0-fair-value-integrity',
+    fairValueEngine:'JUKA Fair Value 8.1',
     environment:process.env.VERCEL_ENV||'unknown',
-    status:filesOk?(fullProviderCoverage?'ok':'degraded'):'unhealthy',
     files,
     env,
-    fullProviderCoverage,
-    anyProviderReady:Boolean(anyProviderReady),
     providerReadiness:{usMarket:env.TWELVE_DATA_API_KEY,euMarket:env.ALPHA_VANTAGE_API_KEY,usFundamentals:env.SEC_USER_AGENT},
     note:'Only presence flags are returned; secret values are never exposed.'
   });
