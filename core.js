@@ -938,6 +938,101 @@
   }
 
 
+
+  // JUKA Intrinsic Value 8.0
+  // Purposefully simple: normalize owner earnings, estimate economically funded
+  // growth from the company's own history, fade growth, discount, then bridge
+  // enterprise value to equity. Market price is never an input to value.
+  function jukaSimpleIntrinsicOperating(annualFacts=[],adaptive={},scenario='base'){
+    const rows=deriveFundamentals(annualFacts).filter(x=>Number(x.revenue)>0&&Number.isFinite(Number(x.operatingIncome))&&Number(x.shares)>0);
+    if(rows.length<3)return null;
+    const recent=rows.slice(-5), latest=recent.at(-1), taxFallback=.21;
+    const ownerRows=recent.map((r,i)=>{
+      const revenue=Number(r.revenue), ebit=Number(r.operatingIncome);
+      const tax=Number.isFinite(Number(r.taxRate))?clamp(Number(r.taxRate),.08,.35):taxFallback;
+      const nopat=ebit*(1-tax);
+      const da=Number.isFinite(Number(r.da))&&Number(r.da)>=0?Number(r.da):null;
+      const capex=Number.isFinite(Number(r.capex))&&Number(r.capex)>=0?Number(r.capex):null;
+      // Buffett-style maintenance investment is an estimate, not fake precision.
+      // If both fields exist, replacement needs are anchored to depreciation and
+      // cannot exceed reported capex. Missing fields fall back neutrally.
+      const maintenanceCapex=da!==null&&capex!==null?Math.min(capex,da*1.15):(da!==null?da:(capex!==null?capex:0));
+      const wc=Number.isFinite(Number(r.deltaNwc))?Number(r.deltaNwc):0;
+      // Only the recurring/maintenance part of working capital is charged here.
+      const maintenanceWc=Math.max(0,wc);
+      const owner=nopat+(da||0)-maintenanceCapex-maintenanceWc;
+      return {fy:r.fy,revenue,nopat,da,capex,maintenanceCapex,maintenanceWc,owner};
+    }).filter(x=>Number.isFinite(x.owner)&&x.owner>0);
+
+    if(ownerRows.length<3)return null;
+    const weights=ownerRows.map((_,i)=>i+1), wsum=weights.reduce((a,b)=>a+b,0);
+    const normalizedOwner=ownerRows.reduce((a,x,i)=>a+x.owner*weights[i],0)/wsum;
+    const latestOwner=ownerRows.at(-1).owner;
+    // Blend recent normalized earning power with latest; this dampens one-off years.
+    const owner0=.60*latestOwner+.40*normalizedOwner;
+
+    const revCagr=fieldCagr(rows,'revenue',rows.length-1,Math.min(5,rows.length-1));
+    const ownerFirst=ownerRows[0]?.owner, ownerLast=ownerRows.at(-1)?.owner;
+    const ownerYears=Math.max(1,ownerRows.length-1);
+    const ownerCagr=ownerFirst>0&&ownerLast>0?Math.pow(ownerLast/ownerFirst,1/ownerYears)-1:null;
+    const histGrowth=median([revCagr,ownerCagr].filter(Number.isFinite));
+    const roics=recent.map(x=>Number(x.roic)).filter(Number.isFinite);
+    const histRoic=roics.length?median(roics):null;
+    const wacc0=clamp(Number(adaptive?.assumptions?.wacc)||.09,.055,.14);
+    const terminalGrowth=clamp(Number(adaptive?.assumptions?.terminalGrowth)||.025,.015,.035);
+    const terminalRoic=clamp(Number(adaptive?.assumptions?.terminalRoic)||Number(histRoic)||.12,Math.max(terminalGrowth+.01,.06),.30);
+
+    const cfg=scenario==='bear'?{growth:-.025,wacc:.012,years:-1,roic:.85}:
+      scenario==='bull'?{growth:.02,wacc:-.007,years:1,roic:1.08}:{growth:0,wacc:0,years:0,roic:1};
+
+    // Company-specific growth: history is evidence, not a promise. It is capped and
+    // must be affordable through reinvestment at the company's observed economics.
+    const rawGrowth=Number.isFinite(histGrowth)?histGrowth:.04;
+    const economicRoic=clamp((Number.isFinite(histRoic)?histRoic:terminalRoic)*cfg.roic,.06,.45);
+    const affordableGrowth=Math.max(0,economicRoic*.65); // never assume >65% reinvestment indefinitely
+    const startGrowth=clamp(Math.min(rawGrowth+cfg.growth,affordableGrowth),-.03,.18);
+    const excessReturn=Number.isFinite(histRoic)?histRoic-wacc0:0;
+    const durability=excessReturn>.12?10:excessReturn>.07?8:excessReturn>.03?7:5;
+    const years=clamp(durability+cfg.years,4,11);
+    const wacc=clamp(wacc0+cfg.wacc,.05,.16);
+
+    let owner=owner0,pv=0,flows=[];
+    for(let y=1;y<=years;y++){
+      const t=years===1?1:(y-1)/(years-1);
+      const g=startGrowth+(terminalGrowth-startGrowth)*t;
+      // Growth has a cost. Deduct the incremental capital required to create it.
+      const preGrowthOwner=owner;
+      const grown=owner*(1+g);
+      const incremental=Math.max(0,grown-preGrowthOwner);
+      const reinvestment=incremental/Math.max(.06,economicRoic);
+      const distributable=grown-reinvestment;
+      const df=Math.pow(1+wacc,y);
+      pv+=distributable/df;
+      flows.push({year:y,growth:g,preGrowthOwner,grownOwnerEarnings:grown,reinvestment,distributable,discountFactor:df});
+      owner=grown;
+    }
+    if(!(wacc>terminalGrowth))return null;
+    const terminalOwner=owner*(1+terminalGrowth);
+    const terminalReinvestment=terminalOwner*(terminalGrowth/terminalRoic);
+    const terminalCash=terminalOwner-terminalReinvestment;
+    const terminalValue=terminalCash/(wacc-terminalGrowth);
+    const terminalPv=terminalValue/Math.pow(1+wacc,years);
+    const enterprise=pv+terminalPv;
+    const debt=Number(latest.debt),cash=Number(latest.cash);
+    const netDebt=Number.isFinite(Number(latest.netFinancialPosition))?Number(latest.netFinancialPosition):
+      (Number.isFinite(debt)&&Number.isFinite(cash)?debt-cash:0);
+    const shares=Number(latest.shares);
+    const equity=enterprise-netDebt, valuePerShare=shares>0?equity/shares:null;
+    return {
+      available:Number.isFinite(valuePerShare)&&valuePerShare>0,valuePerShare,enterprise,equity,
+      normalizedOwnerEarnings:normalizedOwner,startingOwnerEarnings:owner0,
+      ownerRows,history:{revenueCagr:revCagr,ownerEarningsCagr:ownerCagr,historicalRoic:histRoic},
+      assumptions:{startGrowth,terminalGrowth,wacc,economicRoic,terminalRoic,years,durability},
+      pvExplicit:pv,terminalValue,terminalPv,terminalShare:enterprise>0?terminalPv/enterprise:null,
+      flows,scenario,method:'normalized-owner-earnings-intrinsic-value',marketPriceUsed:false
+    };
+  }
+
   function jukaOwnerEarningsIntrinsicValue(input={},adaptive={},scenario='base'){
     const a={...(adaptive?.assumptions||{})},revenue0=Number(input.revenue),ebit0=Number(input.ebit),shares=Number(input.shares),netDebt=Number(input.netDebt)||0;
     if(!(revenue0>0&&Number.isFinite(ebit0)&&shares>0))return null;
@@ -1403,9 +1498,9 @@
     // Legacy DCF is retained only as an independent diagnostic.
     const legacy=jukaDcfScenarios(inp);
     const economic=jukaEconomicDcf(inp,adaptive);
-    const owner=jukaOwnerEarningsIntrinsicValue(inp,adaptive,'base');
-    if(!owner||!(owner.valuePerShare>0)||!economic||!(economic.valuePerShare>0))return null;
-    const bear=jukaOwnerEarningsIntrinsicValue(inp,adaptive,'bear'),bull=jukaOwnerEarningsIntrinsicValue(inp,adaptive,'bull');
+    const owner=jukaSimpleIntrinsicOperating(rows,adaptive,'base');
+    if(!owner||!(owner.valuePerShare>0))return null;
+    const bear=jukaSimpleIntrinsicOperating(rows,adaptive,'bear'),bull=jukaSimpleIntrinsicOperating(rows,adaptive,'bull');
     const valuation={bear:bear?.valuePerShare??null,base:owner.valuePerShare,bull:bull?.valuePerShare??null,detail:{bear,base:owner,bull}};
     const sensitivity=jukaSensitivity(inp);
     const earningsPower=jukaEarningsPowerValue(inp,adaptive);
@@ -1417,7 +1512,7 @@
     }
     const reverse=Number(price)>0?jukaReverseDcf(inp,Number(price)):null;
     const result={
-      version:'JUKA Fair Value 7.0',model:'owner-earnings-primary+economic-dcf-crosscheck+earnings-power-floor',
+      version:'JUKA Fair Value 8.0',model:'normalized-owner-earnings-intrinsic-value',
       valuation,assumptions:inp,adaptive,fundamentalForecast,rdPolicy,rdAdjustment,reverse,sensitivity,confidence,ownerEarnings:owner,economicDcf:economic,triangulation,
       drivers:jukaFairValueDrivers(adaptive,valuation),
       checks:{
@@ -2103,5 +2198,5 @@
     return {version:'JUKA Fair Value History 1.0',method:'point-in-time-filing-cutoff',model,marketPriceUsedForCalibration:false,points};
   }
 
-  return {n,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,jukaQualityScoreV2,jukaPerformanceWindows,jukaChartSlice,jukaInvestorFundamentals,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaDataQuality,jukaCompanyProfile,jukaAutoAssumptions,jukaOperatingRawAssumptions,jukaOperatingSelfCheck,jukaAdaptiveOperatingAssumptions,jukaFairValueConfidence,jukaFairValueDrivers,jukaAsOfRows,jukaPointInTimeFairValue,jukaMoatEvidencePolicy,jukaCompetitiveAdvantagePeriod,jukaEarningsPowerValue,jukaMultiMethodReleaseGate,jukaReleaseMatrixCase,jukaValidateReleaseMatrix,jukaModelStability,jukaForecastFeasibility,jukaReleaseGate,jukaExcessReturnValuation,jukaNormalizedInvestedCapital,jukaReinvestmentEfficiency,jukaWaccPolicy,jukaMatureTerminalPolicy,jukaFairValueAudit,jukaFairValueStability,jukaFairValuePlausibilityAudit,jukaRdPolicy,jukaRdCapitalization,jukaFundamentalForecastEngine,jukaEconomicDcf,jukaOwnerEarningsIntrinsicValue,jukaOwnerEarningsCrossCheck,jukaOwnerEarningsAudit,jukaHistoricalValuationAudit,jukaHistoricalIntegrityAudit,jukaFairValueTriangulation,jukaFairValue2Operating,jukaForecast5Y,jukaForecastScenarios,jukaExpectedReturnMatrix,jukaReturnBridge,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,deriveBankInsuranceMetrics,deriveReitMetrics,jukaBankAutoAssumptions,jukaReitAutoAssumptions,jukaValuationEngine,jukaRiskAudit,modelDataRequirements,jukaModelReadiness,jukaRelativeByModel,peerMetricSet,jukaPeerComparison,valuationMultiplesFromSnapshot,jukaRealityCheck,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,jukaHistoricalShareBasis,buildHistoricalJukaFairSeries,buildHistoricalValuationSeries,filterPeriod,dataRoute,buildFairSeries};
+  return {n,clamp,median,cagr,valuationPct,qualityScore,jukaQualityScore,jukaQualityScoreV2,jukaPerformanceWindows,jukaChartSlice,jukaInvestorFundamentals,dcfFairValue,scenarioValues,jukaDcf10Y,jukaDcfScenarios,jukaReverseDcf,jukaSensitivity,jukaDataQuality,jukaCompanyProfile,jukaAutoAssumptions,jukaOperatingRawAssumptions,jukaOperatingSelfCheck,jukaAdaptiveOperatingAssumptions,jukaFairValueConfidence,jukaFairValueDrivers,jukaAsOfRows,jukaPointInTimeFairValue,jukaMoatEvidencePolicy,jukaCompetitiveAdvantagePeriod,jukaEarningsPowerValue,jukaMultiMethodReleaseGate,jukaReleaseMatrixCase,jukaValidateReleaseMatrix,jukaModelStability,jukaForecastFeasibility,jukaReleaseGate,jukaExcessReturnValuation,jukaNormalizedInvestedCapital,jukaReinvestmentEfficiency,jukaWaccPolicy,jukaMatureTerminalPolicy,jukaFairValueAudit,jukaFairValueStability,jukaFairValuePlausibilityAudit,jukaRdPolicy,jukaRdCapitalization,jukaFundamentalForecastEngine,jukaEconomicDcf,jukaSimpleIntrinsicOperating,jukaOwnerEarningsIntrinsicValue,jukaOwnerEarningsCrossCheck,jukaOwnerEarningsAudit,jukaHistoricalValuationAudit,jukaHistoricalIntegrityAudit,jukaFairValueTriangulation,jukaFairValue2Operating,jukaForecast5Y,jukaForecastScenarios,jukaExpectedReturnMatrix,jukaReturnBridge,jukaRelativeValuation,jukaBankInsurance,jukaReit,classifyValuationModel,deriveBankInsuranceMetrics,deriveReitMetrics,jukaBankAutoAssumptions,jukaReitAutoAssumptions,jukaValuationEngine,jukaRiskAudit,modelDataRequirements,jukaModelReadiness,jukaRelativeByModel,peerMetricSet,jukaPeerComparison,valuationMultiplesFromSnapshot,jukaRealityCheck,deriveFundamentals,qualityInputFromAnnual,dcfInputFromAnnual,jukaHistoricalShareBasis,buildHistoricalJukaFairSeries,buildHistoricalValuationSeries,filterPeriod,dataRoute,buildFairSeries};
 });

@@ -49,3 +49,12 @@
 - Historical filing-to-filing Fair Value jumps >2.5x trigger review; >4x fail integrity.
 - Every curated stock must execute a model-appropriate valuation fixture, not only route structurally.
 - Missing optional data may use transparent proxies only with `liveReady=false`.
+
+## Intrinsic Value Engine 8.0
+- Operating-company Base value is normalized Owner Earnings intrinsic value.
+- Market price is forbidden from valuation inputs; it is comparison/control only.
+- Growth is derived from company history and capped by reinvestment economics.
+- Growth requires reinvestment; no free growth.
+- Terminal growth requires terminal reinvestment.
+- Cash/debt bridge and diluted shares convert enterprise value to per-share value.
+- Old Economic DCF / Earnings Power remain diagnostics, not averaging inputs.
