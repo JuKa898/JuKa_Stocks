@@ -8,46 +8,45 @@ const Symbols=require('../lib/symbols');
 function alphaError(j){
   return j?.['Error Message']||j?.Note||j?.Information||null;
 }
-function alphaToMarket(j,resolved){
-  const series=j?.['Time Series (Daily)'];
-  if(!series||typeof series!=='object')throw new Error(alphaError(j)||'Alpha-Vantage-Kursdaten fehlen');
-  const values=Object.entries(series)
-    .map(([datetime,row])=>({
-      datetime,
-      open:row['1. open'],
-      high:row['2. high'],
-      low:row['3. low'],
-      close:row['4. close'],
-      volume:row['5. volume']
-    }))
-    .sort((a,b)=>String(b.datetime).localeCompare(String(a.datetime)));
-  return {
-    meta:{
-      symbol:resolved.displaySymbol,
-      exchange:resolved.exchangeHint||'Europe',
-      currency:null,
-      interval:'1day',
-      provider:'Alpha Vantage'
-    },
-    values,
-    status:'ok',
-    provider:'Alpha Vantage',
-    resolvedSymbol:resolved.alphaVantageSymbol
-  };
+function alphaSeriesRows(j,key){
+  const series=j?.[key];
+  if(!series||typeof series!=='object')return [];
+  return Object.entries(series).map(([datetime,row])=>({
+    datetime,open:row['1. open'],high:row['2. high'],low:row['3. low'],close:row['4. close'],volume:row['5. volume']
+  })).filter(x=>x.datetime&&Number.isFinite(Number(x.close)));
+}
+function mergeAlphaRows(weekly=[],daily=[]){
+  const byDate=new Map();
+  for(const row of weekly)byDate.set(String(row.datetime).slice(0,10),row);
+  for(const row of daily)byDate.set(String(row.datetime).slice(0,10),row);
+  return [...byDate.values()].sort((a,b)=>String(b.datetime).localeCompare(String(a.datetime)));
+}
+function alphaToMarket(dailyJson,weeklyJson,resolved){
+  const daily=alphaSeriesRows(dailyJson,'Time Series (Daily)');
+  const weekly=alphaSeriesRows(weeklyJson,'Weekly Time Series');
+  const values=mergeAlphaRows(weekly,daily);
+  if(!values.length)throw new Error(alphaError(dailyJson)||alphaError(weeklyJson)||'Alpha-Vantage-Kursdaten fehlen');
+  return {meta:{symbol:resolved.displaySymbol,exchange:resolved.exchangeHint||'Europe',currency:null,interval:'daily+weekly',provider:'Alpha Vantage'},
+    values,status:'ok',provider:'Alpha Vantage',resolvedSymbol:resolved.alphaVantageSymbol};
+}
+async function alphaFetch(fn,resolved,key,extra={}){
+  const url=new URL('https://www.alphavantage.co/query');
+  url.searchParams.set('function',fn);url.searchParams.set('symbol',resolved.alphaVantageSymbol);
+  for(const [k,v] of Object.entries(extra))url.searchParams.set(k,v);
+  url.searchParams.set('apikey',key);
+  const r=await fetchWithTimeout(url,{},15000),j=await r.json();
+  if(!r.ok||alphaError(j)){const e=new Error(alphaError(j)||`Alpha Vantage ${r.status}`);e.status=r.status||502;e.provider='Alpha Vantage';throw e;}
+  return j;
 }
 async function alphaDaily(resolved){
   const key=process.env.ALPHA_VANTAGE_API_KEY;
   if(!key)throw Object.assign(new Error('ALPHA_VANTAGE_API_KEY fehlt'),{code:'NO_ALPHA_KEY'});
   if(!resolved.alphaVantageSymbol)throw new Error('Kein Alpha-Vantage-Symbol für diesen Markt');
-  const url=new URL('https://www.alphavantage.co/query');
-  url.searchParams.set('function','TIME_SERIES_DAILY');
-  url.searchParams.set('symbol',resolved.alphaVantageSymbol);
-  url.searchParams.set('outputsize','full');
-  url.searchParams.set('apikey',key);
-  const r=await fetchWithTimeout(url,{},15000);
-  const j=await r.json();
-  if(!r.ok||alphaError(j))throw new Error(alphaError(j)||`Alpha Vantage ${r.status}`);
-  return alphaToMarket(j,resolved);
+  const [daily,weekly]=await Promise.all([
+    alphaFetch('TIME_SERIES_DAILY',resolved,key,{outputsize:'compact'}),
+    alphaFetch('TIME_SERIES_WEEKLY',resolved,key)
+  ]);
+  return alphaToMarket(daily,weekly,resolved);
 }
 async function twelveDaily(resolved,key,start_date,end_date){
   const url=new URL('https://api.twelvedata.com/time_series');
@@ -112,4 +111,4 @@ module.exports = async function handler(req,res){
   }
 };
 
-module.exports._test={alphaError,alphaToMarket};
+module.exports._test={alphaError,alphaSeriesRows,mergeAlphaRows,alphaToMarket};

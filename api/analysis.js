@@ -113,27 +113,37 @@ async function fundamentalsAdapter(stock){
 }
 
 function alphaError(j){return j?.['Error Message']||j?.Note||j?.Information||null}
-function alphaToAnalysisMarket(j,resolved){
-  const series=j?.['Time Series (Daily)'];
-  if(!series||typeof series!=='object'){
-    const er=new Error(alphaError(j)||'Alpha-Vantage-Kursdaten fehlen');er.code='EU_MARKET_PROVIDER_ERROR';throw er;
-  }
-  const values=Object.entries(series).map(([datetime,row])=>({
+function alphaRows(j,key){
+  const series=j?.[key];if(!series||typeof series!=='object')return [];
+  return Object.entries(series).map(([datetime,row])=>({
     datetime,open:row['1. open'],high:row['2. high'],low:row['3. low'],close:row['4. close'],volume:row['5. volume']
-  })).sort((x,y)=>String(y.datetime).localeCompare(String(x.datetime)));
-  return {meta:{symbol:resolved.displaySymbol,exchange:resolved.exchangeHint||'Europe',interval:'1day',provider:'Alpha Vantage'},
-    values,source:'Alpha Vantage',provider:'Alpha Vantage',status:'ok',resolvedSymbol:resolved.alphaVantageSymbol};
+  })).filter(x=>x.datetime&&Number.isFinite(Number(x.close)));
+}
+function mergeAlphaMarket(weekly=[],daily=[]){
+  const byDate=new Map();for(const row of weekly)byDate.set(String(row.datetime).slice(0,10),row);
+  for(const row of daily)byDate.set(String(row.datetime).slice(0,10),row);
+  return [...byDate.values()].sort((a,b)=>String(b.datetime).localeCompare(String(a.datetime)));
+}
+async function alphaRequest(fn,resolved,key,extra={}){
+  const u=new URL('https://www.alphavantage.co/query');u.searchParams.set('function',fn);u.searchParams.set('symbol',resolved.alphaVantageSymbol);
+  for(const [k,v] of Object.entries(extra))u.searchParams.set(k,v);u.searchParams.set('apikey',key);
+  const r=await fetchWithTimeout(u,{},15000),j=await r.json();
+  if(!r.ok||alphaError(j)){const e=new Error(alphaError(j)||`Alpha Vantage ${r.status}`);e.code='EU_MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e}
+  return j;
 }
 async function alphaDailyAnalysis(resolved){
   const key=process.env.ALPHA_VANTAGE_API_KEY;
   if(!key){const e=new Error('ALPHA_VANTAGE_API_KEY fehlt');e.code='NO_ALPHA_KEY';throw e}
   if(!resolved.alphaVantageSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen EU-Markt');e.code='EU_SYMBOL_UNMAPPED';throw e}
-  const u=new URL('https://www.alphavantage.co/query');
-  u.searchParams.set('function','TIME_SERIES_DAILY');u.searchParams.set('symbol',resolved.alphaVantageSymbol);
-  u.searchParams.set('outputsize','full');u.searchParams.set('apikey',key);
-  const r=await fetchWithTimeout(u,{},15000),j=await r.json();
-  if(!r.ok||alphaError(j)){const e=new Error(alphaError(j)||`Alpha Vantage ${r.status}`);e.code='EU_MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e}
-  return alphaToAnalysisMarket(j,resolved);
+  // Free Alpha Vantage: daily "full" is premium. Use compact daily + free weekly history.
+  const [dailyJson,weeklyJson]=await Promise.all([
+    alphaRequest('TIME_SERIES_DAILY',resolved,key,{outputsize:'compact'}),
+    alphaRequest('TIME_SERIES_WEEKLY',resolved,key)
+  ]);
+  const values=mergeAlphaMarket(alphaRows(weeklyJson,'Weekly Time Series'),alphaRows(dailyJson,'Time Series (Daily)'));
+  if(!values.length){const e=new Error('Alpha-Vantage-Kursdaten fehlen');e.code='EU_MARKET_PROVIDER_ERROR';throw e}
+  return {meta:{symbol:resolved.displaySymbol,exchange:resolved.exchangeHint||'Europe',interval:'daily+weekly',provider:'Alpha Vantage'},
+    values,source:'Alpha Vantage',provider:'Alpha Vantage',status:'ok',resolvedSymbol:resolved.alphaVantageSymbol};
 }
 async function marketAdapter(stock){
   const resolved=Symbols.resolveSymbol(stock);
@@ -157,8 +167,8 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-8.0.0-final-eu-fair-value-system-fix';
-    res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400');
+    out.engineVersion='JUKA-9.2.0-final-system-hardened';
+    res.setHeader('Cache-Control',resolved.region==='EU'?'s-maxage=86400, stale-while-revalidate=604800':'s-maxage=21600, stale-while-revalidate=86400');
     if(String(q.history||'')==='1'){
       const rows=out.fundamentals?.annual||out.derived||[];
       const prices=(out.market?.prices||[]).map(x=>({date:x.date,close:x.close}));
@@ -189,6 +199,8 @@ module.exports=async function handler(req,res){
         release:out.release||out.fairValue2?.release||null,
         stability:out.stability||null,
         fairValue2:out.fairValue2?{version:out.fairValue2.version,model:out.fairValue2.model,confidence:out.fairValue2.confidence,checks:out.fairValue2.checks}:null,
+        valuationMethods:out.valuationMethods||null,
+        historicalPlausibility:out.historicalPlausibility||null,
         relative:out.relative,
         reality:out.reality,
         riskAudit:out.riskAudit,
