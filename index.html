@@ -391,7 +391,7 @@ details{border-top:1px solid #e1e5e2}summary{color:#33423a}.scoreItem{border-bot
 </div>
   <div class="footer">JUKA · Private Equity Research · keine Anlageberatung</div>
 </div>
-<script src="./core.js?v=3.0.7"></script>
+<script src="./core.js?v=3.0.7.1"></script>
 <script>
 const stocks=[
  {s:'META',n:'Meta Platforms',m:'NASDAQ · USA',region:'US',country:'USA',currency:'USD',marketSymbol:'META'},
@@ -540,7 +540,7 @@ function updateBusiness(z){
  const intro=document.getElementById('businessText');if(intro)intro.innerHTML=`<strong>${z?.n||z?.s||'Unternehmen'}</strong> ${deep?.intro||fallback}`;
  set('businessRevenue',deep?.revenue||'Umsätze entstehen über die Kernprodukte und Dienstleistungen; die Segmentlogik wird schrittweise vertieft.');
  set('businessDrivers',deep?.drivers||'Wachstum, Margen, Marktanteile, Kapitalintensität und Kapitalallokation sind die wichtigsten allgemeinen Werttreiber.');
- set('businessCompetition',deep?.competition||'Wettbewerber und Marktführerschaft: noch nicht belastbar hinterlegt. JuKa zeigt hier erst dann konkrete Namen oder einen Marktführer, wenn firmenspezifische Daten vorliegen.');
+ set('businessCompetition',deep?.competition||'Wettbewerber und Marktführerschaft: noch nicht belastbar hinterlegt. JUKA zeigt hier erst dann konkrete Namen oder einen Marktführer, wenn firmenspezifische Daten vorliegen.');
  set('businessMoat',deep?.moat||'Marke, Technologie, Kundenbindung, Netzwerkeffekte und Skalenvorteile werden als potenzielle Wettbewerbsvorteile bewertet.');
  set('businessRisks',deep?.risks||'Wettbewerb, Konjunktur, Regulierung, Ausführungsrisiken und Fehlallokation von Kapital sind zentrale allgemeine Risiken.');
  set('businessCapital',deep?.capital?'Kapitalallokation: '+deep.capital:'Kapitalallokation: wird aus Investitionen, Bilanz und Ausschüttungen beurteilt.');
@@ -592,11 +592,11 @@ function updateFromLive(symbol,marketData,secData){
   const prices=(marketData.values||[]).slice().reverse().map(x=>({date:String(x.datetime).slice(0,10),price:Number(x.close)})).filter(x=>Number.isFinite(x.price));
   if(!prices.length)throw new Error('Keine Kursdaten erhalten');
   const annual=JuKaCore.deriveFundamentals(secData?.annual||[]);
-  const withFair=JuKaCore.buildHistoricalJukaFairSeries(prices,annual,{wacc:.09,terminalGrowth:.025}).map(x=>({...x,date:new Date(x.date)}));
+  const withFair=JuKaCore.buildHistoricalValuationSeries(z||{s:symbol,sector:''},prices,annual,{}).map(x=>({...x,date:new Date(x.date)}));
   chartData=withFair; const last=chartData.at(-1),fact=annual.at(-1),fair=last?.base,vp=JuKaCore.valuationPct(last.price,fair);
   document.getElementById('price').textContent=money(last.price); document.getElementById('priceDate').textContent='Aktienkurs · Stand '+last.date.toLocaleDateString('de-DE');
   document.getElementById('name').textContent=secData?.name||marketData.meta?.symbol||symbol; document.getElementById('symbol').textContent=symbol; updateCompanyLogo(z||{s:symbol,n:secData?.name||symbol}); updateBusiness(z||{s:symbol,n:secData?.name||symbol});
-  document.getElementById('market').textContent=[marketData.meta?.exchange,activeCurrency,'Live-Daten'].filter(Boolean).join(' · ');
+  document.getElementById('market').textContent=[marketData.meta?.exchange,activeCurrency,'Marktdaten'].filter(Boolean).join(' · ');
   document.getElementById('fvMetric').textContent=fair?money(fair):'—'; document.getElementById('valuationMetric').textContent=vp==null?'—':`${Math.abs(vp).toFixed(1)}% · ${vp<0?'unterbewertet':'überbewertet'}`;
   if(fact){
     const eps=Number(fact.eps),eg=annualEpsGrowth(annual),eps5=eps>0?eps*Math.pow(1+eg,5):null;
@@ -607,7 +607,7 @@ function updateFromLive(symbol,marketData,secData){
     else{const qs=JuKaCore.qualityScore({roic:fact.roic,operatingMargin:fact.operatingMargin,revenueCagr3y:fact.revenueCagr3y,epsCagr3y:fact.epsCagr3y,fcfMargin:fact.fcfMargin,netDebtToEbit:fact.operatingIncome?fact.netDebt/fact.operatingIncome:null,shareCagr3y:fact.dilutionPa});document.getElementById('qualityScore').textContent=qs.score;document.getElementById('qualityGrade').textContent=qs.grade+' — '+qs.label+' · Daten-Fallback';document.querySelector('.bar>div').style.width=qs.score+'%';document.getElementById('scoreBreakdown').innerHTML=qs.parts.map(p=>`<div class="scoreItem"><span>${p.label}</span><strong>${p.points}/${p.max} · ${p.reason}</strong></div>`).join('');}
   }
   renderFundamentalHistory(annual,secData?.source||'SEC Company Facts');
-  const modelName=last?.model==='juka-10y'?'10J-FCFF-DCF':'FCF-Fallback'; document.getElementById('fundNote').textContent=`Fundamentaldaten: SEC Company Facts · Bewertungsengine: ${modelName}.`; document.getElementById('chartNote').textContent='Echte Tageskurse. Historische Fair Values werden nur mit Fundamentaldaten berechnet, deren Filing-Datum am jeweiligen Kurstag bereits bekannt war.'; setStatus('LIVE · Engine v1',true); draw();
+  const modelName=last?.valuationEngine||last?.model||'JUKA Fair Value'; document.getElementById('fundNote').textContent=`Fundamentaldaten: SEC Company Facts · Bewertungsengine: ${modelName}.`; document.getElementById('chartNote').textContent='Echte Tageskurse. Historische Fair Values werden nur mit Fundamentaldaten berechnet, deren Filing-Datum am jeweiligen Kurstag bereits bekannt war.'; setStatus('LIVE · JUKA Fair Value 5.0',true); draw();
 }
 function updateFromSnapshot(symbol,snap){
   const z=stocks.find(x=>x.s===symbol)||{s:symbol,n:snap?.fundamentals?.name||symbol};
@@ -712,10 +712,11 @@ function applySummaryNumbers(symbol,summary){
   if(audit) audit.innerHTML='<thead><tr><th>Audit</th><th>Ergebnis</th></tr></thead><tbody>'+
     `<tr><td>Pipeline</td><td>${summary.analysisStatus||'—'}</td></tr>`+
     `<tr><td>Bewertung</td><td>${summary.valuationStatus||'—'}</td></tr>`+
+    `<tr><td>JUKA Release</td><td>${summary.release?.status||'—'} · liveReady: ${summary.release?.liveReady===true?'ja':'nein'}</td></tr>`+
     `<tr><td>Datenqualität</td><td>${summary.dataQuality?.score??'—'}/100 · ${summary.dataQuality?.label||''}</td></tr>`+
     `<tr><td>Risiko</td><td>${summary.riskAudit?.severity||'—'}</td></tr></tbody>`;
 
-  document.getElementById('fundamentalHistory').innerHTML=`<tr><td>${fact.fy??'—'}</td><td>${fmtBig(revenue)}</td><td>${Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(op)?fmtPctMaybe(op/revenue):'—'}</td><td>${fmtBig(Number(fact.fcf))}</td><td>${Number.isFinite(Number(fact.eps))?money(Number(fact.eps)):'—'}</td><td>—</td><td>—</td><td>${fmtLiveDate(fact.filed)}</td></tr>`;
+  document.getElementById('fundamentalHistory').innerHTML=`<tr><td>${fact.fy??'—'}</td><td>${fmtBig(revenue)}</td><td>—</td><td>${fmtBig(op)}</td><td>${Number.isFinite(revenue)&&revenue!==0&&Number.isFinite(op)?fmtPctMaybe(op/revenue):'—'}</td><td>${fmtBig(Number(fact.netIncome))}</td><td>${Number.isFinite(Number(fact.eps))?money(Number(fact.eps)):'—'}</td><td>${fmtBig(Number(fact.cfo))}</td><td>${fmtBig(Number(fact.capex))}</td><td>${fmtBig(Number(fact.fcf))}</td><td>—</td><td>${fmtBig(Number(fact.cash))}</td><td>${fmtBig(Number(fact.debt))}</td><td>${fmtBig(Number(fact.netCash))}</td><td>${Number.isFinite(Number(fact.shares))?(Number(fact.shares)/1e9).toFixed(2)+' Mrd.':'—'}</td><td>—</td><td>—</td><td>—</td><td>${fmtLiveDate(fact.filed)}</td></tr>`;
   document.getElementById('historySource').textContent='Quelle: '+(summary.provenance?.fundamentals?.source||'SEC/Alpha Vantage');
   document.getElementById('historyAvailability').textContent='Schnellmodus: aktuelles Geschäftsjahr';
   document.getElementById('historyCoverage').textContent='Datenqualität: '+(summary.dataQuality?.score??'—')+'/100';
@@ -777,7 +778,7 @@ async function fetchJson(url,label,timeoutMs=15000){
   }
   throw lastErr;
 }
-function jukaCacheKey(symbol,kind){return 'juka-live-v3:'+kind+':'+String(symbol).toUpperCase()}
+function jukaCacheKey(symbol,kind){return 'juka-live-v5:'+kind+':'+String(symbol).toUpperCase()}
 function jukaCacheSet(symbol,kind,data){try{localStorage.setItem(jukaCacheKey(symbol,kind),JSON.stringify({savedAt:Date.now(),data}))}catch{}}
 function jukaCacheGet(symbol,kind,maxAgeMs=86400000){
   try{
@@ -824,7 +825,20 @@ async function loadLiveStock(symbol,token){
      snap.warnings=[...(snap.warnings||[]),'Zwischengespeicherte Detaildaten: Live-Abruf aktuell nicht verfügbar.'];
    }
    ensureActiveLoad(token);updateFromSnapshot(symbol,snap);
-   document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse. Die Zeitraum-Schalter filtern nach echten Kalenderjahren (1J/3J/5J), nicht nach Datenpunkten. Bear/Base/Bull nutzen nur bereits veröffentlichte Fundamentaldaten; zwischen Filings wird der Fair Value zeitlich fortgeschrieben und beim nächsten Filing neu bewertet. Die Kurven werden nur visuell geglättet – nicht inhaltlich verändert.';
+   try{
+     const hist=await fetchJson('/api/analysis?'+new URLSearchParams({...baseParams,history:'1'}).toString(),'Fair-Value-Historie',30000);
+     ensureActiveLoad(token);
+     const points=(hist.history?.points||[]).filter(x=>x.available&&Number.isFinite(Number(x.base))).map(x=>({...x,date:new Date(x.date)})).sort((a,b)=>a.date-b.date);
+     if(points.length){
+       const raw=chartData.map(x=>({...x}));
+       chartData=raw.map(row=>{
+         let chosen=null;for(const pt of points){if(pt.date<=row.date)chosen=pt;else break;}
+         return chosen?{...row,base:Number(chosen.base),bear:Number(chosen.bear),bull:Number(chosen.bull),fairStatus:chosen.status,sourceCutoff:chosen.sourceCutoff}:row;
+       });
+       draw();
+     }
+   }catch(historyErr){console.warn('JUKA point-in-time history enrichment failed:',historyErr);}
+   document.getElementById('chartNote').textContent='Blaue Linie = echte Tageskurse. Die Zeitraum-Schalter filtern nach echten Kalenderjahren (1J/3J/5J), nicht nach Datenpunkten. Bear/Base/Bull verwenden ausschließlich Fundamentaldaten mit bekanntem Veröffentlichungszeitpunkt; ohne belastbares Veröffentlichungsdatum zeichnet JUKA keinen historischen Fair Value. Zwischen Filings wird der zuletzt zulässige Bewertungsstand verwendet. Die Kurven werden nur visuell geglättet – nicht inhaltlich verändert.';
    setStatus('LIVE · Analyse 2.0',true);
  }catch(detailErr){
    const msg=String(detailErr?.message||detailErr);console.warn('JUKA detail enrichment failed:',detailErr);
@@ -1018,10 +1032,10 @@ function renderScenarioForecast(scenarios,matrix,currency=activeCurrency){
   const e=id=>document.getElementById(id),vm=scenarioViewModel(scenarios,matrix);
   const setScenario=(prefix,row)=>{
     const ret=e('scenario'+prefix+'Return'),eps=e('scenario'+prefix+'Eps'),growth=e('scenario'+prefix+'Growth'),margin=e('scenario'+prefix+'Margin'),target=e('scenario'+prefix+'Target');
-    if(ret)ret.textContent=Number.isFinite(Number(row?.returnPa))?pct(Number(row.returnPa)):'—';
+    if(ret)ret.textContent=Number.isFinite(Number(row?.returnPa))?pct(Number(row.returnPa)*100):'—';
     if(eps)eps.textContent=Number.isFinite(Number(row?.eps5))?money(Number(row.eps5),currency):'—';
-    if(growth)growth.textContent=Number.isFinite(Number(row?.revenueGrowth5))?pct(Number(row.revenueGrowth5)):'—';
-    if(margin)margin.textContent=Number.isFinite(Number(row?.ebitMargin5))?pct(Number(row.ebitMargin5)):'—';
+    if(growth)growth.textContent=Number.isFinite(Number(row?.revenueGrowth5))?pct(Number(row.revenueGrowth5)*100):'—';
+    if(margin)margin.textContent=Number.isFinite(Number(row?.ebitMargin5))?pct(Number(row.ebitMargin5)*100):'—';
     if(target)target.textContent=Number.isFinite(Number(row?.targetPrice5))?money(Number(row.targetPrice5),currency):'—';
   };
   setScenario('Bear',vm.bear);setScenario('Base',vm.base);setScenario('Bull',vm.bull);
@@ -1104,7 +1118,7 @@ function loadMetaDemo(){
 
 let searchTimer=null,searchAbort=null,searchSeq=0;
 function localSearch(v='',limit=10){const x=v.trim().toLowerCase();return stocks.filter(z=>{const hay=[z.s,z.n,z.country,z.m,...(z.aliases||[])].join(' ').toLowerCase();return !x||hay.includes(x)}).slice(0,limit)}
-function ensureStockFromSearch(x){const symbol=String(x?.symbol||x?.s||'').toUpperCase();if(!symbol)return null;let z=stocks.find(v=>v.s===symbol);if(z)return z;z={s:symbol,n:String(x?.name||symbol),m:[x?.exchange,'USA'].filter(Boolean).join(' · '),region:'US',country:'USA',currency:String(x?.currency||'USD'),marketSymbol:symbol,valuationModel:x?.valuationModel||'',sector:x?.sector||'',aliases:[String(x?.name||'')].filter(Boolean)};stocks.push(z);return z}
+function ensureStockFromSearch(x){const symbol=String(x?.symbol||x?.s||'').toUpperCase();if(!symbol)return null;let z=stocks.find(v=>v.s===symbol);if(z)return z;const region=String(x?.region||'US').toUpperCase(),marketSymbol=String(x?.marketSymbol||x?.market_symbol||symbol);z={s:symbol,n:String(x?.name||symbol),m:[x?.exchange,region==='EU'?(x?.country||'Europa'):'USA'].filter(Boolean).join(' · '),region,country:String(x?.country||(region==='EU'?'Europa':'USA')),currency:String(x?.currency||(region==='EU'?'EUR':'USD')),marketSymbol,valuationModel:x?.valuationModel||'',sector:x?.sector||'',aliases:[String(x?.name||'')].filter(Boolean)};stocks.push(z);return z}
 function showSearchRows(rows){
   const unique=[],seen=new Set();for(const z of rows||[]){const s=String(z.s||z.symbol||'').toUpperCase();if(!s||seen.has(s))continue;seen.add(s);unique.push(z.s?z:{s:s,n:z.name||s,country:z.country||'USA',currency:z.currency||'USD',exchange:z.exchange,remote:true});if(unique.length>=12)break}
   r.innerHTML=unique.map(z=>`<div class="result" data-s="${escapeHtml(z.s)}" data-remote="${z.remote?'1':'0'}"><span><span class="ticker">${escapeHtml(z.s)}</span> &nbsp; ${escapeHtml(z.n)}</span><span class="country">${escapeHtml(z.country||'USA')} · ${escapeHtml(z.currency||'USD')}</span></div>`).join('');r.style.display=unique.length?'block':'none';
@@ -1498,5 +1512,15 @@ function renderPerformanceFromChart(){
 }
 
 
+
+async function jukaLoadFairValueHistory(symbol, stockMeta={}){
+  const qs=new URLSearchParams({symbol,history:'1',sector:stockMeta.sector||'',model:stockMeta.valuationModel||''});
+  const r=await fetch('/api/analysis?'+qs.toString());
+  if(!r.ok)throw new Error('Fair Value History '+r.status);
+  const j=await r.json();
+  return (j.history?.points||[]).filter(x=>x.available).map(x=>({
+    date:x.date,price:x.price,bear:x.bear,base:x.base,bull:x.bull,status:x.status,confidence:x.confidence,sourceCutoff:x.sourceCutoff
+  }));
+}
 </script>
 <div class="toast" id="productToast"></div></body></html>
