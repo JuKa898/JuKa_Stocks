@@ -21,11 +21,13 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   return res.status(ok?200:503).json({
     ok,
-    service:'JuKa Stocks',
-    version:'3.3.2-live-clean',
+    service:'JUKA',
+    version:'8.0.0-final',
+    fairValueEngine:'JUKA Fair Value 6.0 Final',
     environment:process.env.VERCEL_ENV||'unknown',
     files,
     env,
+    providerReadiness:{usMarket:env.TWELVE_DATA_API_KEY,euMarket:env.ALPHA_VANTAGE_API_KEY,usFundamentals:env.SEC_USER_AGENT},
     note:'Only presence flags are returned; secret values are never exposed.'
   });
 };

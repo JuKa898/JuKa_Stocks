@@ -9,7 +9,7 @@ const Pipeline=require('../lib/pipeline');
 const EU=require('../lib/eu-fundamentals');
 const ANALYSIS_CACHE=new Map();
 
-const UA=()=>process.env.SEC_USER_AGENT||'JuKa Stocks research app contact@example.com';
+const UA=()=>process.env.SEC_USER_AGENT||'JUKA research app contact@example.com';
 let tickerCache={time:0,map:null};
 async function secTickerMap(){
   if(tickerCache.map&&Date.now()-tickerCache.time<86400000)return tickerCache.map;
@@ -74,6 +74,7 @@ async function secAdapter(stock){
     shares:candidates(f,['WeightedAverageNumberOfDilutedSharesOutstanding','CommonStockSharesOutstanding'],'shares'),
     da:candidates(f,['DepreciationDepletionAndAmortization','DepreciationDepletionAndAmortizationPropertyPlantAndEquipment'],'USD'),
     sbc:candidates(f,['ShareBasedCompensation'],'USD'),
+    rd:candidates(f,['ResearchAndDevelopmentExpense','ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost','ResearchAndDevelopmentExpenseSoftwareExcludingAcquiredInProcessCost'],'USD'),
     interest:candidates(f,['InterestExpenseNonOperating','InterestAndDebtExpense'],'USD'),
     pretax:candidates(f,['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'],'USD'),
     tax:candidates(f,['IncomeTaxExpenseBenefit'],'USD'),
@@ -87,7 +88,7 @@ async function secAdapter(stock){
   let priorNwc=null;
   const annual=periods.map(date=>{
     const g=k=>closest(sets[k],date);
-    const R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ffo=g('ffo'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
+    const R=g('rev'),O=g('op'),N=g('ni'),E=g('eps'),C=g('cfo'),X=g('capex'),Ca=g('cash'),Dc=g('debtCur'),Dn=g('debtNon'),S=g('shares'),D=g('da'),Sb=g('sbc'),Rd=g('rd'),I=g('interest'),P=g('pretax'),T=g('tax'),Eq=g('equity'),Ffo=g('ffo'),Ar=g('ar'),Inv=g('inv'),Ap=g('ap');
     const revenue=R?.val??null,operatingIncome=O?.val??null,cfo=C?.val??null,capex=X?.val??null;
     const cash=Ca?.val??null,debt=(Dc?.val??0)+(Dn?.val??0);
     const nwc=(Ar||Inv||Ap)?(Ar?.val??0)+(Inv?.val??0)-(Ap?.val??0):null;
@@ -99,7 +100,7 @@ async function secAdapter(stock){
       fy:Number(String(periodDate).slice(0,4)),date:periodDate,filed,
       revenue,operatingIncome,netIncome:N?.val??null,eps:E?.val??null,cfo,capex,
       fcf:cfo!=null&&capex!=null?cfo-capex:null,cash,debt,netCash:cash!=null?cash-debt:null,
-      shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,interestExpense:I?.val??null,
+      shares:S?.val??null,da:D?.val??null,sbc:Sb?.val??null,rd:Rd?.val??null,researchAndDevelopment:Rd?.val??null,interestExpense:I?.val??null,
       pretaxIncome:P?.val??null,incomeTax:T?.val??null,equity:Eq?.val??null,ffo:Ffo?.val??null,nwc,deltaNwc
     };
   }).filter(x=>x.date);
@@ -111,9 +112,35 @@ async function fundamentalsAdapter(stock){
   return resolved.region==='US'?secAdapter(stock):EU.alphaVantageFundamentals(stock);
 }
 
+function alphaError(j){return j?.['Error Message']||j?.Note||j?.Information||null}
+function alphaToAnalysisMarket(j,resolved){
+  const series=j?.['Time Series (Daily)'];
+  if(!series||typeof series!=='object'){
+    const er=new Error(alphaError(j)||'Alpha-Vantage-Kursdaten fehlen');er.code='EU_MARKET_PROVIDER_ERROR';throw er;
+  }
+  const values=Object.entries(series).map(([datetime,row])=>({
+    datetime,open:row['1. open'],high:row['2. high'],low:row['3. low'],close:row['4. close'],volume:row['5. volume']
+  })).sort((x,y)=>String(y.datetime).localeCompare(String(x.datetime)));
+  return {meta:{symbol:resolved.displaySymbol,exchange:resolved.exchangeHint||'Europe',interval:'1day',provider:'Alpha Vantage'},
+    values,source:'Alpha Vantage',provider:'Alpha Vantage',status:'ok',resolvedSymbol:resolved.alphaVantageSymbol};
+}
+async function alphaDailyAnalysis(resolved){
+  const key=process.env.ALPHA_VANTAGE_API_KEY;
+  if(!key){const e=new Error('ALPHA_VANTAGE_API_KEY fehlt');e.code='NO_ALPHA_KEY';throw e}
+  if(!resolved.alphaVantageSymbol){const e=new Error('Kein Alpha-Vantage-Symbol für diesen EU-Markt');e.code='EU_SYMBOL_UNMAPPED';throw e}
+  const u=new URL('https://www.alphavantage.co/query');
+  u.searchParams.set('function','TIME_SERIES_DAILY');u.searchParams.set('symbol',resolved.alphaVantageSymbol);
+  u.searchParams.set('outputsize','full');u.searchParams.set('apikey',key);
+  const r=await fetchWithTimeout(u,{},15000),j=await r.json();
+  if(!r.ok||alphaError(j)){const e=new Error(alphaError(j)||`Alpha Vantage ${r.status}`);e.code='EU_MARKET_PROVIDER_ERROR';e.httpStatus=r.status||502;throw e}
+  return alphaToAnalysisMarket(j,resolved);
+}
 async function marketAdapter(stock){
-  const key=process.env.TWELVE_DATA_API_KEY;if(!key){const e=new Error('TWELVE_DATA_API_KEY fehlt');e.code='NO_MARKET_KEY';throw e;}
   const resolved=Symbols.resolveSymbol(stock);
+  // EU is deliberately routed to Alpha Vantage here as well as in /api/market.
+  // This fixes the previous split-brain bug where the chart endpoint worked but full analysis still called Twelve Data.
+  if(resolved.region==='EU')return alphaDailyAnalysis(resolved);
+  const key=process.env.TWELVE_DATA_API_KEY;if(!key){const e=new Error('TWELVE_DATA_API_KEY fehlt');e.code='NO_MARKET_KEY';throw e;}
   const start=new Date();start.setFullYear(start.getFullYear()-10);
   const u=new URL('https://api.twelvedata.com/time_series');
   u.searchParams.set('symbol',resolved.marketSymbol);u.searchParams.set('interval','1day');u.searchParams.set('adjust','all');u.searchParams.set('outputsize','5000');u.searchParams.set('start_date',start.toISOString().slice(0,10));
@@ -130,8 +157,16 @@ module.exports=async function handler(req,res){
     const pipe=Pipeline.createPipeline({marketAdapter,fundamentalsAdapter,core:Core,cache:ANALYSIS_CACHE,ttlMs:21600000,allowPartial:true});
     const out=await pipe.load(stock);
     out.symbolResolution=resolved;
-    out.engineVersion='JUKA-3.0-live-paket6.7';
+    out.engineVersion='JUKA-8.0.0-final-eu-fair-value-system-fix';
     res.setHeader('Cache-Control','s-maxage=21600, stale-while-revalidate=86400');
+    if(String(q.history||'')==='1'){
+      const rows=out.fundamentals?.annual||out.derived||[];
+      const prices=(out.market?.prices||[]).map(x=>({date:x.date,close:x.close}));
+      const requested=String(q.dates||'').split(',').map(x=>x.trim()).filter(Boolean);
+      const publicationDates=rows.map(r=>r.accepted||r.filed||r.filedDate||r.publishedDate||r.availableFrom).filter(Boolean); const currentDate=out.market?.asOf?[out.market.asOf]:[]; const dates=requested.length?requested:[...new Set([...publicationDates.slice(-12),...currentDate])];
+      const history=Core.jukaPointInTimeFairValue(stock,rows,prices,{dates,model:out.model});
+      return res.status(200).json({engineVersion:out.engineVersion,symbol:out.stock?.s,currency:out.currency,history});
+    }
     if(String(q.summary||'')==='1'){
       const l=out.latest||{};
       return res.status(200).json({
@@ -151,6 +186,9 @@ module.exports=async function handler(req,res){
         latest:{fy:l.fy,date:l.date,filed:l.filed,revenue:l.revenue,operatingIncome:l.operatingIncome,netIncome:l.netIncome,eps:l.eps,cfo:l.cfo,capex:l.capex,fcf:l.fcf,cash:l.cash,debt:l.debt,netCash:l.netCash,shares:l.shares},
         quality:out.quality?{score:out.quality.score,grade:out.quality.grade,label:out.quality.label,coverage:out.quality.coverage,confidence:out.quality.confidence,verdict:out.quality.verdict,recommendation:out.quality.recommendation,strengths:out.quality.strengths,weaknesses:out.quality.weaknesses,parts:out.quality.parts}:null,
         valuation:out.valuation?{bear:out.valuation.bear,base:out.valuation.base,bull:out.valuation.bull}:null,
+        release:out.release||out.fairValue2?.release||null,
+        stability:out.stability||null,
+        fairValue2:out.fairValue2?{version:out.fairValue2.version,model:out.fairValue2.model,confidence:out.fairValue2.confidence,checks:out.fairValue2.checks}:null,
         relative:out.relative,
         reality:out.reality,
         riskAudit:out.riskAudit,
